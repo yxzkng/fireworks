@@ -38,7 +38,39 @@ create policy "누구나 제보" on reports
     level between 1 and 4
     and char_length(coalesce(comment, '')) <= 80
     and char_length(coalesce(nickname, '')) <= 12
+    -- 사진 경로는 우리가 만드는 형식만 받는다. 임의 경로를 넣어
+    -- 다른 파일을 가리키게 하는 것을 막는다.
+    and (photo_path is null
+         or photo_path ~ '^[0-9]{10,}-[a-z0-9]{4,12}(\.thumb)?\.jpg$')
   );
+
+-- 브라우저 쪽 제한은 새로고침이나 도구로 우회된다.
+-- 실제 방어는 여기서 한다: 같은 장소에 짧은 시간 안에 쏟아지는 제보를 막는다.
+create or replace function reports_rate_limit()
+returns trigger
+language plpgsql
+as $$
+declare
+  recent_count int;
+begin
+  -- 한 장소에 10초 안에 5건이 넘게 들어오면 정상적인 제보가 아니다.
+  select count(*) into recent_count
+    from reports
+   where area = new.area
+     and created_at > now() - interval '10 seconds';
+
+  if recent_count >= 5 then
+    raise exception 'rate_limited'
+      using hint = '잠시 후 다시 시도해 주세요.';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger reports_rate_limit_trigger
+  before insert on reports
+  for each row execute function reports_rate_limit();
 
 -- 신고는 flags만 올릴 수 있게 별도 함수로 처리한다.
 -- update 정책을 열어두면 남의 제보 내용을 고칠 수 있기 때문이다.
@@ -57,6 +89,21 @@ end;
 $$;
 
 grant execute on function report_flag(uuid) to anon;
+
+-- ── Storage 버킷 설정 ──────────────────────────────────────
+-- 대시보드에서 photos 버킷을 만들 때 아래를 함께 지정하세요.
+-- (SQL로도 되지만, 이미 만들었다면 대시보드에서 고치는 편이 확실합니다.)
+--
+--   Public bucket : 체크
+--   File size limit : 1 MB      ← 원본이 200KB 안팎이라 충분한 여유
+--   Allowed MIME types : image/jpeg
+--
+-- SQL로 하려면:
+--   update storage.buckets
+--      set public = true,
+--          file_size_limit = 1048576,
+--          allowed_mime_types = array['image/jpeg']
+--    where id = 'photos';
 
 -- 실시간 구독 켜기 — 한 사람의 제보가 모든 접속자 화면에 바로 뜬다
 alter publication supabase_realtime add table reports;
