@@ -81,13 +81,15 @@ header::before {
 .head-row { display: flex; align-items: baseline; gap: 10px; position: relative; }
 h1 { font-family: var(--display); font-weight: 700; font-size: 23px; margin: 0; }
 .head-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-left: auto; }
-.traffic-btn {
+.head-btn-row { display: flex; gap: 6px; }
+.traffic-btn, .live-btn {
   font-family: var(--body); font-size: 11px; font-weight: 800; letter-spacing: .02em;
   color: var(--on-signal); background: var(--signal); border: none; border-radius: 999px;
   padding: 6px 11px; cursor: pointer; white-space: nowrap;
 }
-.traffic-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
-#map { display: block; width: 100%; height: 340px; cursor: grab; }
+.traffic-btn:focus-visible, .live-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.live-btn { background: #e0293a; color: #fff; text-decoration: none; display: inline-flex; align-items: center; }
+#map { display: block; width: 100%; height: clamp(300px, 50dvh, 340px); cursor: grab; }
 #map:active { cursor: grabbing; }
 #map:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 
@@ -135,6 +137,20 @@ footer { margin: 30px auto 0; max-width: 640px; padding: 0 var(--pad); font-size
   .card { flex: none; width: 100%; max-width: none; min-width: 0; padding: 16px; }
 }
 
+@media (max-width: 520px) {
+  header { padding-top: 16px; }
+  .head-row { align-items: flex-start; }
+  h1 { font-size: 22px; line-height: 1.15; }
+  .sub { margin-top: 5px; }
+  .head-side { gap: 6px; }
+  .head-btn-row { gap: 5px; }
+  .traffic-btn, .live-btn { padding: 6px 8px; font-size: 10.5px; }
+  #map { height: clamp(290px, 48dvh, 330px); }
+  .legend { left: 8px; right: 8px; bottom: 8px; justify-content: space-between; gap: 5px; padding: 6px 7px; }
+  .map-hint { left: 8px; right: auto; bottom: 46px; max-width: calc(100% - 16px); }
+  .map-ui { top: 8px; right: 8px; }
+}
+
 /*__SHARED_CSS__*/
 </style>
 
@@ -145,7 +161,10 @@ footer { margin: 30px auto 0; max-width: 640px; padding: 0 var(--pad); font-size
       <p class="sub">9월 5일 토요일 · 실시간 혼잡도</p>
     </div>
     <div class="head-side">
-      <button class="traffic-btn" id="openTraffic">교통통제 안내</button>
+      <div class="head-btn-row">
+        <button class="traffic-btn" id="openTraffic">교통통제 안내</button>
+        <a class="live-btn" id="openLive" href="https://www.youtube.com/live/nLZKpuCxmpM?si=klSB3459OY0cg_Y_" target="_blank" rel="noopener noreferrer">불꽃 축제 생중계</a>
+      </div>
       <div class="cd" id="cd">—</div>
     </div>
   </div>
@@ -893,6 +912,16 @@ document.addEventListener('click', async (e) => {
       lb.addEventListener('click', () => lb.remove());
       document.body.appendChild(lb);
     }
+    return;
+  }
+
+  const history = t.closest('[data-history]');
+  if (history?.src) {
+    const lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.innerHTML = `<img src="${history.src}" alt="${esc(history.alt || '과거 현장 사진')}">`;
+    lb.addEventListener('click', () => lb.remove());
+    document.body.appendChild(lb);
     return;
   }
 

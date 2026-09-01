@@ -97,6 +97,7 @@
   border: 1px solid var(--ink-line); border-bottom: 0;
   border-radius: calc(var(--r) + 2px) calc(var(--r) + 2px) 0 0;
   padding: 20px var(--pad) calc(24px + env(safe-area-inset-bottom));
+  max-height: min(88dvh, 760px); overflow-y: auto; overscroll-behavior: contain;
   animation: rise .22s ease-out;
 }
 @keyframes rise { from { transform: translateY(14px); opacity: 0 } }
@@ -273,3 +274,35 @@
 }
 
 [hidden] { display: none !important }
+
+@media (max-width: 520px) {
+  :root { --pad: 14px }
+  body { padding-bottom: 86px }
+  .list-head { margin-top: 14px; align-items: flex-end }
+  .sorts { flex-shrink: 0 }
+  .sort-btn { min-height: 34px }
+  .rail {
+    gap: 8px; padding-bottom: 10px; scroll-padding-inline: var(--pad);
+  }
+  .card { flex-basis: 88%; max-width: none }
+  .card-top { gap: 7px }
+  .metrics { gap: 8px 10px }
+  .sheet {
+    max-height: 90dvh;
+    padding-top: 16px;
+    border-radius: 12px 12px 0 0;
+  }
+  .sheet-head { position: sticky; top: -16px; z-index: 2; background: var(--ink-raised); padding-top: 2px }
+  .history-strip {
+    display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory;
+    margin-inline: calc(var(--pad) * -1); padding: 0 var(--pad) 4px;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .history-strip::-webkit-scrollbar { display: none }
+  .history-shot { flex: 0 0 74%; scroll-snap-align: center }
+  .history-shot img, .history-ph { aspect-ratio: 16 / 10 }
+  .history-count { font-size: 14px }
+  .report { grid-template-columns: 68px minmax(0, 1fr) }
+  .report img { width: 68px; height: 68px }
+  .fab { min-height: 50px }
+}
