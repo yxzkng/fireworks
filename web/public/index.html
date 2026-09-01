@@ -403,7 +403,7 @@ function renderRail(){
     if (s.vote) bits.push(`<span>제보 <b>${s.vote.count}건</b></span>`);
     const pics = photosOf(s.area);
     const thumbs = pics.length ? `<div class="thumbs">${
-      pics.slice(0,3).map(r => `<img src="${esc(r.photo)}" alt="" loading="lazy">`).join('') +
+      pics.slice(0,3).map(r => `<img src="${esc(r.thumb || r.photo)}" alt="" loading="lazy">`).join('') +
       (pics.length > 3 ? `<div class="thumb-more">+${pics.length-3}</div>` : '')}</div>` : '';
     return `<button class="card${s.area===selected?' active':''}" data-area="${esc(s.area)}">
       <div class="card-top">
@@ -571,24 +571,49 @@ function mapReport(r){
     id: r.id, area: r.area, level: r.level, comment: r.comment,
     nickname: r.nickname, hidden: r.hidden, flags: r.flags,
     ts: new Date(r.created_at).getTime(),
+    // 원본과 썸네일은 경로 규칙으로 짝지어 둔다 — DB 컬럼을 늘리지 않아도 된다.
     photo: r.photo_path
       ? sb.storage.from('photos').getPublicUrl(r.photo_path).data.publicUrl
+      : null,
+    thumb: r.photo_path
+      ? sb.storage.from('photos').getPublicUrl(thumbPath(r.photo_path)).data.publicUrl
       : null,
   };
 }
 
-/** Storage에 올리므로 아티팩트 때의 256KB 제한이 없다. 그래도 현장 업로드
-    속도를 위해 1600px까지만 줄인다. */
-async function shrink(file){
-  const bmp = await createImageBitmap(file);
-  const side = 1600;
+/** photos/abc.jpg → photos/abc.thumb.jpg */
+function thumbPath(path){
+  return path.replace(/\.jpg$/, '.thumb.jpg');
+}
+
+/** 이미지를 한 변이 side를 넘지 않게 줄여 JPEG로 만든다. */
+function resize(bmp, side, quality){
   const scale = Math.min(1, side / Math.max(bmp.width, bmp.height));
   const c = document.createElement('canvas');
   c.width = Math.round(bmp.width * scale);
   c.height = Math.round(bmp.height * scale);
   c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
-  bmp.close?.();
-  return new Promise(res => c.toBlob(res, 'image/jpeg', 0.82));
+  return new Promise(res => c.toBlob(res, 'image/jpeg', quality));
+}
+
+/**
+ * 사진 한 장에서 원본용과 썸네일용 두 벌을 만든다.
+ *
+ * 카드 목록에는 장소마다 썸네일이 최대 3장씩 붙어 한 화면에 수십 장이 깔린다.
+ * 여기에 원본(약 300KB)을 쓰면 접속자 수백 명만 돼도 전송량이 저장소 한도를 넘는다.
+ * 목록에는 40~68px로만 보이므로 240px면 충분하다(약 15KB, 20배 차이).
+ */
+async function shrink(file){
+  const bmp = await createImageBitmap(file);
+  try {
+    const [full, thumb] = await Promise.all([
+      resize(bmp, 1280, 0.82),   // 확대해서 볼 때 쓰는 원본
+      resize(bmp, 240,  0.72),   // 목록·타임라인용
+    ]);
+    return full && thumb ? { full, thumb } : null;
+  } finally {
+    bmp.close?.();
+  }
 }
 
 /* ── 시트 ── */
@@ -638,7 +663,7 @@ function detailSheet(area){
   html += `<div class="block"><div class="block-label">제보 타임라인</div>
     ${list.length ? `<div class="reports">${list.map(r => `
       <div class="report">
-        ${r.photo ? `<img src="${esc(r.photo)}" alt="현장 사진" data-zoom="${esc(r.id)}" loading="lazy">` : '<span></span>'}
+        ${r.photo ? `<img src="${esc(r.thumb || r.photo)}" alt="현장 사진" data-zoom="${esc(r.id)}" loading="lazy">` : '<span></span>'}
         <div class="report-meta"><span class="badge lv${r.level}">${LEVELS[r.level-1]}</span>
           <span>${esc(r.nickname||'익명')}</span><span>${ago(r.ts)}</span>
           <button class="report-flag" data-flag="${esc(r.id)}">신고</button></div>
@@ -648,10 +673,10 @@ function detailSheet(area){
   return html;
 }
 
-let form = { level:0, blob:null, url:null };
+let form = { level:0, blob:null, thumb:null, url:null };
 
 function reportSheet(area){
-  form = { level:0, blob:null, url:null };
+  form = { level:0, blob:null, thumb:null, url:null };
   return `<div class="sheet-head"><span class="sheet-title">현장 상황 제보</span>
     <button class="close" data-close aria-label="닫기">&times;</button></div>
     <div class="block"><div class="block-label">어디에 계신가요</div>
@@ -726,7 +751,7 @@ document.addEventListener('click', async (e) => {
   if (t.id === 'f-photo-btn') return $('#f-photo').click();
   if (t.classList.contains('photo-clear')){
     if (form.url) URL.revokeObjectURL(form.url);
-    form.blob = null; form.url = null;
+    form.blob = null; form.thumb = null; form.url = null;
     $('#photo-slot').innerHTML = '<button class="photo-btn" id="f-photo-btn">📷 사진 찍거나 고르기</button>';
     return;
   }
@@ -739,9 +764,16 @@ document.addEventListener('click', async (e) => {
       let path = null;
       if (form.blob){
         path = `${Date.now()}-${Math.random().toString(36).slice(2,10)}.jpg`;
-        const { error } = await sb.storage.from('photos')
-          .upload(path, form.blob, { contentType:'image/jpeg', cacheControl:'3600' });
-        if (error) throw error;
+        // 원본과 썸네일을 나란히 올린다. 썸네일이 실패해도 원본만으로 동작하도록
+        // 원본 실패만 오류로 본다.
+        const [full, thumb] = await Promise.all([
+          sb.storage.from('photos')
+            .upload(path, form.blob, { contentType:'image/jpeg', cacheControl:'31536000' }),
+          sb.storage.from('photos')
+            .upload(thumbPath(path), form.thumb, { contentType:'image/jpeg', cacheControl:'31536000' }),
+        ]);
+        if (full.error) throw full.error;
+        if (thumb.error) console.warn('썸네일 업로드 실패 — 원본으로 대체됩니다');
       }
       // .select()를 붙이면 방금 넣은 행이 그대로 돌아온다 — 다시 조회할 필요가 없다
       const { data: inserted, error } = await sb.from('reports').insert({
@@ -776,15 +808,16 @@ document.addEventListener('change', async (e) => {
   const slot = $('#photo-slot');
   slot.innerHTML = '<div class="notice">사진 줄이는 중…</div>';
   try{
-    const blob = await shrink(file);
-    if (!blob) throw new Error('shrink failed');
+    const out = await shrink(file);
+    if (!out) throw new Error('shrink failed');
     if (form.url) URL.revokeObjectURL(form.url);
-    form.blob = blob;
-    form.url = URL.createObjectURL(blob);
+    form.blob = out.full;
+    form.thumb = out.thumb;
+    form.url = URL.createObjectURL(out.full);
     slot.innerHTML = `<div class="photo-preview"><img src="${form.url}" alt="올릴 사진 미리보기">
       <button class="photo-clear" aria-label="사진 빼기">&times;</button></div>`;
   }catch{
-    form.blob = null;
+    form.blob = null; form.thumb = null;
     slot.innerHTML = `<button class="photo-btn" id="f-photo-btn">📷 사진 찍거나 고르기</button>
       <div class="notice" style="margin-top:8px">사진을 처리하지 못했습니다. 다른 사진을 골라주세요.</div>`;
   }
