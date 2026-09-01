@@ -146,8 +146,7 @@ footer { margin: 30px auto 0; max-width: 640px; padding: 0 var(--pad); font-size
   .head-btn-row { gap: 5px; }
   .traffic-btn, .live-btn { padding: 6px 8px; font-size: 10.5px; }
   #map { height: clamp(290px, 48dvh, 330px); }
-  .legend { left: 8px; right: 8px; bottom: 8px; justify-content: space-between; gap: 5px; padding: 6px 7px; }
-  .map-hint { left: 8px; right: auto; bottom: 46px; max-width: calc(100% - 16px); }
+  .map-hint { left: 8px; right: auto; bottom: 100px; max-width: calc(100% - 16px); }
   .map-ui { top: 8px; right: 8px; }
 }
 
@@ -178,6 +177,7 @@ footer { margin: 30px auto 0; max-width: 640px; padding: 0 var(--pad); font-size
     <button class="map-btn" id="zout" aria-label="축소">−</button>
     <button class="map-btn" id="zfit" aria-label="여의도로 되돌리기">⌖</button>
   </div>
+  <button class="loc-btn" id="locateMe" aria-label="현재 위치 표시" title="현재 위치 표시"></button>
   <div class="legend">
     <span><i style="background:var(--c1)"></i>여유</span>
     <span><i style="background:var(--c2)"></i>보통</span>
@@ -410,6 +410,7 @@ const allStates = () => COORDS.map(stateOf);
 const cv = $('#map');
 const ctx = cv.getContext('2d');
 let view = { lat: 37.528, lon: 126.945, zoom: 1 };   // zoom 1 = 여의도 일대
+let myLocation = null;
 
 function fitDefault() { view = { lat: 37.528, lon: 126.945, zoom: 1 }; }
 
@@ -555,6 +556,24 @@ function drawMap() {
   ctx.fillRect(fx - lw / 2 - 4, fy - 27, lw + 8, 13);
   ctx.fillStyle = getCss('--gold');
   ctx.fillText('발사', fx, fy - 17);
+
+  if (myLocation) {
+    const [mx, my] = P(myLocation.lat, myLocation.lon);
+    ctx.save();
+    ctx.fillStyle = 'rgba(36,124,255,.22)';
+    ctx.beginPath(); ctx.arc(mx, my, 18, 0, 7); ctx.fill();
+    ctx.fillStyle = '#247CFF';
+    ctx.beginPath(); ctx.arc(mx, my, 8, 0, 7); ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
+    ctx.font = '800 10.5px ' + getCss('--body');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    const ml = ctx.measureText('내 위치').width;
+    ctx.fillStyle = 'rgba(11,16,32,.86)';
+    ctx.fillRect(mx - ml / 2 - 5, my + 14, ml + 10, 15);
+    ctx.fillStyle = '#fff';
+    ctx.fillText('내 위치', mx, my + 16);
+    ctx.restore();
+  }
 }
 let hit = [];
 
@@ -608,6 +627,26 @@ function zoomTo(items) {
 $('#zin').onclick  = () => { view.zoom = Math.min(9, view.zoom * 1.5); drawMap(); };
 $('#zout').onclick = () => { view.zoom = Math.max(0.35, view.zoom / 1.5); drawMap(); };
 $('#zfit').onclick = () => { fitDefault(); drawMap(); };
+$('#locateMe').onclick = () => locateMe();
+
+function locateMe() {
+  const btn = $('#locateMe');
+  if (!navigator.geolocation) {
+    $('#mapHint').textContent = '현재 위치를 지원하지 않는 브라우저입니다';
+    return;
+  }
+  btn.classList.add('loading');
+  navigator.geolocation.getCurrentPosition((pos) => {
+    myLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+    view.lat = myLocation.lat; view.lon = myLocation.lon; view.zoom = Math.max(view.zoom, 3.2);
+    btn.classList.remove('loading'); btn.classList.add('on');
+    $('#mapHint').textContent = '파란 점 = 내 위치';
+    drawMap();
+  }, () => {
+    btn.classList.remove('loading');
+    $('#mapHint').textContent = '위치 권한을 허용하면 내 위치를 표시합니다';
+  }, { enableHighAccuracy: true, timeout: 9000, maximumAge: 60000 });
+}
 
 /* 키보드로도 지도를 움직일 수 있게 한다 */
 cv.addEventListener('keydown', (e) => {
@@ -739,7 +778,7 @@ function detailSheet(area) {
         <div class="fc">${o.forecast.map((f) => {
           const hh = (f.time || '').slice(11, 13);
           const lv = lvNum(f.level);
-          const bh = Math.max(6, Math.round((f.ppltn?.max || 0) / max * 72));
+          const bh = Math.max(6, Math.round((f.ppltn?.max || 0) / max * 58));
           return `<div class="fc-col ${hh === '20' ? 'peak' : ''}">
             <div class="fc-bar" style="height:${bh}px;background:${cssLv(lv || 1)}" title="${esc(f.time)} ${esc(f.level)}"></div>
             <div class="fc-time">${hh}시</div></div>`;

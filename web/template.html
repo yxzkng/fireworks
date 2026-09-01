@@ -136,7 +136,6 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   .head-btn-row{gap:5px}
   .traffic-btn,.live-btn{padding:6px 8px;font-size:10.5px}
   #map{height:clamp(300px,50dvh,360px)}
-  .legend{left:8px;right:8px;bottom:8px;justify-content:space-between;gap:5px;padding:6px 7px}
   .map-hint{top:8px;right:8px;bottom:auto;max-width:calc(100% - 16px)}
   .pin-label{font-size:10px}
 }
@@ -173,6 +172,7 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
     <span><i style="background:var(--c4)"></i>붐빔</span>
   </div>
   <div class="map-hint" id="mapHint">원 크기 = 인원</div>
+  <button class="loc-btn" id="locateMe" aria-label="현재 위치 표시" title="현재 위치 표시"></button>
 </div>
 
 <div class="list-head">
@@ -309,6 +309,7 @@ function renderHistorical(area){
 let COORDS = [];
 let cfg = {}, sb = null, map = null;
 let markers = [];
+let myLocationOverlay = null;
 let reports = [], official = {};
 let sortMode = 'near', selected = null, sheet = null;
 
@@ -421,6 +422,35 @@ function initMap(){
   });
 
   drawMarkers();
+}
+
+function locateMe(){
+  const btn = $('#locateMe');
+  if (!map || !window.kakao?.maps) {
+    $('#mapHint').textContent = '지도를 불러온 뒤 다시 눌러주세요';
+    return;
+  }
+  if (!navigator.geolocation) {
+    $('#mapHint').textContent = '현재 위치를 지원하지 않는 브라우저입니다';
+    return;
+  }
+  btn.classList.add('loading');
+  navigator.geolocation.getCurrentPosition((pos) => {
+    const lat = pos.coords.latitude, lon = pos.coords.longitude;
+    const here = new kakao.maps.LatLng(lat, lon);
+    if (myLocationOverlay) myLocationOverlay.setMap(null);
+    myLocationOverlay = new kakao.maps.CustomOverlay({
+      map, position: here, zIndex: 8,
+      content: '<div class="me-pin"><div class="me-label">내 위치</div></div>',
+    });
+    map.setLevel(Math.min(map.getLevel(), 4));
+    map.panTo(here);
+    btn.classList.remove('loading'); btn.classList.add('on');
+    $('#mapHint').textContent = '파란 점 = 내 위치';
+  }, () => {
+    btn.classList.remove('loading');
+    $('#mapHint').textContent = '위치 권한을 허용하면 내 위치를 표시합니다';
+  }, { enableHighAccuracy: true, timeout: 9000, maximumAge: 60000 });
 }
 
 function drawMarkers(){
@@ -734,7 +764,7 @@ function renderForecast(list){
     <div class="fc-top">최다 ${(peak.ppltn?.max||0).toLocaleString()}명 · ${esc((peak.time||'').slice(11,13))}시</div>
     <div class="fc">${list.map(f => {
       const hh = (f.time||'').slice(11,13), lv = lvNum(f.level);
-      const bh = Math.max(6, Math.round((f.ppltn?.max||0)/max*72));
+      const bh = Math.max(6, Math.round((f.ppltn?.max||0)/max*58));
       return `<div class="fc-col ${hh==='20'?'peak':''}">
         <div class="fc-bar" style="height:${bh}px;background:${cssLv(lv||1)}"></div>
         <div class="fc-time">${hh}시</div></div>`;
@@ -988,6 +1018,7 @@ function refreshSheet(){
 
 document.addEventListener('click', async (e) => {
   const t = e.target;
+  if (t.id === 'locateMe') return locateMe();
   const card = t.closest('.card');
   if (card) return selectArea(card.dataset.area);
   if (t.id === 'openReport') return openSheet('report', selected);

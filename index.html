@@ -146,8 +146,7 @@ footer { margin: 30px auto 0; max-width: 640px; padding: 0 var(--pad); font-size
   .head-btn-row { gap: 5px; }
   .traffic-btn, .live-btn { padding: 6px 8px; font-size: 10.5px; }
   #map { height: clamp(290px, 48dvh, 330px); }
-  .legend { left: 8px; right: 8px; bottom: 8px; justify-content: space-between; gap: 5px; padding: 6px 7px; }
-  .map-hint { left: 8px; right: auto; bottom: 46px; max-width: calc(100% - 16px); }
+  .map-hint { left: 8px; right: auto; bottom: 100px; max-width: calc(100% - 16px); }
   .map-ui { top: 8px; right: 8px; }
 }
 
@@ -190,15 +189,14 @@ footer { margin: 30px auto 0; max-width: 640px; padding: 0 var(--pad); font-size
 .sort-btn[aria-pressed="true"] { background: var(--signal); color: var(--on-signal) }
 .sort-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 
-/* 좁은 화면은 가로 스냅 레일, 넓은 화면은 2열 그리드(아래 브레이크포인트). */
+/* 장소 카드는 모든 화면에서 2열 그리드로 고정한다. */
 .rail {
-  display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px; overflow: visible;
   padding: 2px var(--pad) 8px; margin: 0 auto; max-width: var(--maxw);
-  scrollbar-width: none; -webkit-overflow-scrolling: touch;
 }
-.rail::-webkit-scrollbar { display: none }
 .card {
-  flex: 0 0 82%; max-width: 300px; scroll-snap-align: center;
+  width: 100%; min-width: 0;
   text-align: left; background: var(--card-bg);
   border: 1px solid var(--ink-line); border-radius: var(--r);
   padding: var(--card-pad); color: inherit; font: inherit; cursor: pointer;
@@ -271,10 +269,13 @@ footer { margin: 30px auto 0; max-width: 640px; padding: 0 var(--pad); font-size
 .metrics b { color: var(--text); font-variant-numeric: tabular-nums }
 
 /* ── 예측 그래프 ──────────────────────────────────────────────────── */
-.fc-top { font-size: 11.5px; color: var(--text-dim); margin-bottom: 6px; font-variant-numeric: tabular-nums }
+.fc-top {
+  font-size: 11.5px; color: var(--text-dim); margin-bottom: 12px;
+  font-variant-numeric: tabular-nums; line-height: 1.35;
+}
 .fc {
-  display: flex; gap: 3px; align-items: flex-end; height: 76px;
-  border-bottom: 1px solid var(--ink-line); padding-bottom: 4px;
+  display: flex; gap: 3px; align-items: flex-end; height: 84px;
+  border-bottom: 1px solid var(--ink-line); padding: 8px 0 4px;
 }
 .fc-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px }
 .fc-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 3px }
@@ -401,10 +402,40 @@ footer { margin: 30px auto 0; max-width: 640px; padding: 0 var(--pad); font-size
   background: var(--scrim); border: 1px solid var(--ink-line);
   border-radius: var(--r); backdrop-filter: blur(10px); font-weight: 650;
 }
-.legend { display: flex; gap: 9px; padding: 7px 9px }
+.legend { left: 10px; bottom: 10px; display: flex; gap: 9px; padding: 7px 9px }
 .legend span { display: flex; align-items: center }
 .legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 3px }
-.map-hint { padding: 6px 9px }
+.map-hint { right: 62px; bottom: 14px; padding: 6px 9px }
+.loc-btn {
+  position: absolute; right: 10px; bottom: 10px; z-index: 6;
+  width: 42px; height: 42px; display: grid; place-items: center;
+  border: 1px solid var(--ink-line); border-radius: var(--r);
+  background: var(--scrim); color: var(--text); cursor: pointer;
+  box-shadow: 0 8px 22px rgba(0,0,0,.28); backdrop-filter: blur(10px);
+}
+.loc-btn::before {
+  content: ''; width: 16px; height: 16px; border: 2px solid currentColor;
+  border-radius: 50%; box-shadow: 0 0 0 4px rgba(255,255,255,.08);
+}
+.loc-btn::after {
+  content: ''; position: absolute; width: 2px; height: 26px;
+  background: currentColor; transform: rotate(45deg); opacity: .72;
+}
+.loc-btn.loading { opacity: .72; cursor: wait }
+.loc-btn.on { color: var(--signal); border-color: var(--signal) }
+.loc-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
+.me-pin {
+  position: relative; width: 22px; height: 22px; border-radius: 50%;
+  background: #247CFF; border: 3px solid #fff;
+  box-shadow: 0 0 0 7px rgba(36,124,255,.22), 0 8px 20px rgba(0,0,0,.36);
+}
+@keyframes mePulse { 50% { box-shadow: 0 0 0 11px rgba(36,124,255,.1), 0 8px 20px rgba(0,0,0,.36) } }
+.me-pin { animation: mePulse 1.8s ease-in-out infinite }
+.me-label {
+  position: absolute; left: 50%; top: 100%; transform: translateX(-50%);
+  margin-top: 5px; white-space: nowrap; font-size: 10.5px; font-weight: 800;
+  color: #fff; background: rgba(7,10,15,.86); border-radius: 4px; padding: 2px 6px;
+}
 
 /* ── 공통 ────────────────────────────────────────────────────────── */
 .sub { color: var(--text-dim); font-size: 12px; margin: 8px 0 0; font-weight: 500 }
@@ -412,13 +443,11 @@ footer { margin: 30px auto 0; max-width: 640px; padding: 0 var(--pad); font-size
 .flow-in { color: var(--c3) }
 .flow-out { color: var(--c1) }
 
-/* 넓은 화면 — 가로 스크롤 레일 대신 2열 그리드로 편다. */
 @media (min-width: 920px) {
   .rail {
-    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--rail-gap); overflow: visible; align-items: stretch;
   }
-  .card { flex: none; width: 100%; max-width: none; min-width: 0; padding: var(--card-pad-wide) }
+  .card { padding: var(--card-pad-wide) }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -434,12 +463,18 @@ footer { margin: 30px auto 0; max-width: 640px; padding: 0 var(--pad); font-size
   .list-head { margin-top: 14px; align-items: flex-end }
   .sorts { flex-shrink: 0 }
   .sort-btn { min-height: 34px }
-  .rail {
-    gap: 8px; padding-bottom: 10px; scroll-padding-inline: var(--pad);
-  }
-  .card { flex-basis: 88%; max-width: none }
+  .rail { gap: 8px; padding-bottom: 10px }
+  .card { padding: 12px 10px }
+  .card-name { font-size: 14px }
+  .card-desc { font-size: 11.5px }
+  .badge { font-size: 10.5px; padding: 3px 6px }
   .card-top { gap: 7px }
   .metrics { gap: 8px 10px }
+  .fc-top { margin-bottom: 10px }
+  .fc { height: 78px; padding-top: 6px }
+  .fc-time { font-size: 8.5px }
+  .loc-btn { right: 8px; bottom: 8px; width: 40px; height: 40px }
+  .legend { left: 8px; right: 8px; bottom: 56px; justify-content: space-between; gap: 5px; padding: 6px 7px }
   .sheet {
     max-height: 90dvh;
     padding-top: 16px;
@@ -485,6 +520,7 @@ footer { margin: 30px auto 0; max-width: 640px; padding: 0 var(--pad); font-size
     <button class="map-btn" id="zout" aria-label="축소">−</button>
     <button class="map-btn" id="zfit" aria-label="여의도로 되돌리기">⌖</button>
   </div>
+  <button class="loc-btn" id="locateMe" aria-label="현재 위치 표시" title="현재 위치 표시"></button>
   <div class="legend">
     <span><i style="background:var(--c1)"></i>여유</span>
     <span><i style="background:var(--c2)"></i>보통</span>
@@ -717,6 +753,7 @@ const allStates = () => COORDS.map(stateOf);
 const cv = $('#map');
 const ctx = cv.getContext('2d');
 let view = { lat: 37.528, lon: 126.945, zoom: 1 };   // zoom 1 = 여의도 일대
+let myLocation = null;
 
 function fitDefault() { view = { lat: 37.528, lon: 126.945, zoom: 1 }; }
 
@@ -862,6 +899,24 @@ function drawMap() {
   ctx.fillRect(fx - lw / 2 - 4, fy - 27, lw + 8, 13);
   ctx.fillStyle = getCss('--gold');
   ctx.fillText('발사', fx, fy - 17);
+
+  if (myLocation) {
+    const [mx, my] = P(myLocation.lat, myLocation.lon);
+    ctx.save();
+    ctx.fillStyle = 'rgba(36,124,255,.22)';
+    ctx.beginPath(); ctx.arc(mx, my, 18, 0, 7); ctx.fill();
+    ctx.fillStyle = '#247CFF';
+    ctx.beginPath(); ctx.arc(mx, my, 8, 0, 7); ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
+    ctx.font = '800 10.5px ' + getCss('--body');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    const ml = ctx.measureText('내 위치').width;
+    ctx.fillStyle = 'rgba(11,16,32,.86)';
+    ctx.fillRect(mx - ml / 2 - 5, my + 14, ml + 10, 15);
+    ctx.fillStyle = '#fff';
+    ctx.fillText('내 위치', mx, my + 16);
+    ctx.restore();
+  }
 }
 let hit = [];
 
@@ -915,6 +970,26 @@ function zoomTo(items) {
 $('#zin').onclick  = () => { view.zoom = Math.min(9, view.zoom * 1.5); drawMap(); };
 $('#zout').onclick = () => { view.zoom = Math.max(0.35, view.zoom / 1.5); drawMap(); };
 $('#zfit').onclick = () => { fitDefault(); drawMap(); };
+$('#locateMe').onclick = () => locateMe();
+
+function locateMe() {
+  const btn = $('#locateMe');
+  if (!navigator.geolocation) {
+    $('#mapHint').textContent = '현재 위치를 지원하지 않는 브라우저입니다';
+    return;
+  }
+  btn.classList.add('loading');
+  navigator.geolocation.getCurrentPosition((pos) => {
+    myLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+    view.lat = myLocation.lat; view.lon = myLocation.lon; view.zoom = Math.max(view.zoom, 3.2);
+    btn.classList.remove('loading'); btn.classList.add('on');
+    $('#mapHint').textContent = '파란 점 = 내 위치';
+    drawMap();
+  }, () => {
+    btn.classList.remove('loading');
+    $('#mapHint').textContent = '위치 권한을 허용하면 내 위치를 표시합니다';
+  }, { enableHighAccuracy: true, timeout: 9000, maximumAge: 60000 });
+}
 
 /* 키보드로도 지도를 움직일 수 있게 한다 */
 cv.addEventListener('keydown', (e) => {
@@ -1046,7 +1121,7 @@ function detailSheet(area) {
         <div class="fc">${o.forecast.map((f) => {
           const hh = (f.time || '').slice(11, 13);
           const lv = lvNum(f.level);
-          const bh = Math.max(6, Math.round((f.ppltn?.max || 0) / max * 72));
+          const bh = Math.max(6, Math.round((f.ppltn?.max || 0) / max * 58));
           return `<div class="fc-col ${hh === '20' ? 'peak' : ''}">
             <div class="fc-bar" style="height:${bh}px;background:${cssLv(lv || 1)}" title="${esc(f.time)} ${esc(f.level)}"></div>
             <div class="fc-time">${hh}시</div></div>`;
