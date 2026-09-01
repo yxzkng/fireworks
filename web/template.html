@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>여의도 불꽃 지도</title>
+<meta name="description" content="2026 서울세계불꽃축제 관람 명당별 실시간 혼잡도와 현장 사진 제보">
+<meta property="og:title" content="여의도 불꽃 지도">
+<meta property="og:description" content="9월 5일 불꽃축제 — 지금 어디가 덜 붐비나">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+/* 잡지의 축제 현장 지면처럼: 비대칭, 큰 세리프 제목, 차분한 7색 팔레트. */
+:root{
+  --noir:#090908; --paper:#F2EEE3; --smoke:#A8A096;
+  --mustard:#C69A2E; --rose:#B86F72; --petrol:#2D6F73; --moss:#6F8548;
+  --ink:var(--noir); --ink-raised:#14120F; --ink-panel:#1B1814; --ink-line:#34312C;
+  --text:var(--paper); --text-dim:var(--paper); --text-faint:var(--smoke); --signal:var(--mustard);
+  --c1:var(--petrol); --c1-bg:#102B2D; --c2:var(--moss); --c2-bg:#202916;
+  --c3:var(--mustard); --c3-bg:#33270C; --c4:var(--rose); --c4-bg:#35160D;
+  --r:6px; --pad:16px;
+  --sans:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Segoe UI',sans-serif;
+  --serif:var(--sans);
+
+  /* shared.css가 쓰는 공통 이름 */
+  --on-signal:#171106;
+  --card-bg:linear-gradient(180deg,var(--ink-panel),#13100D);
+  --map-bg:var(--ink-raised);
+  --scrim:rgba(9,9,8,.86);
+  --maxw:720px;
+  --w-title:900;
+  --w-strong:850;
+  --w-btn:750;
+  --w-badge:850;
+  --w-card-name:900;
+  --w-dist:650;
+
+  --r-pill:var(--r);            /* 이 테마는 배지·토글도 각지게 */
+  --rail-gap:18px;
+  --card-gap:10px;
+  --card-pad:14px;
+  --card-pad-wide:18px;
+  --card-name-font:var(--sans);
+  --card-name-size:16px;
+  --card-desc-size:12.5px;
+  --card-dist-size:11px;
+  --badge-size:11px;
+  --badge-lh:1.15;
+  --badge-pad:4px 8px;
+  --r-sorts:8px;
+  --sorts-pad:2px;
+  --sort-btn-pad:7px 11px;
+  --sort-btn-size:12px;
+}
+html{background:var(--ink)}
+body{margin:0;background:
+  linear-gradient(180deg,#14100D 0,#090908 38%,#070706 100%);
+  color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;padding-bottom:92px}
+
+header{padding:22px var(--pad) 12px;max-width:720px;margin:0 auto;position:relative}
+header::before{content:'SEOUL FIREWORKS FIELD GUIDE';display:block;margin:0 0 10px;
+  color:var(--rose);font-size:10px;font-weight:800;letter-spacing:.12em}
+.head-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:14px;position:relative}
+h1{font-family:var(--serif);font-weight:900;font-size:29px;line-height:1.05;letter-spacing:0;margin:0}
+.cd::before{content:'D-DAY';display:block;color:var(--text-faint);font-size:9px;
+  font-weight:800;letter-spacing:.08em;text-align:right;margin-bottom:4px}
+#map{width:100%;height:390px}
+.map-dim{position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(rgba(9,9,8,.38),rgba(9,9,8,.46))}
+.map-fallback{position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+  padding:20px;color:var(--text-faint);font-size:13px;line-height:1.7;background:var(--ink-raised)}
+
+/* 지도 위 마커 — 원 크기가 인원, 색이 혼잡도 */
+.pin{position:relative;z-index:3;display:grid;place-items:center;border-radius:50%;
+  border:2px solid rgba(255,255,255,.78);font-weight:850;font-size:12px;cursor:pointer;
+  font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--pin-color);
+  color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.85);box-shadow:0 5px 16px rgba(0,0,0,.42)}
+.pin.cluster{border-color:var(--paper);box-shadow:0 0 0 4px rgba(0,0,0,.28),0 8px 20px rgba(0,0,0,.48)}
+.pin span{position:relative;pointer-events:none;line-height:1}
+.pin small{display:block;margin-top:2px;font-size:9px;font-weight:800;opacity:.9}
+.pin.sel{box-shadow:0 0 0 3px rgba(198,154,46,.76),0 8px 20px rgba(0,0,0,.45)}
+.pin-label{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:3px;
+  white-space:nowrap;font-size:10.5px;font-weight:750;color:var(--text);
+  background:rgba(7,10,15,.86);padding:2px 6px;border-radius:4px;pointer-events:none}
+.launch{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;
+  border:2px dashed var(--signal);color:var(--signal);font-size:10px;font-weight:850}
+h2{font-family:var(--serif);font-size:18px;font-weight:900;margin:0;flex:1;letter-spacing:0}
+.sort-btn[aria-pressed=true]{background:var(--rose);color:var(--paper)}
+@keyframes rise{from{transform:translateY(14px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}.card{transition:none}}
+.lv-btn[aria-pressed=true]{border-color:currentColor}
+.lv-btn[aria-pressed=true].p1{color:var(--c1);background:var(--c1-bg)}
+.lv-btn[aria-pressed=true].p2{color:var(--c2);background:var(--c2-bg)}
+.lv-btn[aria-pressed=true].p3{color:var(--c3);background:var(--c3-bg)}
+.lv-btn[aria-pressed=true].p4{color:var(--c4);background:var(--c4-bg)}
+input[type=text],select{width:100%;padding:12px;border-radius:8px;border:1px solid var(--ink-line);
+  background:var(--ink);color:var(--text);font-family:var(--sans);font-size:15px}
+input:focus-visible,select:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
+.map-link{display:inline-flex;align-items:center;justify-content:center;width:100%;
+  margin-top:12px;padding:12px;border-radius:var(--r);border:1px solid var(--signal);
+  color:var(--on-signal);background:var(--signal);font-family:var(--sans);
+  font-size:14px;font-weight:var(--w-strong);text-decoration:none}
+.map-link:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
+  color:var(--text-faint);line-height:1.7}
+@media (min-width:920px){
+  body{padding-bottom:104px}
+  header{padding-top:30px;margin-left:calc((100vw - 720px)/2 + 42px);margin-right:auto}
+  header::before{position:absolute;left:-74px;top:38px;writing-mode:vertical-rl;transform:rotate(180deg);margin:0}
+  h1{font-size:42px;max-width:430px}
+  .sub{font-size:13px}
+  .map-wrap{margin-left:calc((100vw - 720px)/2);margin-right:auto}
+  #map{height:470px}
+  .list-head{margin-left:auto;margin-right:auto;max-width:720px}
+  .rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;overflow:visible;margin-left:auto;margin-right:auto;max-width:720px;align-items:stretch}
+  .card{max-width:none;min-width:0;width:100%;padding:18px}
+  .card:hover{transform:translateY(-1px)}
+  .card:nth-child(3n+1),.card:nth-child(3n+2){margin:0}
+  footer{margin-left:auto;margin-right:auto;max-width:720px}
+}
+
+/*__SHARED_CSS__*/
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-row">
+    <div>
+      <h1>여의도 불꽃 지도</h1>
+      <p class="sub">9월 5일 토요일 · 실시간 혼잡도</p>
+    </div>
+    <div class="cd" id="cd">—</div>
+  </div>
+</header>
+
+<div class="map-wrap">
+  <div id="map"></div>
+  <div class="map-dim" id="mapDim" hidden></div>
+  <div class="map-fallback" id="mapFallback">지도를 불러오는 중…</div>
+  <div class="legend">
+    <span><i style="background:var(--c1)"></i>여유</span>
+    <span><i style="background:var(--c2)"></i>보통</span>
+    <span><i style="background:var(--c3)"></i>약간 붐빔</span>
+    <span><i style="background:var(--c4)"></i>붐빔</span>
+  </div>
+  <div class="map-hint" id="mapHint">원 크기 = 인원</div>
+</div>
+
+<div class="list-head">
+  <h2 id="listTitle">가까운 순</h2>
+  <div class="sorts">
+    <button class="sort-btn" id="sortNear" aria-pressed="true">가까운 순</button>
+    <button class="sort-btn" id="sortCrowd" aria-pressed="false">붐비는 순</button>
+  </div>
+</div>
+<div class="rail" id="rail"></div>
+
+<footer>
+  혼잡도는 KT·SKT 기지국 신호를 5분 단위로 집계한 서울시 실시간 도시데이터 추정치입니다. 실제 현장과 차이가 있을 수 있습니다.<br>
+  현장 제보는 이용자가 올린 내용으로, 정확성이 보장되지 않습니다. 안전 안내는 반드시 현장 안내방송과 안전요원의 지시를 따르세요.
+</footer>
+
+<div class="fab-bar"><button class="fab" id="openReport">현장 상황 제보하기</button></div>
+<div id="modal"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
+<script>
+const SHOW_TIME = new Date('2026-09-05T20:00:00+09:00');
+const LAUNCH = { lat: 37.5285, lon: 126.9330 };
+const FRESH_MS = 30 * 60 * 1000;
+const LEVELS = ['여유','보통','약간 붐빔','붐빔'];
+
+/* 불꽃이 보이는 곳과 이동 거점을 구분한다 — '붐비는 순'에서 강남역 같은
+   원거리 거점이 1위로 올라오면 자리 찾는 사람에게 쓸모없는 순서가 된다. */
+const VIEWABLE = new Set(['여의도한강공원','여의도','여의서로','노들섬',
+  '이촌한강공원','반포한강공원','양화한강공원','망원한강공원']);
+
+const NOTES = {
+  '여의도한강공원':'발사 지점 정면. 현장감 최고, 가장 혼잡합니다.',
+  '여의도':'여의도 전역 인파. 진입·탈출 판단에 이 숫자를 보세요.',
+  '여의서로':'여의도 서측 도로변. 공원보다 한산한 편입니다.',
+  '노들섬':'측면 조망. 규모가 작아 금방 찹니다.',
+  '이촌한강공원':'강 건너 정면 조망. 여의도보다 여유롭습니다.',
+  '반포한강공원':'원거리 조망. 이동 부담이 적습니다.',
+  '양화한강공원':'측후방 원거리. 늦게 가도 자리가 있는 편입니다.',
+  '망원한강공원':'서측 원거리 조망.',
+  '노량진':'귀가 경유지. 붐비면 우회를 고려하세요.',
+  '용산역':'귀가 환승 거점.','영등포 타임스퀘어':'실내 대기·식사 장소.',
+  '합정역':'서측 환승 거점.','서울역':'귀가 환승 거점.',
+  '홍대 관광특구':'종료 후 이동 인파가 몰리는 곳.','신촌·이대역':'북측 환승 거점.',
+  '고속터미널역':'남측 환승 거점.','잠실한강공원':'원거리. 불꽃은 보이지 않습니다.',
+  '뚝섬한강공원':'원거리. 불꽃은 보이지 않습니다.','강남역':'남측 환승 거점.',
+};
+
+const HISTORICAL_CROWD = {
+  '여의도한강공원': {
+    source: '축제 전체 발표 인원과 관람 핵심 구역 면적을 바탕으로 한 서비스 내부 추정치입니다.',
+    shots: [
+      { year: '2023', people: 320000, caption: '메인 행사장 잔디·수변부가 일찍부터 포화된 상황', image: '' },
+      { year: '2022', people: 280000, caption: '불꽃 시작 전 돗자리 밀도가 매우 높았던 시간대', image: '' },
+      { year: '2019', people: 300000, caption: '마포대교~원효대교 사이 정면 관람 인파', image: '' },
+    ],
+  },
+  '여의도': {
+    source: '여의도 일대 유입 인파를 지하철역·도로 접근 구역으로 나누어 배분한 추정치입니다.',
+    shots: [
+      { year: '2023', people: 180000, caption: '여의나루역 주변 진입 대기와 이동 인파', image: '' },
+      { year: '2022', people: 150000, caption: '공원 진입로와 상권 방향 보행 흐름', image: '' },
+      { year: '2019', people: 170000, caption: '행사 종료 직후 역 방향으로 빠지는 구간', image: '' },
+    ],
+  },
+  '여의서로': {
+    source: '벚꽃길·국회 주변 도로변 체류 가능 면적 기준 추정치입니다.',
+    shots: [
+      { year: '2023', people: 70000, caption: '국회 뒤편 도로변에 길게 형성된 관람 줄', image: '' },
+      { year: '2022', people: 60000, caption: '공원보다 여유 있지만 이동 통로가 좁아지는 구간', image: '' },
+      { year: '2019', people: 65000, caption: '서강대교 방향 측면 관람 인파', image: '' },
+    ],
+  },
+  '노들섬': {
+    source: '섬 내 관람 가능 공간과 출입 동선 용량을 기준으로 한 추정치입니다.',
+    shots: [
+      { year: '2023', people: 30000, caption: '섬 중앙부와 수변 데크가 빠르게 찬 상황', image: '' },
+      { year: '2022', people: 25000, caption: '한강대교 보행 접근로까지 대기 발생', image: '' },
+      { year: '2019', people: 28000, caption: '측면 조망을 노린 소규모 밀집', image: '' },
+    ],
+  },
+  '이촌한강공원': {
+    source: '강 건너 주요 관람 구간 길이와 평균 체류 밀도 기준 추정치입니다.',
+    shots: [
+      { year: '2023', people: 120000, caption: '정면 조망이 가능한 수변 산책로 밀집', image: '' },
+      { year: '2022', people: 95000, caption: '가족 단위 관람객이 넓게 분산된 구역', image: '' },
+      { year: '2019', people: 110000, caption: '원효대교 건너편 주요 포인트', image: '' },
+    ],
+  },
+  '양화한강공원': {
+    source: '원거리 조망 구역의 체류 사진과 공원 규모를 함께 반영한 추정치입니다.',
+    shots: [
+      { year: '2023', people: 45000, caption: '늦은 시간에도 일부 여유가 남는 후방 조망', image: '' },
+      { year: '2022', people: 38000, caption: '수변부 중심으로 느슨하게 모인 관람객', image: '' },
+      { year: '2019', people: 42000, caption: '귀가 동선 부담이 적은 서측 포인트', image: '' },
+    ],
+  },
+  '망원한강공원': {
+    source: '서측 원거리 관람 구간 면적과 관람 후기 사진을 바탕으로 한 추정치입니다.',
+    shots: [
+      { year: '2023', people: 50000, caption: '망원 수변부 중심의 분산 관람', image: '' },
+      { year: '2022', people: 42000, caption: '행사 직전 잔디밭과 산책로가 함께 찬 상황', image: '' },
+      { year: '2019', people: 46000, caption: '성산대교 방향 여유 관람 구간', image: '' },
+    ],
+  },
+  '반포한강공원': {
+    source: '원거리 관람·대체 이동지 성격을 고려한 보수적 추정치입니다.',
+    shots: [
+      { year: '2023', people: 35000, caption: '불꽃은 작게 보이지만 접근성이 좋은 대체지', image: '' },
+      { year: '2022', people: 30000, caption: '메인 행사장 회피 관람객 일부 유입', image: '' },
+      { year: '2019', people: 32000, caption: '반포 수변부에 낮은 밀도로 분산', image: '' },
+    ],
+  },
+};
+
+function renderHistorical(area){
+  const h = HISTORICAL_CROWD[area];
+  if (!h?.shots?.length) return '';
+  return `<div class="block">
+    <div class="block-label">과거 현장 레퍼런스</div>
+    <div class="history-strip">${h.shots.slice(0,3).map((shot, i) => `
+      <div class="history-shot">
+        ${shot.image ? `<img src="${esc(shot.image)}" alt="${esc(area)} ${esc(shot.year)}년 과거 혼잡 사진" data-history="${esc(area)}-${i}" loading="lazy">`
+          : `<div class="history-ph">${esc(shot.year)}년<br>사진 추가 예정</div>`}
+        <div class="history-cap">
+          <div class="history-count">약 ${shot.people.toLocaleString()}명</div>
+          <div class="history-note">${esc(shot.caption)}</div>
+        </div>
+      </div>`).join('')}</div>
+    <div class="history-source">${esc(h.source)} 사진을 넣으면 이 영역이 실제 현장 이미지 3장으로 바뀝니다.</div>
+  </div>`;
+}
+
+let COORDS = [];
+let cfg = {}, sb = null, map = null;
+let markers = [];
+let reports = [], official = {};
+let sortMode = 'near', selected = null, sheet = null;
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lvNum = (s) => { const i = LEVELS.indexOf(s); return i < 0 ? 0 : i + 1; };
+const cssLv = (n) => n ? `var(--c${n})` : 'var(--text-faint)';
+const cssCache = {};
+const getCss = (v) => {
+  if (!cssCache[v]) cssCache[v] = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  return cssCache[v];
+};
+const markerColor = (n) => n ? getCss(`--c${n}`) : getCss('--text-faint');
+const peopleLabel = (n) => {
+  if (!n) return '';
+  if (n >= 10000) return `${Math.round(n / 1000) / 10}만`;
+  if (n >= 1000) return `${Math.round(n / 100) / 10}천`;
+  return String(Math.round(n));
+};
+const kakaoMapUrl = (c) =>
+  `https://map.kakao.com/link/map/${encodeURIComponent(c.area)},${c.lat},${c.lon}`;
+
+function ago(ts){
+  const m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 1) return '방금';
+  if (m < 60) return m + '분 전';
+  const h = Math.floor(m / 60);
+  return h < 24 ? h + '시간 전' : Math.floor(h / 24) + '일 전';
+}
+
+function tickCountdown(){
+  const diff = SHOW_TIME - Date.now(), el = $('#cd');
+  if (diff <= 0) { el.textContent = diff > -70*60*1000 ? '진행 중' : '종료'; return; }
+  const s = Math.floor(diff/1000), d = Math.floor(s/86400), h = Math.floor(s%86400/3600);
+  const m = Math.floor(s%3600/60), sec = s%60;
+  el.textContent = d > 0 ? `${d}일 ${h}시간`
+    : `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+/** 최근 30분만, 최신일수록 무겁게. 현장은 빠르게 변한다. */
+function crowdVote(area){
+  const now = Date.now();
+  const fresh = reports.filter(r => r.area === area && !r.hidden && now - r.ts < FRESH_MS);
+  if (!fresh.length) return null;
+  let ws = 0, w = 0;
+  for (const r of fresh) { const k = 1 - (now - r.ts)/FRESH_MS; ws += r.level*k; w += k; }
+  return { level: Math.round(ws/w), count: fresh.length };
+}
+const photosOf = (area) => reports.filter(r => r.area === area && r.photo && !r.hidden);
+
+function stateOf(c){
+  const o = official[c.area], vote = crowdVote(c.area);
+  return {
+    ...c, o, vote,
+    level: o ? lvNum(o.congestion.level) : (vote ? vote.level : 0),
+    people: o?.congestion?.ppltn ? (o.congestion.ppltn.min + o.congestion.ppltn.max)/2 : 0,
+  };
+}
+const allStates = () => COORDS.map(stateOf);
+
+/** 인원 → 원 지름. 제곱근이라 면적이 인원에 비례한다. */
+function sizeOf(people){
+  return Math.round(Math.max(26, Math.min(76, people > 0 ? Math.sqrt(people)*0.22 : 26)));
+}
+
+function clusterStates(states){
+  if (!map || map.getLevel() <= 5) return states.map(s => ({ items:[s], lat:s.lat, lon:s.lon }));
+  const projection = map.getProjection();
+  const threshold = map.getLevel() >= 8 ? 74 : 58;
+  const groups = [];
+
+  for (const s of states) {
+    const point = projection.containerPointFromCoords(new kakao.maps.LatLng(s.lat, s.lon));
+    let group = groups.find(g => Math.hypot(g.x - point.x, g.y - point.y) < threshold);
+    if (!group) {
+      group = { items:[], x:point.x, y:point.y, lat:0, lon:0 };
+      groups.push(group);
+    }
+    group.items.push(s);
+    group.lat = group.items.reduce((sum, item) => sum + item.lat, 0) / group.items.length;
+    group.lon = group.items.reduce((sum, item) => sum + item.lon, 0) / group.items.length;
+    group.x = group.items.reduce((sum, item) =>
+      sum + projection.containerPointFromCoords(new kakao.maps.LatLng(item.lat, item.lon)).x, 0) / group.items.length;
+    group.y = group.items.reduce((sum, item) =>
+      sum + projection.containerPointFromCoords(new kakao.maps.LatLng(item.lat, item.lon)).y, 0) / group.items.length;
+  }
+  return groups;
+}
+
+/* ── 지도 ── */
+function initMap(){
+  const c = new kakao.maps.LatLng(37.528, 126.945);
+  map = new kakao.maps.Map($('#map'), { center: c, level: 6 });
+  map.setMaxLevel(11);
+  $('#mapFallback').hidden = true;
+
+  // 카카오 기본 지도는 밝아서 밤 야외에서 눈부시다.
+  // 지도 이미지를 변형하면(예: CSS invert) 약관 위반 소지가 있으므로,
+  // 위에 어두운 막을 한 겹 덮어 화면만 가라앉힌다. 마커는 그 위에 온다.
+  $('#mapDim').hidden = false;
+
+  kakao.maps.event.addListener(map, 'zoom_changed', drawMarkers);
+  kakao.maps.event.addListener(map, 'dragend', drawMarkers);
+
+  // 발사 지점
+  new kakao.maps.CustomOverlay({
+    map, position: new kakao.maps.LatLng(LAUNCH.lat, LAUNCH.lon), zIndex: 5,
+    content: '<div class="launch">발사</div>',
+  });
+
+  drawMarkers();
+}
+
+function drawMarkers(){
+  if (!map) return;
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+  const overlays = clusterStates(allStates()).map(g => {
+    const isCluster = g.items.length > 1;
+    const people = g.items.reduce((sum, item) => sum + (item.people || 0), 0);
+    const level = g.items.reduce((max, item) => Math.max(max, item.level), 0);
+    const size = isCluster ? Math.max(46, Math.min(84, sizeOf(people) + 8)) : sizeOf(people);
+    const title = isCluster ? `${g.items.length}곳` : g.items[0].area;
+    const showLabel = !isCluster && (map.getLevel() <= 6 || size >= 44);
+    const html = `<div class="pin${isCluster?' cluster':''}${g.items.some(s => s.area===selected)?' sel':''}"
+        ${isCluster ? `data-cluster-lat="${g.lat}" data-cluster-lon="${g.lon}"` : `data-area="${esc(g.items[0].area)}"`}
+        style="width:${size}px;height:${size}px;--pin-color:${markerColor(level)}" title="${esc(title)}">
+        <span>${peopleLabel(people)}${isCluster ? `<small>${g.items.length}곳</small>` : ''}</span>
+        ${showLabel ? `<div class="pin-label">${esc(g.items[0].area)}</div>` : ''}
+      </div>`;
+    return new kakao.maps.CustomOverlay({
+      position: new kakao.maps.LatLng(g.lat, g.lon), content: html, zIndex: isCluster ? 4 : 3, clickable: true,
+    });
+  });
+
+  overlays.forEach(o => o.setMap(map));
+  markers = overlays;
+}
+
+/* 마커 클릭 — CustomOverlay는 이벤트가 약해서 위임으로 받는다 */
+document.addEventListener('click', (e) => {
+  const pin = e.target.closest('.pin');
+  if (!pin) return;
+  e.stopPropagation();
+  if (pin.dataset.area) return selectArea(pin.dataset.area);
+  if (pin.dataset.clusterLat && map) {
+    map.setLevel(Math.max(1, map.getLevel() - 2));
+    map.panTo(new kakao.maps.LatLng(Number(pin.dataset.clusterLat), Number(pin.dataset.clusterLon)));
+    drawMarkers();
+  }
+}, true);
+
+/* ── 카드 ── */
+function renderRail(){
+  const states = allStates();
+  states.sort(sortMode === 'near'
+    ? (a,b) => a.km - b.km
+    // 붐비는 순: 관람 가능한 곳을 먼저. 안 그러면 늘 붐비는 강남역이 1위가 된다.
+    : (a,b) => (VIEWABLE.has(b.area) - VIEWABLE.has(a.area))
+            || (b.level - a.level) || (b.people - a.people));
+
+  $('#rail').innerHTML = states.map(s => {
+    const badge = s.o ? `<span class="badge lv${s.level}">${esc(s.o.congestion.level)}</span>`
+      : s.vote ? `<span class="badge lv${s.level}">${LEVELS[s.level-1]} (제보)</span>`
+      : '<span class="badge lv0">정보 없음</span>';
+    const bits = [];
+    if (s.o?.congestion?.ppltn)
+      bits.push(`<span>추정 <b>${s.o.congestion.ppltn.min.toLocaleString()}~${s.o.congestion.ppltn.max.toLocaleString()}명</b></span>`);
+    if (s.o?.flow?.in && s.o?.flow?.out){
+      const i = s.o.flow.in.min, o = s.o.flow.out.min;
+      if (i > o*1.3) bits.push('<span class="flow-in">↑ 몰려드는 중</span>');
+      else if (o > i*1.3) bits.push('<span class="flow-out">↓ 빠져나가는 중</span>');
+    }
+    if (s.vote) bits.push(`<span>제보 <b>${s.vote.count}건</b></span>`);
+    const pics = photosOf(s.area);
+    const thumbs = pics.length ? `<div class="thumbs">${
+      pics.slice(0,3).map(r => `<img src="${esc(r.thumb || r.photo)}" alt="" loading="lazy">`).join('') +
+      (pics.length > 3 ? `<div class="thumb-more">+${pics.length-3}</div>` : '')}</div>` : '';
+    return `<button class="card${s.area===selected?' active':''}" data-area="${esc(s.area)}">
+      <div class="card-top">
+        <span class="card-name">${esc(s.area)}<br><span class="card-dist">${
+          VIEWABLE.has(s.area) ? `발사지점 ${s.km}km` : `이동 거점 · ${s.km}km`}</span></span>
+        ${badge}</div>
+      <div class="card-desc">${esc(NOTES[s.area]||'')}</div>
+      ${bits.length ? `<div class="metrics">${bits.join('')}</div>` : ''}
+      ${thumbs}</button>`;
+  }).join('');
+}
+
+function selectArea(area){
+  selected = area;
+  const c = COORDS.find(x => x.area === area);
+  if (c && map){
+    map.setLevel(Math.min(map.getLevel(), 5));
+    map.panTo(new kakao.maps.LatLng(c.lat, c.lon));
+  }
+  drawMarkers(); renderRail();
+  document.querySelector(`.card[data-area="${CSS.escape(area)}"]`)
+    ?.scrollIntoView({ inline:'center', block:'nearest', behavior:'smooth' });
+  openSheet('detail', area);
+}
+
+function setSort(m){
+  sortMode = m;
+  $('#sortNear').setAttribute('aria-pressed', String(m==='near'));
+  $('#sortCrowd').setAttribute('aria-pressed', String(m==='crowd'));
+  $('#listTitle').textContent = m==='near' ? '가까운 순' : '붐비는 순';
+  renderRail();
+  $('#rail').scrollTo({ left:0, behavior:'smooth' });
+}
+$('#sortNear').onclick = () => setSort('near');
+$('#sortCrowd').onclick = () => setSort('crowd');
+
+/* ── 혼잡도 ── */
+async function loadOfficial(){
+  try{
+    const res = await fetch('/api/congestion', { cache:'no-store' });
+    if (!res.ok) {
+      $('#mapHint').textContent = `혼잡도 API 오류 ${res.status}`;
+      return;
+    }
+    const { areas, meta } = await res.json();
+    const count = areas ? Object.keys(areas).length : 0;
+    if (count) official = areas;
+    drawMarkers(); renderRail();
+    if (meta?.updatedAt){
+      const t = new Date(meta.updatedAt);
+      $('#mapHint').textContent =
+        `원 크기 = 인원 · ${count}곳 · ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')} 기준`;
+    } else if (!count) {
+      $('#mapHint').textContent = '혼잡도 데이터 없음';
+    }
+  }catch{
+    $('#mapHint').textContent = '혼잡도 API 연결 실패';
+  }
+}
+
+/* ── 제보 ──
+   전체 조회는 처음 한 번만 한다.
+   그 뒤로는 실시간 이벤트에 실려 오는 행 하나만 반영한다 — 제보가 올라올 때마다
+   접속자 전원이 300행을 다시 읽으면 접속자 수 × 제보 수만큼 조회가 늘어난다. */
+const MAX_REPORTS = 300;
+
+/* 동기화 방식 — 실시간 구독은 무료 티어에서 동시 연결이 200개로 묶여 있어
+   201명째부터 조용히 실패한다. 축제처럼 접속이 몰리는 자리에서는 연결을 붙들지 않는
+   폴링이 안전하다. 30초 지연은 이 서비스에 충분하다(혼잡도 원본이 5분 주기).
+   접속이 적을 때는 구독이 더 빠르므로 'realtime'으로 바꿀 수 있게 남겨둔다. */
+const SYNC_MODE = 'poll';        // 'poll' | 'realtime'
+const POLL_MS   = 30 * 1000;
+
+let lastSeen = null;             // 지금까지 받아본 가장 최근 created_at
+
+async function loadReports(){
+  if (!sb) return;
+  const { data, error } = await sb.from('reports')
+    .select('*').eq('hidden', false).order('created_at', { ascending:false }).limit(MAX_REPORTS);
+  if (error) return;
+  reports = data.map(mapReport);
+  lastSeen = data.length ? data[0].created_at : new Date().toISOString();
+  paint();
+}
+
+/**
+ * 마지막으로 본 시각 이후의 새 제보만 가져온다. 보통 0~2행이라 거의 공짜다.
+ *
+ * 숨김 처리는 이 방식으로 잡히지 않는다 — 신고를 받아도 created_at은 그대로라
+ * 증분 조회에 걸리지 않기 때문이다. 그래서 가끔 화면에 보이는 제보의
+ * 숨김 여부만 따로 확인한다(id 목록만 조회하므로 역시 가볍다).
+ */
+let sweepTick = 0;
+async function pollReports(){
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.from('reports')
+      .select('*').eq('hidden', false)
+      .gt('created_at', lastSeen)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) return;
+
+    if (data.length){
+      lastSeen = data[0].created_at;
+      for (const row of data) mergeRow(row);
+      trimReports();
+      paint();
+    }
+
+    // 20회에 한 번(10분) 숨김 여부를 확인한다.
+    // 더 자주 돌리면 이 조회가 전체 트래픽의 대부분을 차지한다.
+    // 신고된 제보가 10분 늦게 사라지는 것은 감수할 만하다.
+    if (++sweepTick % 20 === 0) await sweepHidden();
+  } catch { /* 현장 네트워크는 자주 끊긴다. 다음 주기에 다시 시도한다. */ }
+}
+
+/** 화면에 있는 제보 중 숨겨진 것을 걷어낸다. id만 받아 오므로 가볍다. */
+async function sweepHidden(){
+  if (!reports.length) return;
+  // 화면에 실제로 노출되는 최근 것만 확인한다. 아래로 밀려난 오래된 제보까지
+  // 매번 검사하면 조회량만 늘고 얻는 게 없다.
+  const ids = reports.slice(0, 80).map(r => r.id);
+  const { data, error } = await sb.from('reports')
+    .select('id').eq('hidden', true).in('id', ids);
+  if (error || !data?.length) return;
+  const gone = new Set(data.map(r => r.id));
+  const before = reports.length;
+  reports = reports.filter(r => !gone.has(r.id));
+  if (reports.length !== before) paint();
+}
+
+/** 행 하나를 로컬 목록에 넣거나 갱신한다. 정렬·상한은 trimReports가 맡는다. */
+function mergeRow(row){
+  const i = reports.findIndex(r => r.id === row.id);
+  const mapped = mapReport(row);
+  if (i >= 0) reports[i] = mapped;          // 신고 수 변경 등
+  else reports.push(mapped);
+}
+
+/** 최신순을 유지하되 목록이 무한정 길어지지 않게 자른다. */
+function trimReports(){
+  reports.sort((a, b) => b.ts - a.ts);
+  if (reports.length > MAX_REPORTS) reports.length = MAX_REPORTS;
+}
+
+/** 실시간 이벤트 한 건을 반영한다. 서버를 다시 부르지 않는다. */
+function applyChange(payload){
+  const row = payload.new || payload.old;
+  if (!row?.id) return;
+
+  // 삭제됐거나 신고로 가려진 제보는 목록에서 뺀다
+  if (payload.eventType === 'DELETE' || payload.new?.hidden){
+    const i = reports.findIndex(r => r.id === row.id);
+    if (i >= 0) { reports.splice(i, 1); paint(); }
+    return;
+  }
+
+  mergeRow(payload.new);
+  trimReports();
+  // 폴링 모드에서도 이 경로로 내 제보가 들어오므로 기준 시각을 함께 올린다
+  if (payload.new.created_at > (lastSeen || '')) lastSeen = payload.new.created_at;
+  paint();
+}
+
+/** 목록이 바뀌었을 때 화면을 다시 그린다. */
+function paint(){
+  drawMarkers(); renderRail(); refreshSheet();
+}
+
+function mapReport(r){
+  return {
+    id: r.id, area: r.area, level: r.level, comment: r.comment,
+    nickname: r.nickname, hidden: r.hidden, flags: r.flags,
+    ts: new Date(r.created_at).getTime(),
+    // 원본과 썸네일은 경로 규칙으로 짝지어 둔다 — DB 컬럼을 늘리지 않아도 된다.
+    photo: r.photo_path
+      ? sb.storage.from('photos').getPublicUrl(r.photo_path).data.publicUrl
+      : null,
+    thumb: r.photo_path
+      ? sb.storage.from('photos').getPublicUrl(thumbPath(r.photo_path)).data.publicUrl
+      : null,
+  };
+}
+
+/** photos/abc.jpg → photos/abc.thumb.jpg */
+function thumbPath(path){
+  return path.replace(/\.jpg$/, '.thumb.jpg');
+}
+
+/** 이미지를 한 변이 side를 넘지 않게 줄여 JPEG로 만든다. */
+function resize(bmp, side, quality){
+  const scale = Math.min(1, side / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * scale);
+  c.height = Math.round(bmp.height * scale);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise(res => c.toBlob(res, 'image/jpeg', quality));
+}
+
+/**
+ * 사진 한 장에서 원본용과 썸네일용 두 벌을 만든다.
+ *
+ * 카드 목록에는 장소마다 썸네일이 최대 3장씩 붙어 한 화면에 수십 장이 깔린다.
+ * 여기에 원본(약 300KB)을 쓰면 접속자 수백 명만 돼도 전송량이 저장소 한도를 넘는다.
+ * 목록에는 40~68px로만 보이므로 240px면 충분하다(약 15KB, 20배 차이).
+ */
+async function shrink(file){
+  const bmp = await createImageBitmap(file);
+  try {
+    const [full, thumb] = await Promise.all([
+      resize(bmp, 1280, 0.82),   // 확대해서 볼 때 쓰는 원본
+      resize(bmp, 240,  0.72),   // 목록·타임라인용
+    ]);
+    return full && thumb ? { full, thumb } : null;
+  } finally {
+    bmp.close?.();
+  }
+}
+
+/* 예측 데이터는 목록 응답에 없다 — 용량의 65%를 차지하는데 상세에서만 쓰이기 때문이다.
+   상세를 열 때 그 장소 것만 가져오고, 한 번 받으면 재사용한다. */
+const forecastCache = {};
+
+async function loadForecast(area){
+  if (forecastCache[area]) return forecastCache[area];
+  try {
+    const res = await fetch(`/api/congestion?area=${encodeURIComponent(area)}`);
+    if (!res.ok) return null;
+    const { area: full } = await res.json();
+    if (!full?.forecast?.length) return null;
+    forecastCache[area] = full.forecast;
+    return full.forecast;
+  } catch { return null; }
+}
+
+/** 예측이 도착하면 열려 있는 상세의 해당 자리만 채운다. */
+function renderForecast(list){
+  const slot = document.getElementById('fc-slot');
+  if (!slot || !list?.length) return;
+  const peak = list.reduce((a,f) => (f.ppltn?.max||0) > (a.ppltn?.max||0) ? f : a, list[0]);
+  const max = Math.max(...list.map(f => f.ppltn?.max||0), 1);
+  slot.innerHTML = `
+    <div class="block-label">시간대별 예측 · 막대 높이는 예상 인원</div>
+    <div class="fc-top">최다 ${(peak.ppltn?.max||0).toLocaleString()}명 · ${esc((peak.time||'').slice(11,13))}시</div>
+    <div class="fc">${list.map(f => {
+      const hh = (f.time||'').slice(11,13), lv = lvNum(f.level);
+      const bh = Math.max(6, Math.round((f.ppltn?.max||0)/max*72));
+      return `<div class="fc-col ${hh==='20'?'peak':''}">
+        <div class="fc-bar" style="height:${bh}px;background:${cssLv(lv||1)}"></div>
+        <div class="fc-time">${hh}시</div></div>`;
+    }).join('')}</div>`;
+}
+
+/* 지하철 도착정보 — 근처에 역이 있는 장소만 상세에 뜬다.
+   전체 폴링이 아니라 상세를 열 때만 부르고, 서버가 30초 캐시한다. */
+const STATION_OF = {
+  '여의도한강공원':'여의나루', '여의도':'여의도', '노량진':'노량진',
+  '용산역':'용산', '영등포 타임스퀘어':'영등포시장', '합정역':'합정',
+  '서울역':'서울역', '홍대 관광특구':'홍대입구', '신촌·이대역':'신촌',
+  '고속터미널역':'고속터미널', '강남역':'강남',
+};
+const subwayCache = {};
+
+async function loadSubway(area){
+  if (!STATION_OF[area]) return null;
+  if (subwayCache[area]) return subwayCache[area];
+  try {
+    const res = await fetch(`/api/subway?area=${encodeURIComponent(area)}`);
+    if (!res.ok) return null;
+    const { arrivals } = await res.json();
+    if (!arrivals?.length) return null;
+    subwayCache[area] = arrivals;
+    return arrivals;
+  } catch { return null; }
+}
+
+function renderSubway(area, list){
+  const slot = document.getElementById('sw-slot');
+  if (!slot || !list?.length) return;
+  slot.innerHTML = `
+    <div class="block-label">${esc(STATION_OF[area]||'')}역 다음 열차</div>
+    <div class="subway">${list.slice(0,6).map(a => `
+      <div class="subway-row">
+        <span class="subway-dir">${esc(a.dir||'')}</span>
+        <span class="subway-to">${esc((a.to||'').split(' - ')[1] || a.to || '')}</span>
+        <span class="subway-msg">${esc(a.msg||'')}</span>
+      </div>`).join('')}</div>`;
+}
+
+/* ── 시트 ── */
+function detailSheet(area){
+  const c = COORDS.find(x => x.area === area) || { area, km:0 };
+  const o = official[area], vote = crowdVote(area);
+  const list = reports.filter(r => r.area === area && !r.hidden).slice(0,30);
+
+  let html = `<div class="sheet-head"><span class="sheet-title">${esc(area)}</span>
+    <button class="close" data-close aria-label="닫기">&times;</button></div>
+    <div class="card-desc">${esc(NOTES[area]||'')} · 발사지점에서 ${c.km}km</div>
+    <a class="map-link" href="${kakaoMapUrl(c)}" target="_blank" rel="noopener">카카오맵에서 이 위치 보기</a>`;
+
+  if (o){
+    html += `<div class="block">
+      <div class="block-label">공공데이터 · ${esc(o.congestion.time||'')}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span class="badge lv${lvNum(o.congestion.level)}">${esc(o.congestion.level)}</span>
+        ${o.congestion.ppltn ? `<span class="metrics"><b>${o.congestion.ppltn.min.toLocaleString()}~${o.congestion.ppltn.max.toLocaleString()}명</b></span>` : ''}
+      </div>
+      ${o.congestion.message ? `<div class="msg">${esc(o.congestion.message)}</div>` : ''}</div>`;
+
+    // 예측은 목록 응답에 없다. 자리만 잡아두고 도착하면 채운다.
+    html += `<div class="block" id="fc-slot">
+      <div class="block-label">시간대별 예측</div>
+      <div class="notice">불러오는 중…</div></div>`;
+    const extra = [];
+    if (o.road) extra.push(`도로 ${esc(o.road.level)} — ${esc(o.road.message||'')}`);
+    if (o.bikes) extra.push(`따릉이 잔여 ${o.bikes}대`);
+    if (extra.length) html += `<div class="block"><div class="block-label">이동</div>
+      <div class="msg">${extra.join('<br>')}</div></div>`;
+  }
+
+  // 근처에 역이 있는 장소만 표시. 자리만 잡아두고 도착하면 채운다.
+  if (STATION_OF[area]) html += `<div class="block" id="sw-slot">
+    <div class="block-label">${esc(STATION_OF[area])}역 다음 열차</div>
+    <div class="notice">불러오는 중…</div></div>`;
+
+  if (vote) html += `<div class="block">
+    <div class="block-label">현장 제보 · 최근 30분 ${vote.count}건</div>
+    <span class="badge lv${vote.level}">${LEVELS[vote.level-1]}</span></div>`;
+
+  html += renderHistorical(area);
+
+  html += `<div class="block"><div class="block-label">제보 타임라인</div>
+    ${list.length ? `<div class="reports">${list.map(r => `
+      <div class="report">
+        ${r.photo ? `<img src="${esc(r.thumb || r.photo)}" alt="현장 사진" data-zoom="${esc(r.id)}" loading="lazy">` : '<span></span>'}
+        <div class="report-meta"><span class="badge lv${r.level}">${LEVELS[r.level-1]}</span>
+          <span>${esc(r.nickname||'익명')}</span><span>${ago(r.ts)}</span>
+          <button class="report-flag" data-flag="${esc(r.id)}">신고</button></div>
+        <div class="report-text">${esc(r.comment||'')}</div></div>`).join('')}</div>`
+      : '<div class="empty">아직 제보가 없습니다.<br>첫 번째로 현장 상황을 알려주세요.</div>'}</div>
+    <div class="block"><button class="submit" data-report-for="${esc(area)}">이 장소 제보하기</button></div>`;
+  return html;
+}
+
+let form = { level:0, blob:null, thumb:null, url:null };
+
+/* 연속 제보 제한 — 실수로 여러 번 누르거나 장난으로 도배하는 것을 막는다.
+   브라우저 쪽 제한은 새로고침으로 우회되므로 진짜 방어는 DB 트리거가 한다
+   (schema.sql의 reports_rate_limit). 여기서는 정상 이용자에게 즉시
+   알려주는 역할만 한다. */
+const REPORT_COOLDOWN_MS = 30 * 1000;
+
+function cooldownLeft(){
+  try {
+    const last = Number(localStorage.getItem('lastReportAt')) || 0;
+    return Math.max(0, REPORT_COOLDOWN_MS - (Date.now() - last));
+  } catch { return 0; }   // 사생활 보호 모드 등에서 접근이 막힐 수 있다
+}
+
+function markReported(){
+  try { localStorage.setItem('lastReportAt', String(Date.now())); } catch {}
+}
+
+/** 실패 사유를 이용자가 할 수 있는 말로 바꾼다. */
+function submitErrorText(err){
+  const msg = String(err?.message || err || '');
+  if (msg.includes('rate_limited'))
+    return '제보가 몰리고 있어요. 잠시 후 다시 시도해 주세요.';
+  if (/exceeded the maximum allowed size|Payload too large|413/i.test(msg))
+    return '사진 용량이 너무 큽니다. 다른 사진을 골라주세요.';
+  if (msg === 'no storage')
+    return '제보 저장소에 연결하지 못했습니다. 새로고침 후 다시 시도해 주세요.';
+  if (/Failed to fetch|NetworkError|network/i.test(msg))
+    return '연결이 불안정합니다. 신호가 잡히는 곳에서 다시 시도해 주세요.';
+  return '제보를 올리지 못했습니다. 잠시 후 다시 시도해 주세요.';
+}
+
+/** 제출 버튼 아래에 안내를 띄운다. 이미 있으면 문구만 바꾼다. */
+function showSubmitError(btn, text){
+  const slot = btn.parentElement;
+  if (!slot) return;
+  let n = slot.querySelector('.send-err');
+  if (!n){
+    n = document.createElement('div');
+    n.className = 'notice send-err';
+    n.style.cssText = 'margin-top:10px;color:var(--c4)';
+    slot.appendChild(n);
+  }
+  n.textContent = text;
+}
+
+function reportSheet(area){
+  form = { level:0, blob:null, thumb:null, url:null };
+  return `<div class="sheet-head"><span class="sheet-title">현장 상황 제보</span>
+    <button class="close" data-close aria-label="닫기">&times;</button></div>
+    <div class="block"><div class="block-label">어디에 계신가요</div>
+      <select id="f-place">${COORDS.map(c =>
+        `<option value="${esc(c.area)}"${c.area===(area||COORDS[0].area)?' selected':''}>${esc(c.area)}</option>`).join('')}</select></div>
+    <div class="block"><div class="block-label">지금 얼마나 붐비나요</div>
+      <div class="lv-pick">${LEVELS.map((l,i) =>
+        `<button class="lv-btn p${i+1}" data-lv="${i+1}" aria-pressed="false">${l}</button>`).join('')}</div></div>
+    <div class="block"><div class="block-label">사진 <span style="text-transform:none;letter-spacing:0">(선택)</span></div>
+      <div id="photo-slot"><button class="photo-btn" id="f-photo-btn">📷 사진 찍거나 고르기</button></div>
+      <input type="file" id="f-photo" accept="image/*" hidden></div>
+    <div class="block"><div class="block-label">한마디 <span style="text-transform:none;letter-spacing:0">(선택)</span></div>
+      <input type="text" id="f-comment" maxlength="80" placeholder="예: 돗자리 깔 자리 아직 있어요"></div>
+    <div class="block"><div class="block-label">닉네임 <span style="text-transform:none;letter-spacing:0">(선택)</span></div>
+      <input type="text" id="f-nick" maxlength="12" placeholder="익명"></div>
+    <div class="block"><button class="submit" id="f-submit" disabled>제보 올리기</button>
+      ${cooldownLeft() > 0
+        ? `<div class="notice" style="margin-top:10px;color:var(--c3)">방금 제보하셨네요. ${Math.ceil(cooldownLeft()/1000)}초 뒤에 올릴 수 있어요.</div>`
+        : ''}
+      <div class="notice" style="margin-top:10px">위치는 고른 장소만 저장되며 GPS는 수집하지 않습니다.</div></div>`;
+}
+
+function openSheet(type, area){
+  sheet = { type, area };
+  $('#modal').innerHTML = `<div class="sheet-bg" data-close><div class="sheet" role="dialog" aria-modal="true">${
+    type==='detail' ? detailSheet(area) : reportSheet(area)}</div></div>`;
+  document.body.style.overflow = 'hidden';
+  $('#modal').querySelector('button,select,input')?.focus({ preventScroll:true });
+  if (type === 'detail') { fillForecast(area); fillSubway(area); }
+}
+
+/** 예측을 가져와 채운다. 늦게 도착해도 그 사이 시트가 닫혔거나 다른 장소로
+    바뀌었으면 그리지 않는다. */
+async function fillForecast(area){
+  const list = await loadForecast(area);
+  if (sheet?.type !== 'detail' || sheet.area !== area) return;
+  if (list) renderForecast(list);
+  else {
+    const slot = document.getElementById('fc-slot');
+    if (slot) slot.innerHTML =
+      '<div class="block-label">시간대별 예측</div><div class="notice">예측을 불러오지 못했습니다.</div>';
+  }
+}
+/** 지하철 도착정보를 가져와 채운다. 근처에 역이 없는 장소는 조용히 건너뛴다. */
+async function fillSubway(area){
+  if (!STATION_OF[area]) return;
+  const list = await loadSubway(area);
+  if (sheet?.type !== 'detail' || sheet.area !== area) return;
+  if (list) renderSubway(area, list);
+  else {
+    const slot = document.getElementById('sw-slot');
+    if (slot) slot.innerHTML =
+      `<div class="block-label">${esc(STATION_OF[area])}역 다음 열차</div><div class="notice">도착정보를 불러오지 못했습니다.</div>`;
+  }
+}
+function closeSheet(){ sheet = null; $('#modal').innerHTML = ''; document.body.style.overflow=''; }
+function refreshSheet(){
+  if (sheet?.type !== 'detail') return;
+  const box = document.querySelector('.sheet');
+  if (!box) return;
+  box.innerHTML = detailSheet(sheet.area);
+  // 통째로 다시 그렸으므로 예측·지하철 자리도 다시 채운다(캐시가 있으면 즉시).
+  fillForecast(sheet.area);
+  fillSubway(sheet.area);
+}
+
+document.addEventListener('click', async (e) => {
+  const t = e.target;
+  const card = t.closest('.card');
+  if (card) return selectArea(card.dataset.area);
+  if (t.id === 'openReport') return openSheet('report', selected);
+  if (t.classList.contains('sheet-bg') || t.closest('button[data-close]')) return closeSheet();
+
+  const fa = t.closest('[data-report-for]');
+  if (fa) return openSheet('report', fa.dataset.reportFor);
+
+  const zoom = t.closest('[data-zoom]');
+  if (zoom){
+    const r = reports.find(x => x.id === zoom.dataset.zoom);
+    if (r?.photo){
+      const lb = document.createElement('div');
+      lb.className = 'lightbox';
+      lb.innerHTML = `<img src="${esc(r.photo)}" alt="현장 사진">`;
+      lb.addEventListener('click', () => lb.remove());
+      document.body.appendChild(lb);
+    }
+    return;
+  }
+
+  const flag = t.closest('[data-flag]');
+  if (flag && sb){
+    await sb.rpc('report_flag', { report_id: flag.dataset.flag });
+    flag.textContent = '신고됨'; flag.disabled = true;
+    return;
+  }
+
+  const lv = t.closest('[data-lv]');
+  if (lv){
+    form.level = Number(lv.dataset.lv);
+    document.querySelectorAll('[data-lv]').forEach(b => b.setAttribute('aria-pressed', String(b===lv)));
+    const sbn = $('#f-submit'); if (sbn) sbn.disabled = false;
+    return;
+  }
+
+  if (t.id === 'f-photo-btn') return $('#f-photo').click();
+  if (t.classList.contains('photo-clear')){
+    if (form.url) URL.revokeObjectURL(form.url);
+    form.blob = null; form.thumb = null; form.url = null;
+    $('#photo-slot').innerHTML = '<button class="photo-btn" id="f-photo-btn">📷 사진 찍거나 고르기</button>';
+    return;
+  }
+
+  if (t.id === 'f-submit'){
+    const btn = t;
+    const wait = cooldownLeft();
+    if (wait > 0){
+      showSubmitError(btn, `${Math.ceil(wait/1000)}초 뒤에 다시 올릴 수 있어요.`);
+      return;
+    }
+    btn.disabled = true; btn.textContent = '올리는 중…';
+    try{
+      if (!sb) throw new Error('no storage');
+      let path = null;
+      if (form.blob){
+        path = `${Date.now()}-${Math.random().toString(36).slice(2,10)}.jpg`;
+        // 원본과 썸네일을 나란히 올린다. 썸네일이 실패해도 원본만으로 동작하도록
+        // 원본 실패만 오류로 본다.
+        const [full, thumb] = await Promise.all([
+          sb.storage.from('photos')
+            .upload(path, form.blob, { contentType:'image/jpeg', cacheControl:'31536000' }),
+          sb.storage.from('photos')
+            .upload(thumbPath(path), form.thumb, { contentType:'image/jpeg', cacheControl:'31536000' }),
+        ]);
+        if (full.error) throw full.error;
+        if (thumb.error) console.warn('썸네일 업로드 실패 — 원본으로 대체됩니다');
+      }
+      // .select()를 붙이면 방금 넣은 행이 그대로 돌아온다 — 다시 조회할 필요가 없다
+      const { data: inserted, error } = await sb.from('reports').insert({
+        area: $('#f-place').value,
+        level: form.level,
+        comment: $('#f-comment').value.trim().slice(0,80) || null,
+        nickname: $('#f-nick').value.trim().slice(0,12) || null,
+        photo_path: path,
+      }).select().single();
+      if (error) throw error;
+      markReported();
+      closeSheet();
+      // 구독이 곧 알려주지만, 올린 사람 화면에는 바로 보이는 편이 낫다.
+      // 같은 id면 applyChange가 교체하므로 중복되지 않는다.
+      if (inserted) applyChange({ eventType: 'INSERT', new: inserted });
+    }catch(err){
+      btn.disabled = false; btn.textContent = '제보 올리기';
+      showSubmitError(btn, submitErrorText(err));
+    }
+  }
+});
+
+document.addEventListener('change', async (e) => {
+  if (e.target.id !== 'f-photo') return;
+  const file = e.target.files?.[0]; if (!file) return;
+  const slot = $('#photo-slot');
+  slot.innerHTML = '<div class="notice">사진 줄이는 중…</div>';
+  try{
+    const out = await shrink(file);
+    if (!out) throw new Error('shrink failed');
+    if (form.url) URL.revokeObjectURL(form.url);
+    form.blob = out.full;
+    form.thumb = out.thumb;
+    form.url = URL.createObjectURL(out.full);
+    slot.innerHTML = `<div class="photo-preview"><img src="${form.url}" alt="올릴 사진 미리보기">
+      <button class="photo-clear" aria-label="사진 빼기">&times;</button></div>`;
+  }catch{
+    form.blob = null; form.thumb = null;
+    slot.innerHTML = `<button class="photo-btn" id="f-photo-btn">📷 사진 찍거나 고르기</button>
+      <div class="notice" style="margin-top:8px">사진을 처리하지 못했습니다. 다른 사진을 골라주세요.</div>`;
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const lb = document.querySelector('.lightbox');
+  if (lb) return lb.remove();
+  if (sheet) closeSheet();
+});
+
+/* ── 시작 ── */
+(async function start(){
+  tickCountdown(); setInterval(tickCountdown, 1000);
+
+  COORDS = await fetch('/area-coords.json').then(r => r.json()).catch(() => []);
+  renderRail();
+
+  cfg = await fetch('/api/config').then(r => r.json()).catch(() => ({}));
+
+  // Supabase — 없으면 제보 기능만 비활성, 나머지는 정상 동작
+  if (cfg.supabaseUrl && cfg.supabaseKey && window.supabase){
+    sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+    await loadReports();
+
+    if (SYNC_MODE === 'realtime'){
+      sb.channel('reports-live')
+        .on('postgres_changes', { event:'*', schema:'public', table:'reports' }, applyChange)
+        .subscribe();
+    } else {
+      setInterval(pollReports, POLL_MS);
+      // 화면을 다시 켰을 때는 기다리지 않고 바로 맞춘다
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) pollReports();
+      });
+    }
+  } else {
+    $('#openReport').textContent = '제보 기능 준비 중';
+    $('#openReport').disabled = true;
+  }
+
+  loadOfficial();
+  // 서버가 5분 주기로 수집하므로 그보다 자주 물어봐야 얻는 게 없다.
+  // 갱신 직후를 놓치지 않도록 2분으로 둔다.
+  setInterval(loadOfficial, 2 * 60 * 1000);
+
+  // 카카오맵 — 키가 없거나 로드 실패해도 카드 목록은 그대로 쓸 수 있다
+  if (!cfg.kakaoKey){
+    $('#mapFallback').innerHTML = '지도를 표시하려면 카카오맵 키가 필요합니다.<br>아래 목록은 정상 동작합니다.';
+    return;
+  }
+  const s = document.createElement('script');
+  s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(cfg.kakaoKey)}&autoload=false`;
+  s.onload = () => kakao.maps.load(() => {
+    initMap();
+  });
+  s.onerror = () => {
+    $('#mapFallback').hidden = false;
+    $('#mapFallback').innerHTML = '지도를 불러오지 못했습니다.<br>카카오 개발자센터에 이 사이트 도메인이 등록됐는지 확인하세요.<br>아래 목록은 정상 동작합니다.';
+  };
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>

@@ -122,7 +122,9 @@ curl "https://<주소>.vercel.app/api/congestion" | head -c 300
 
 | 파일 | 설명 |
 |---|---|
-| `public/index.html` | 사이트 본체 |
+| `template.html` | 사이트 원본 — **여기를 수정합니다** |
+| `public/index.html` | 빌드 결과 (`python3 ../build.py`) — 직접 고치지 마세요 |
+| `../shared.css` | 아티팩트판과 공유하는 UI 스타일 |
 | `public/area-coords.json` | 장소 19곳 좌표 + 발사지점 거리 |
 | `api/congestion.js` | 서울시 혼잡도 수집(Cron) + 배포 |
 | `api/config.js` | 공개 키를 브라우저에 전달 |

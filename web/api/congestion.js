@@ -9,8 +9,6 @@
  * 그래서 서버가 5분에 한 번만 모아두고 접속자에게는 그 값을 나눠준다.
  */
 
-import { kv } from '@vercel/kv';
-
 /* 등급별 장소 — 전부 실호출로 검증된 이름이다(각각 다른 POI 코드 반환).
    HOT은 관람 핵심, WARM은 주변·귀가 경로, COLD는 지도 맥락용. */
 const HOT  = ['여의도', '여의도한강공원', '여의서로', '노들섬'];
@@ -19,6 +17,26 @@ const WARM = ['이촌한강공원', '반포한강공원', '양화한강공원', 
 const COLD = ['서울역', '홍대 관광특구', '신촌·이대역', '고속터미널역',
               '잠실한강공원', '뚝섬한강공원', '강남역'];
 const ALL = [...new Set([...HOT, ...WARM, ...COLD])];
+
+let kvClientPromise;
+
+async function getKv() {
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null;
+  kvClientPromise ||= import('@vercel/kv').then((m) => m.kv).catch(() => null);
+  return kvClientPromise;
+}
+
+async function kvGet(key) {
+  const client = await getKv();
+  if (!client) return null;
+  try { return await client.get(key); } catch { return null; }
+}
+
+async function kvSet(key, value, options) {
+  const client = await getKv();
+  if (!client) return;
+  try { await client.set(key, value, options); } catch {}
+}
 
 /** 이번 분에 어떤 등급을 갱신할지. 하루 총량이 1,000회를 넘지 않게 맞춰져 있다. */
 function tiersToFetch(kst) {
@@ -91,11 +109,28 @@ async function collect(area, key) {
 
     const data = distill(raw?.CITYDATA);
     if (!data) return { area, ok: false, why: 'no data' };
-    await kv.set(`area:${area}`, data);
-    return { area, ok: true };
+    await kvSet(`area:${area}`, data);
+    return { area, ok: true, data };
   } catch (e) {
     return { area, ok: false, why: String(e).slice(0, 60) };
   }
+}
+
+async function fetchLive(area, key) {
+  const url = `http://openapi.seoul.go.kr:8088/${key}/json/citydata/1/5/${encodeURIComponent(area)}`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  if (!res.ok) return null;
+  const raw = await res.json();
+  const code = raw?.RESULT?.['RESULT.CODE'];
+  if (code && code !== 'INFO-000') return null;
+  return distill(raw?.CITYDATA);
+}
+
+async function collectBestEffort(area, key) {
+  const data = await fetchLive(area, key);
+  if (!data) return { area, ok: false, why: 'no data' };
+  await kvSet(`area:${area}`, data);
+  return { area, ok: true, data };
 }
 
 export default async function handler(req, res) {
@@ -123,9 +158,9 @@ export default async function handler(req, res) {
     }
 
     const day = kst.toISOString().slice(0, 10);
-    const used = (await kv.get(`calls:${day}`)) || 0;
-    await kv.set(`calls:${day}`, used + targets.length, { ex: 172800 });
-    await kv.set('meta', {
+    const used = (await kvGet(`calls:${day}`)) || 0;
+    await kvSet(`calls:${day}`, used + targets.length, { ex: 172800 });
+    await kvSet('meta', {
       updatedAt: new Date().toISOString(),
       failed: results.filter((r) => !r.ok),
       callsToday: used + targets.length,
@@ -134,17 +169,50 @@ export default async function handler(req, res) {
     return res.json({ fetched: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok) });
   }
 
-  // 접속자 요청 — 저장된 값만 읽는다. 서울시 API는 부르지 않는다.
-  const [values, meta] = await Promise.all([
-    Promise.all(ALL.map((a) => kv.get(`area:${a}`))),
-    kv.get('meta'),
-  ]);
+  // 접속자 요청 — 평소에는 저장된 값만 읽는다.
+  // 배포 직후나 KV가 비어 있는 상태에서는 첫 화면이 전부 회색이 되므로,
+  // 서버에서 한 번만 서울시 API를 호출해 캐시를 채운다.
+  let values = [], meta = null;
+  try {
+    [values, meta] = await Promise.all([
+      Promise.all(ALL.map((a) => kvGet(`area:${a}`))),
+      kvGet('meta'),
+    ]);
+  } catch (e) {
+    if (!process.env.SEOUL_API_KEY) {
+      return res.status(503).json({
+        error: 'kv_unavailable',
+        message: 'Vercel KV 연결을 확인하세요.',
+      });
+    }
+    values = [];
+    meta = { updatedAt: null, kvUnavailable: true };
+  }
   const areas = {};
   ALL.forEach((a, i) => { if (values[i]) areas[a] = values[i]; });
+
+  if (!Object.keys(areas).length && process.env.SEOUL_API_KEY) {
+    const results = [];
+    for (let i = 0; i < ALL.length; i += 4) {
+      results.push(...await Promise.all(ALL.slice(i, i + 4).map((a) => collectBestEffort(a, process.env.SEOUL_API_KEY))));
+    }
+    results.forEach((r) => { if (r.ok && r.data) areas[r.area] = r.data; });
+    meta = {
+      updatedAt: new Date().toISOString(),
+      failed: results.filter((r) => !r.ok),
+      callsToday: results.length,
+      filledFromEmptyCache: true,
+    };
+    await kvSet('meta', meta);
+  }
 
   // ?area=<이름> 이면 그 장소의 전체(예측 포함)를 준다. 상세 화면을 열 때만 쓴다.
   const one = req.query?.area;
   if (one){
+    if (!areas[one] && ALL.includes(one) && process.env.SEOUL_API_KEY) {
+      const live = await collectBestEffort(one, process.env.SEOUL_API_KEY);
+      if (live.ok) areas[one] = live.data;
+    }
     if (!areas[one]) return res.status(404).json({ error: 'not_found' });
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
     return res.json({ area: areas[one] });
