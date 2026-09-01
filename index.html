@@ -1,0 +1,985 @@
+<title>여의도 불꽃 지도</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+
+<style>
+/* ── 밤에 야외에서 보는 화면. 다크 단일 테마로 의도적으로 고정한다.
+      밝은 배경은 어둠 속에서 눈부시고 배터리도 더 먹는다. ────────────── */
+:root {
+  --ink:        #0B1020;
+  --ink-raised: #151B30;
+  --ink-line:   #232B45;
+  --water:      #16243F;
+  --land:       #0E1426;
+  --bridge:     #37456B;
+  --text:       #EDF0F7;
+  --text-dim:   #98A2BE;
+  --text-faint: #5D6785;
+  --gold:       #F4B740;
+
+  /* 혼잡도 = 의미색. 액센트(금색)와 분리한다. */
+  --c1: #35C7B4;  --c1-bg: #0E3A36;
+  --c2: #6BBF59;  --c2-bg: #1B3618;
+  --c3: #E8963C;  --c3-bg: #3D2A11;
+  --c4: #E85D5D;  --c4-bg: #3D1717;
+
+  --r: 14px;
+  --pad: 16px;
+  --display: 'Gowun Batang', 'Apple SD Gothic Neo', serif;
+  --body: 'IBM Plex Sans KR', -apple-system, 'Apple SD Gothic Neo', sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--ink); color: var(--text);
+  font-family: var(--body); font-size: 15px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 96px;
+}
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 var(--pad); }
+
+/* ── 헤더 ─────────────────────────────────────────────── */
+header { padding: 20px var(--pad) 14px; max-width: 640px; margin: 0 auto; position: relative; }
+header::before {
+  content: ''; position: absolute; inset: -30% 15% auto; height: 200px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(244,183,64,.15), transparent 68%);
+  pointer-events: none;
+}
+.head-row { display: flex; align-items: baseline; gap: 10px; position: relative; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 23px; margin: 0; }
+.sub { color: var(--text-dim); font-size: 12px; margin: 2px 0 0; position: relative; }
+.cd {
+  margin-left: auto; font-family: var(--display); font-size: 17px; font-weight: 700;
+  color: var(--gold); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* ── 지도 ─────────────────────────────────────────────── */
+.map-wrap {
+  position: relative; margin: 12px auto 0; max-width: 640px;
+  border-radius: var(--r); overflow: hidden;
+  border: 1px solid var(--ink-line); background: var(--land);
+  touch-action: none;
+}
+#map { display: block; width: 100%; height: 340px; cursor: grab; }
+#map:active { cursor: grabbing; }
+#map:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+
+.map-ui {
+  position: absolute; top: 10px; right: 10px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.map-btn {
+  width: 34px; height: 34px; border-radius: 9px; cursor: pointer;
+  background: rgba(11,16,32,.85); border: 1px solid var(--ink-line);
+  color: var(--text); font-size: 17px; font-family: var(--body);
+  display: grid; place-items: center; padding: 0;
+}
+.map-btn:hover { border-color: var(--text-faint); }
+.map-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+.legend {
+  position: absolute; left: 10px; bottom: 10px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+  background: rgba(11,16,32,.85); border: 1px solid var(--ink-line);
+  border-radius: 9px; padding: 6px 9px; font-size: 10.5px; color: var(--text-dim);
+}
+.legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 3px; }
+.legend span { display: flex; align-items: center; }
+
+.map-hint {
+  position: absolute; right: 10px; bottom: 10px;
+  font-size: 10.5px; color: var(--text-faint);
+  background: rgba(11,16,32,.85); border: 1px solid var(--ink-line);
+  border-radius: 9px; padding: 5px 9px;
+}
+
+/* ── 정렬 탭 + 가로 슬라이드 카드 ──────────────────────── */
+.list-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 22px 0 10px; max-width: 640px; padding: 0 var(--pad);
+  margin-left: auto; margin-right: auto;
+}
+h2 { font-family: var(--display); font-size: 17px; font-weight: 700; margin: 0; flex: 1; }
+.sorts { display: flex; gap: 4px; background: var(--ink-raised); border-radius: 999px; padding: 3px; }
+.sort-btn {
+  padding: 6px 12px; border-radius: 999px; border: 0; cursor: pointer;
+  background: transparent; color: var(--text-dim);
+  font-family: var(--body); font-size: 12.5px; font-weight: 600;
+}
+.sort-btn[aria-pressed="true"] { background: var(--gold); color: #241A03; }
+.sort-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* 가로 스크롤 카드 — 스냅으로 한 장씩 멈춘다 */
+.rail {
+  display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory;
+  padding: 2px var(--pad) 8px; margin: 0 auto; max-width: 640px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.rail::-webkit-scrollbar { display: none; }
+.card {
+  flex: 0 0 82%; max-width: 300px; scroll-snap-align: center;
+  text-align: left; background: var(--ink-raised);
+  border: 1px solid var(--ink-line); border-radius: var(--r);
+  padding: 13px; color: inherit; font: inherit; cursor: pointer;
+  display: grid; gap: 9px; align-content: start;
+  transition: border-color .18s;
+}
+.card:hover { border-color: var(--text-faint); }
+.card.active { border-color: var(--gold); }
+.card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.card-top { display: flex; align-items: flex-start; gap: 8px; }
+.card-name { font-weight: 600; font-size: 15.5px; flex: 1; line-height: 1.35; }
+.card-dist { font-size: 11.5px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.card-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+.badge {
+  flex-shrink: 0; font-size: 11.5px; font-weight: 600;
+  padding: 3px 9px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap;
+}
+.lv1 { color: var(--c1); background: var(--c1-bg); }
+.lv2 { color: var(--c2); background: var(--c2-bg); }
+.lv3 { color: var(--c3); background: var(--c3-bg); }
+.lv4 { color: var(--c4); background: var(--c4-bg); }
+.lv0 { color: var(--text-faint); background: transparent; }
+
+.metrics {
+  display: flex; flex-wrap: wrap; gap: 4px 12px;
+  font-size: 11.5px; color: var(--text-dim); font-variant-numeric: tabular-nums;
+}
+.metrics b { color: var(--text); font-weight: 600; }
+.flow-in { color: var(--c3); } .flow-out { color: var(--c1); }
+.thumbs { display: flex; gap: 5px; }
+.thumbs img { width: 40px; height: 40px; object-fit: cover; border-radius: 7px; border: 1px solid var(--ink-line); }
+.thumb-more {
+  width: 40px; height: 40px; border-radius: 7px; border: 1px solid var(--ink-line);
+  display: grid; place-items: center; font-size: 11px; color: var(--text-dim);
+}
+
+/* ── 하단 고정 버튼 ─────────────────────────────────────── */
+.fab-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  padding: 12px var(--pad) calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, var(--ink) 30%);
+}
+.fab {
+  display: block; width: 100%; max-width: 640px; margin: 0 auto;
+  padding: 15px; border: 0; border-radius: var(--r);
+  background: var(--gold); color: #241A03;
+  font-family: var(--body); font-size: 15.5px; font-weight: 700; cursor: pointer;
+}
+.fab:active { filter: brightness(.93); }
+.fab:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+/* ── 시트 ─────────────────────────────────────────────── */
+.sheet-bg {
+  position: fixed; inset: 0; background: rgba(4,7,16,.72); z-index: 50;
+  display: grid; align-items: end; justify-items: center; overflow-y: auto;
+}
+.sheet {
+  width: 100%; max-width: 640px; background: var(--ink-raised);
+  border: 1px solid var(--ink-line); border-bottom: 0; border-radius: 20px 20px 0 0;
+  padding: 20px var(--pad) calc(24px + env(safe-area-inset-bottom));
+  animation: rise .22s ease-out;
+}
+@keyframes rise { from { transform: translateY(14px); opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none } .card { transition: none } }
+.sheet-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 4px; }
+.sheet-title { font-family: var(--display); font-size: 20px; font-weight: 700; flex: 1; }
+.close { background: none; border: 0; color: var(--text-dim); font-size: 26px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.close:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.block { margin-top: 20px; }
+.block-label {
+  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-faint); margin-bottom: 8px;
+}
+.msg { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; background: var(--ink); border-radius: 10px; padding: 12px; }
+
+.fc-top { font-size: 11.5px; color: var(--text-dim); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+.fc { display: flex; gap: 3px; align-items: flex-end; height: 76px; border-bottom: 1px solid var(--ink-line); padding-bottom: 2px; }
+.fc-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.fc-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 4px; }
+.fc-time { font-size: 9.5px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.fc-col.peak .fc-time { color: var(--gold); font-weight: 700; }
+
+.reports { display: flex; flex-direction: column; gap: 12px; }
+.report { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--ink-line); }
+.report:last-child { border-bottom: 0; padding-bottom: 0 }
+.report img { width: 68px; height: 68px; object-fit: cover; border-radius: 10px; border: 1px solid var(--ink-line); grid-row: span 2; cursor: pointer; }
+.report-meta { font-size: 11.5px; color: var(--text-faint); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.report-text { font-size: 13.5px; line-height: 1.5; }
+.report-flag { background: none; border: 0; color: var(--text-faint); font-size: 11px; cursor: pointer; padding: 2px 4px; margin-left: auto; }
+.report-flag:hover { color: var(--c4) }
+
+.lv-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.lv-btn {
+  padding: 12px 4px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--ink-line); background: var(--ink); color: var(--text-dim);
+  font-family: var(--body); font-size: 12.5px; font-weight: 600;
+}
+.lv-btn[aria-pressed="true"] { border-color: currentColor; }
+.lv-btn[aria-pressed="true"].p1 { color: var(--c1); background: var(--c1-bg) }
+.lv-btn[aria-pressed="true"].p2 { color: var(--c2); background: var(--c2-bg) }
+.lv-btn[aria-pressed="true"].p3 { color: var(--c3); background: var(--c3-bg) }
+.lv-btn[aria-pressed="true"].p4 { color: var(--c4); background: var(--c4-bg) }
+.lv-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px }
+
+input[type="text"], select, textarea {
+  width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--ink-line);
+  background: var(--ink); color: var(--text); font-family: var(--body); font-size: 15px;
+}
+input:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.photo-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 14px; border-radius: 10px; cursor: pointer;
+  border: 1px dashed var(--ink-line); background: var(--ink); color: var(--text-dim);
+  font-family: var(--body); font-size: 14px;
+}
+.photo-preview { position: relative; }
+.photo-preview img { width: 100%; border-radius: 10px; display: block; }
+.photo-clear {
+  position: absolute; top: 8px; right: 8px; background: rgba(4,7,16,.8);
+  border: 0; color: var(--text); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 17px;
+}
+.submit {
+  width: 100%; padding: 15px; border: 0; border-radius: var(--r);
+  background: var(--gold); color: #241A03; font-family: var(--body);
+  font-size: 15.5px; font-weight: 700; cursor: pointer;
+}
+.submit:disabled { opacity: .45; cursor: not-allowed }
+.empty { text-align: center; color: var(--text-faint); font-size: 13.5px; padding: 22px 12px; line-height: 1.6; }
+.notice { font-size: 12.5px; color: var(--text-faint); padding: 10px 12px; background: var(--ink); border-radius: 10px; line-height: 1.55; }
+footer { margin: 30px auto 0; max-width: 640px; padding: 0 var(--pad); font-size: 11.5px; color: var(--text-faint); line-height: 1.7; }
+.lightbox { position: fixed; inset: 0; background: rgba(4,7,16,.94); z-index: 80; display: grid; place-items: center; padding: 20px; cursor: zoom-out; }
+.lightbox img { max-width: 100%; max-height: 90vh; border-radius: 10px }
+[hidden] { display: none !important }
+</style>
+
+<header>
+  <div class="head-row">
+    <div>
+      <h1>여의도 불꽃 지도</h1>
+      <p class="sub">9월 5일 토요일 · 실시간 혼잡도</p>
+    </div>
+    <div class="cd" id="cd">—</div>
+  </div>
+</header>
+
+<div class="map-wrap">
+  <canvas id="map" role="img" aria-label="여의도 일대 장소별 혼잡도 지도" tabindex="0"></canvas>
+  <div class="map-hint" id="mapHint">원 크기 = 인원</div>
+  <div class="map-ui">
+    <button class="map-btn" id="zin"  aria-label="확대">+</button>
+    <button class="map-btn" id="zout" aria-label="축소">−</button>
+    <button class="map-btn" id="zfit" aria-label="여의도로 되돌리기">⌖</button>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--c1)"></i>여유</span>
+    <span><i style="background:var(--c2)"></i>보통</span>
+    <span><i style="background:var(--c3)"></i>약간 붐빔</span>
+    <span><i style="background:var(--c4)"></i>붐빔</span>
+  </div>
+</div>
+
+<div class="list-head">
+  <h2 id="listTitle">가까운 순</h2>
+  <div class="sorts">
+    <button class="sort-btn" id="sortNear"  aria-pressed="true">가까운 순</button>
+    <button class="sort-btn" id="sortCrowd" aria-pressed="false">붐비는 순</button>
+  </div>
+</div>
+<div class="rail" id="rail"></div>
+
+<footer>
+  혼잡도는 KT·SKT 기지국 신호를 5분 단위로 집계한 서울시 실시간 도시데이터 추정치입니다. 실제 현장과 차이가 있을 수 있습니다.<br>
+  현장 제보는 이용자가 올린 내용으로, 정확성이 보장되지 않습니다. 안전 안내는 반드시 현장 안내방송과 안전요원의 지시를 따르세요.
+</footer>
+
+<div class="fab-bar"><button class="fab" id="openReport">현장 상황 제보하기</button></div>
+<div id="modal"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   설정 — Worker 배포 후 주소만 채우면 공공데이터가 켜진다.
+   비워두면 제보 기능만으로 정상 동작한다.
+   ══════════════════════════════════════════════════════════ */
+const WORKER_URL = '';   // 예: 'https://fireworks-congestion.xxx.workers.dev'
+
+const SHOW_TIME = new Date('2026-09-05T20:00:00+09:00');
+const LAUNCH    = { lat: 37.5285, lon: 126.9330 };   // 발사 지점
+const FRESH_MS  = 30 * 60 * 1000;
+const LEVELS    = ['여유', '보통', '약간 붐빔', '붐빔'];
+
+/* 빌드 시 주입되는 지도 데이터 (build.py) */
+const GEO    = {"river":[[37.54147,127.02516],[37.54076,127.03231],[37.53425,127.05471],[37.52992,127.06396],[37.5281,127.06977],[37.52654,127.07861],[37.52689,127.0877],[37.51969,127.09161],[37.51846,127.08128],[37.52055,127.06591],[37.52491,127.0581],[37.52908,127.05222],[37.53252,127.03792],[37.5343,127.03397],[37.5348,127.02828],[37.53381,127.02497],[37.53169,127.02193],[37.52863,127.01928],[37.51846,127.00742],[37.51729,127.00489],[37.5155,127.00418],[37.51343,127.00074],[37.51221,126.99695],[37.50739,126.9912],[37.50655,126.98809],[37.50689,126.98517],[37.50623,126.98256],[37.50648,126.9748],[37.50715,126.97122],[37.50933,126.96545],[37.51024,126.96477],[37.51311,126.95948],[37.51827,126.94566],[37.52083,126.94357],[37.52844,126.93453],[37.53148,126.92961],[37.53393,126.92266],[37.53598,126.91187],[37.53523,126.91027],[37.53538,126.9117],[37.53505,126.91265],[37.53478,126.91235],[37.53431,126.90952],[37.53487,126.90815],[37.53702,126.90615],[37.54846,126.8886],[37.55155,126.88337],[37.5548,126.87552],[37.5614,126.86686],[37.57626,126.84124],[37.58122,126.82915],[37.58327,126.82632],[37.58764,126.81788],[37.59146,126.81255],[37.59866,126.80562],[37.60539,126.79785],[37.60716,126.79306],[37.60748,126.79118],[37.6069,126.78981],[37.60732,126.78856],[37.60826,126.78698],[37.6096,126.78609],[37.61917,126.77102],[37.62243,126.75823],[37.62472,126.75281],[37.62695,126.74944],[37.62873,126.74459],[37.63082,126.74118],[37.63347,126.73866],[37.63587,126.73463],[37.64823,126.70681],[37.65139,126.70271],[37.65478,126.70195],[37.65773,126.69612],[37.66301,126.68223],[37.66503,126.67859],[37.66771,126.67514],[37.66849,126.675],[37.67274,126.66815],[37.67747,126.66322],[37.68327,126.65901],[37.68824,126.65884],[37.69168,126.66001],[37.69236,126.6623],[37.69591,126.66435],[37.69941,126.66256],[37.70474,126.66292],[37.70817,126.66489],[37.72012,126.66788],[37.72888,126.67122],[37.73064,126.67028],[37.73512,126.6701],[37.73489,126.6691],[37.73537,126.66873],[37.73547,126.66993],[37.74194,126.66922],[37.75453,126.6659],[37.76282,126.66082],[37.76832,126.65631],[37.77306,126.6748],[37.77091,126.67518],[37.76981,126.67722],[37.77052,126.67846],[37.77036,126.67951],[37.76697,126.68379],[37.76471,126.6851],[37.75865,126.68639],[37.75834,126.68707],[37.75604,126.68508],[37.7434,126.68645],[37.73848,126.6853],[37.73769,126.68686],[37.73563,126.68777],[37.73172,126.68842],[37.72705,126.68828],[37.72516,126.68689],[37.72326,126.6874],[37.72051,126.68665],[37.71259,126.68018],[37.70498,126.67523],[37.69609,126.67222],[37.69498,126.67136],[37.69272,126.67119],[37.68743,126.67406],[37.68075,126.67872],[37.67415,126.68595],[37.67023,126.69148],[37.66185,126.71215],[37.65843,126.71845],[37.65534,126.72166],[37.65371,126.72462],[37.65388,126.72645],[37.65263,126.72697],[37.65328,126.72801],[37.65921,126.72998],[37.66043,126.73137],[37.65922,126.73244],[37.65664,126.73671],[37.65974,126.73098],[37.65718,126.72984],[37.65506,126.73041],[37.65541,126.7294],[37.65321,126.72855],[37.6523,126.7274],[37.65248,126.72633],[37.65348,126.72613],[37.65314,126.72551],[37.65205,126.7263],[37.64768,126.73258],[37.63231,126.76149],[37.62874,126.77126],[37.62724,126.77834],[37.62183,126.78889],[37.61465,126.80039],[37.60602,126.80951],[37.59946,126.81505],[37.59664,126.81911],[37.59209,126.83066],[37.59128,126.83118],[37.58947,126.83585],[37.58573,126.84201],[37.58538,126.8436],[37.58411,126.8445],[37.584,126.84658],[37.58166,126.85066],[37.57862,126.85361],[37.5752,126.86078],[37.5741,126.86201],[37.57449,126.86296],[37.57376,126.86251],[37.57218,126.86584],[37.57079,126.86745],[37.57014,126.86959],[37.56498,126.87592],[37.56188,126.88485],[37.56131,126.88481],[37.55847,126.8899],[37.54425,126.90989],[37.54326,126.91252],[37.54253,126.9175],[37.54279,126.92015],[37.54338,126.91994],[37.54373,126.92062],[37.5432,126.92117],[37.54414,126.92585],[37.54142,126.93361],[37.54119,126.93742],[37.54001,126.93923],[37.53467,126.94326],[37.53374,126.94704],[37.52975,126.95159],[37.52406,126.95313],[37.52275,126.95402],[37.52179,126.95565],[37.52091,126.95968],[37.51514,126.97492],[37.51452,126.98144],[37.51522,126.98743],[37.51735,126.99183],[37.51669,126.99229],[37.51733,126.99411],[37.51716,126.99275],[37.51776,126.99414],[37.51886,126.9945],[37.52192,127.00096],[37.52588,127.00413],[37.53047,127.01204],[37.53951,127.01835],[37.54109,127.02081],[37.54147,127.02516]],"yeouido":[[37.5317,126.91044],[37.53076,126.9109],[37.52823,126.91133],[37.52648,126.91214],[37.52394,126.91433],[37.52199,126.9153],[37.51979,126.91705],[37.51866,126.91876],[37.51635,126.92512],[37.5156,126.92969],[37.51671,126.9367],[37.51814,126.94273],[37.51888,126.94391],[37.51946,126.94431],[37.52083,126.94357],[37.52929,126.93347],[37.53115,126.93032],[37.5329,126.92604],[37.53405,126.92214],[37.53599,126.91141],[37.53567,126.91053],[37.53523,126.91027],[37.53506,126.91087],[37.5354,126.91157],[37.53495,126.91265],[37.53458,126.90978],[37.5317,126.91044]],"nodeul":[[37.5163,126.96248],[37.5173,126.96159],[37.51889,126.95737],[37.51917,126.95571],[37.51867,126.95486],[37.51795,126.95522],[37.5166,126.95838],[37.51603,126.96079],[37.5163,126.96248]],"bridges":{"양화대교":[[37.5432,126.901],[37.5382,126.902]],"서강대교":[[37.5405,126.927],[37.529,126.9235]],"마포대교":[[37.542,126.9455],[37.529,126.9385]],"원효대교":[[37.5345,126.948],[37.521,126.937]],"한강대교":[[37.525,126.9585],[37.5105,126.956]]}};
+const COORDS = [{"area":"여의도한강공원","lat":37.52899,"lon":126.92822,"cat":"공원","km":0.4},{"area":"여의도","lat":37.52502,"lon":126.92553,"cat":"발달상권","km":0.8},{"area":"여의서로","lat":37.5327,"lon":126.91458,"cat":"공원","km":1.7},{"area":"노량진","lat":37.51389,"lon":126.94406,"cat":"발달상권","km":1.9},{"area":"용산역","lat":37.53026,"lon":126.96082,"cat":"인구밀집지역","km":2.5},{"area":"노들섬","lat":37.51756,"lon":126.95866,"cat":"공원","km":2.6},{"area":"영등포 타임스퀘어","lat":37.51686,"lon":126.90615,"cat":"발달상권","km":2.7},{"area":"합정역","lat":37.54938,"lon":126.91173,"cat":"인구밀집지역","km":3.0},{"area":"홍대 관광특구","lat":37.55392,"lon":126.92127,"cat":"관광특구","km":3.0},{"area":"이촌한강공원","lat":37.5194,"lon":126.96665,"cat":"공원","km":3.1},{"area":"신촌·이대역","lat":37.55704,"lon":126.93897,"cat":"인구밀집지역","km":3.2},{"area":"양화한강공원","lat":37.5413,"lon":126.89819,"cat":"공원","km":3.4},{"area":"망원한강공원","lat":37.55328,"lon":126.89927,"cat":"공원","km":4.0},{"area":"서울역","lat":37.55659,"lon":126.97303,"cat":"인구밀집지역","km":4.7},{"area":"반포한강공원","lat":37.50983,"lon":126.99467,"cat":"공원","km":5.8},{"area":"고속터미널역","lat":37.50481,"lon":127.00586,"cat":"인구밀집지역","km":6.9},{"area":"강남역","lat":37.49886,"lon":127.02813,"cat":"인구밀집지역","km":9.0},{"area":"뚝섬한강공원","lat":37.52918,"lon":127.07151,"cat":"공원","km":12.2},{"area":"잠실한강공원","lat":37.51923,"lon":127.0843,"cat":"공원","km":13.4}];
+
+/* 관람 가능 여부 — 불꽃이 보이는 곳과 이동 거점을 구분한다.
+   '붐비는 순'에서 강남역 같은 원거리 거점이 맨 위로 올라오면
+   자리를 찾는 사람에게 쓸모없는 순서가 되기 때문이다. */
+const VIEWABLE = new Set([
+  '여의도한강공원', '여의도', '여의서로', '노들섬',
+  '이촌한강공원', '반포한강공원', '양화한강공원', '망원한강공원',
+]);
+
+/* 관람 특성 — 혼잡도만으로는 고를 수 없어서 함께 보여준다 */
+const NOTES = {
+  '여의도한강공원': '발사 지점 정면. 현장감 최고, 가장 혼잡합니다.',
+  '여의도':        '여의도 전역 인파. 진입·탈출 판단에 이 숫자를 보세요.',
+  '여의서로':      '여의도 서측 도로변. 공원보다 한산한 편입니다.',
+  '노들섬':        '측면 조망. 규모가 작아 금방 찹니다.',
+  '이촌한강공원':   '강 건너 정면 조망. 여의도보다 여유롭습니다.',
+  '반포한강공원':   '원거리 조망. 이동 부담이 적습니다.',
+  '양화한강공원':   '측후방 원거리. 늦게 가도 자리가 있는 편입니다.',
+  '망원한강공원':   '서측 원거리 조망.',
+  '노량진':        '귀가 경유지. 붐비면 우회를 고려하세요.',
+  '용산역':        '귀가 환승 거점.',
+  '영등포 타임스퀘어': '실내 대기·식사 장소.',
+  '합정역':        '서측 환승 거점.',
+  '서울역':        '귀가 환승 거점.',
+  '홍대 관광특구':  '종료 후 이동 인파가 몰리는 곳.',
+  '신촌·이대역':    '북측 환승 거점.',
+  '고속터미널역':   '남측 환승 거점.',
+  '잠실한강공원':   '원거리. 불꽃은 보이지 않습니다.',
+  '뚝섬한강공원':   '원거리. 불꽃은 보이지 않습니다.',
+  '강남역':        '남측 환승 거점.',
+};
+
+/* ── 상태 ─────────────────────────────────────────────── */
+let db = null;
+let reports = [];
+let official = {};          // area명 -> 공공데이터
+let sortMode = 'near';      // 'near' | 'crowd'
+let selected = null;        // 선택된 area명
+let sheet = null;
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
+  (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const lvNum = (s) => { const i = LEVELS.indexOf(s); return i < 0 ? 0 : i + 1; };
+const cssLv = (n) => n ? `var(--c${n})` : 'var(--text-faint)';       // CSS(style 속성)용
+/** Canvas용 — var()를 이해하지 못하므로 실제 색값으로 바꿔준다. */
+const canvasLv = (n) => n ? getCss(`--c${n}`) : getCss('--text-faint');
+
+function ago(ts) {
+  const m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 1) return '방금';
+  if (m < 60) return m + '분 전';
+  const h = Math.floor(m / 60);
+  return h < 24 ? h + '시간 전' : Math.floor(h / 24) + '일 전';
+}
+
+/* ── 카운트다운 ───────────────────────────────────────── */
+function tickCountdown() {
+  const diff = SHOW_TIME - Date.now();
+  const el = $('#cd');
+  if (diff <= 0) { el.textContent = diff > -70 * 60 * 1000 ? '진행 중' : '종료'; return; }
+  const s = Math.floor(diff / 1000);
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600);
+  const m = Math.floor(s % 3600 / 60), sec = s % 60;
+  el.textContent = d > 0 ? `${d}일 ${h}시간`
+    : `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+/* ── 제보 집계 ────────────────────────────────────────── */
+/** 최근 30분만, 최신일수록 무겁게. 현장은 빠르게 변한다. */
+function crowdVote(area) {
+  const now = Date.now();
+  const fresh = reports.filter((r) => r.placeId === area && !r.hidden && now - r.ts < FRESH_MS);
+  if (!fresh.length) return null;
+  let ws = 0, w = 0;
+  for (const r of fresh) { const k = 1 - (now - r.ts) / FRESH_MS; ws += r.level * k; w += k; }
+  return { level: Math.round(ws / w), count: fresh.length };
+}
+const photosOf = (area) => reports.filter((r) => r.placeId === area && r.photo && !r.hidden);
+
+/** 지도·카드에 쓸 장소별 통합 상태 */
+function stateOf(c) {
+  const o = official[c.area];
+  const vote = crowdVote(c.area);
+  const level = o ? lvNum(o.congestion.level) : (vote ? vote.level : 0);
+  const people = o?.congestion?.ppltn ? (o.congestion.ppltn.min + o.congestion.ppltn.max) / 2 : 0;
+  return { ...c, o, vote, level, people };
+}
+const allStates = () => COORDS.map(stateOf);
+
+/* ══════════════════════════════════════════════════════
+   지도 — 타일 서버를 쓸 수 없으므로(아티팩트 CSP가 외부
+   이미지를 막는다) 한강·여의도 윤곽을 직접 그린다.
+   불꽃축제엔 오히려 이쪽이 읽기 쉽다: 강과 섬, 다리,
+   그리고 사람이 어디 몰렸는지만 보이면 된다.
+   ══════════════════════════════════════════════════════ */
+const cv = $('#map');
+const ctx = cv.getContext('2d');
+let view = { lat: 37.528, lon: 126.945, zoom: 1 };   // zoom 1 = 여의도 일대
+
+function fitDefault() { view = { lat: 37.528, lon: 126.945, zoom: 1 }; }
+
+/** 화면 크기에 맞춰 캔버스 해상도를 잡는다(레티나 대응) */
+function sizeCanvas() {
+  const r = cv.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(r.width * dpr);
+  cv.height = Math.round(r.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w: r.width, h: r.height };
+}
+
+/** 위경도 → 화면 좌표. zoom이 클수록 확대. */
+function projector(w, h) {
+  const spanLon = 0.085 / view.zoom;              // 기본 가로 폭(경도)
+  const spanLat = spanLon * (h / w) * 0.79;       // 위도 1도가 더 길다(cos 보정)
+  return (lat, lon) => [
+    (lon - (view.lon - spanLon / 2)) / spanLon * w,
+    ((view.lat + spanLat / 2) - lat) / spanLat * h,
+  ];
+}
+
+/** 화면 좌표 → 위경도 (클릭 판정용 역변환) */
+function unproject(px, py, w, h) {
+  const spanLon = 0.085 / view.zoom;
+  const spanLat = spanLon * (h / w) * 0.79;
+  return [view.lat + spanLat / 2 - py / h * spanLat,
+          view.lon - spanLon / 2 + px / w * spanLon];
+}
+
+/**
+ * 가까이 붙은 장소를 하나로 묶는다.
+ * 화면 픽셀 거리로 판단하므로 확대하면 자연히 풀린다.
+ */
+function cluster(states, P, w, h) {
+  const R = 46;                                   // 이 픽셀 안이면 한 덩어리
+  const out = [];
+  for (const s of states) {
+    const [x, y] = P(s.lat, s.lon);
+    if (x < -80 || x > w + 80 || y < -80 || y > h + 80) continue;   // 화면 밖은 버린다
+    const near = out.find((g) => Math.hypot(g.x - x, g.y - y) < R);
+    if (near) {
+      near.items.push(s);
+      // 무게중심으로 옮긴다 — 덩어리가 실제 분포를 대표하도록
+      near.x = near.items.reduce((a, i) => a + P(i.lat, i.lon)[0], 0) / near.items.length;
+      near.y = near.items.reduce((a, i) => a + P(i.lat, i.lon)[1], 0) / near.items.length;
+    } else out.push({ x, y, items: [s] });
+  }
+  return out;
+}
+
+/** 인원 → 원 반지름. 제곱근이라 면적이 인원에 비례한다. */
+function radiusOf(people, n) {
+  const base = people > 0 ? Math.sqrt(people) * 0.11 : 7;
+  return Math.max(7, Math.min(46, base)) + (n > 1 ? 3 : 0);
+}
+
+function drawMap() {
+  const { w, h } = sizeCanvas();
+  const P = projector(w, h);
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = getCss('--land'); ctx.fillRect(0, 0, w, h);
+
+  // 한강 → 그 위에 섬(육지색)을 덮어 구멍을 낸다
+  const poly = (pts, fill) => {
+    if (!pts?.length) return;
+    ctx.beginPath();
+    pts.forEach(([la, lo], i) => { const [x, y] = P(la, lo); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+  };
+  poly(GEO.river, getCss('--water'));
+  // 섬은 테두리를 줘서 원에 가려도 형태가 남게 한다
+  const island = (pts) => {
+    poly(pts, getCss('--land'));
+    if (!pts?.length) return;
+    ctx.strokeStyle = getCss('--bridge'); ctx.lineWidth = 1; ctx.stroke();
+  };
+  island(GEO.yeouido);
+  island(GEO.nodeul);
+
+  // 다리
+  ctx.strokeStyle = getCss('--bridge'); ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+  for (const [, seg] of Object.entries(GEO.bridges || {})) {
+    const [a, b] = seg; const [x1, y1] = P(a[0], a[1]); const [x2, y2] = P(b[0], b[1]);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  }
+
+  // 장소 원 — 클러스터 단위
+  const groups = cluster(allStates(), P, w, h);
+  hit = [];
+  for (const g of groups) {
+    const items = g.items;
+    const people = items.reduce((a, i) => a + i.people, 0);
+    const lead = items.reduce((a, i) => i.level > a.level ? i : a, items[0]);   // 가장 붐비는 곳 색
+    const r = radiusOf(people, items.length);
+    const col = canvasLv(lead.level);
+
+    // 반투명 색을 강 위에 그대로 얹으면 탁해져서 혼잡도가 안 읽힌다.
+    // 어두운 바탕을 먼저 깔고 그 위에 색을 올린다.
+    ctx.beginPath(); ctx.arc(g.x, g.y, r, 0, 7);
+    ctx.fillStyle = 'rgba(11,16,32,.45)'; ctx.fill();   // 강물 색이 비쳐 탁해지는 것을 막는다
+    ctx.fillStyle = col; ctx.globalAlpha = .42; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.lineWidth = selected && items.some((i) => i.area === selected) ? 3 : 2;
+    ctx.strokeStyle = col; ctx.stroke();
+
+    ctx.fillStyle = col;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (items.length > 1) {
+      ctx.font = '700 12px ' + getCss('--body');
+      ctx.fillText(items.length, g.x, g.y);
+    } else {
+      ctx.beginPath(); ctx.arc(g.x, g.y, 3, 0, 7); ctx.fill();
+    }
+
+    // 이름표 — 확대했거나 큰 원에만. 작은 글씨가 겹치면 못 읽는다.
+    if (view.zoom >= 1.6 || r >= 18 || items.length > 1) {
+      const label = items.length > 1 ? `${items[0].area} 외 ${items.length - 1}` : items[0].area;
+      ctx.font = '600 10.5px ' + getCss('--body');
+      ctx.textBaseline = 'top';
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(11,16,32,.82)';
+      ctx.fillRect(g.x - tw / 2 - 4, g.y + r + 3, tw + 8, 14);
+      ctx.fillStyle = getCss('--text');
+      ctx.fillText(label, g.x, g.y + r + 5);
+    }
+    hit.push({ x: g.x, y: g.y, r: Math.max(r, 14), items });
+  }
+
+  // 발사 지점은 맨 위에 — 큰 원에 가려지면 기준점을 잃는다
+  const [fx, fy] = P(LAUNCH.lat, LAUNCH.lon);
+  ctx.save();
+  ctx.strokeStyle = getCss('--gold'); ctx.lineWidth = 2; ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.arc(fx, fy, 12, 0, 7); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = getCss('--gold');
+  ctx.beginPath(); ctx.arc(fx, fy, 3, 0, 7); ctx.fill();
+  ctx.font = '700 10px ' + getCss('--body');
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  const lw = ctx.measureText('발사').width;
+  ctx.fillStyle = 'rgba(11,16,32,.85)';
+  ctx.fillRect(fx - lw / 2 - 4, fy - 27, lw + 8, 13);
+  ctx.fillStyle = getCss('--gold');
+  ctx.fillText('발사', fx, fy - 17);
+}
+let hit = [];
+
+const cssCache = {};
+function getCss(v) {
+  if (!cssCache[v]) cssCache[v] = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  return cssCache[v];
+}
+
+/* 지도 조작 — 드래그, 휠, 핀치 */
+let drag = null;
+cv.addEventListener('pointerdown', (e) => {
+  drag = { x: e.clientX, y: e.clientY, lat: view.lat, lon: view.lon, moved: false };
+  cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const r = cv.getBoundingClientRect();
+  const spanLon = 0.085 / view.zoom, spanLat = spanLon * (r.height / r.width) * 0.79;
+  const dx = (e.clientX - drag.x) / r.width * spanLon;
+  const dy = (e.clientY - drag.y) / r.height * spanLat;
+  if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) drag.moved = true;
+  view.lon = drag.lon - dx; view.lat = drag.lat + dy;
+  drawMap();
+});
+cv.addEventListener('pointerup', (e) => {
+  const wasDrag = drag?.moved;
+  drag = null;
+  if (wasDrag) return;                      // 드래그였으면 클릭으로 치지 않는다
+  const r = cv.getBoundingClientRect();
+  const px = e.clientX - r.left, py = e.clientY - r.top;
+  const g = hit.find((g) => Math.hypot(g.x - px, g.y - py) <= g.r);
+  if (!g) return;
+  if (g.items.length === 1) selectArea(g.items[0].area);
+  else { zoomTo(g.items); }                 // 덩어리를 누르면 그쪽으로 확대해 풀어준다
+});
+cv.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  view.zoom = Math.max(0.35, Math.min(9, view.zoom * (e.deltaY < 0 ? 1.18 : 0.85)));
+  drawMap();
+}, { passive: false });
+
+function zoomTo(items) {
+  const la = items.map((i) => i.lat), lo = items.map((i) => i.lon);
+  view.lat = (Math.min(...la) + Math.max(...la)) / 2;
+  view.lon = (Math.min(...lo) + Math.max(...lo)) / 2;
+  view.zoom = Math.min(9, view.zoom * 2.1);
+  drawMap();
+}
+
+$('#zin').onclick  = () => { view.zoom = Math.min(9, view.zoom * 1.5); drawMap(); };
+$('#zout').onclick = () => { view.zoom = Math.max(0.35, view.zoom / 1.5); drawMap(); };
+$('#zfit').onclick = () => { fitDefault(); drawMap(); };
+
+/* 키보드로도 지도를 움직일 수 있게 한다 */
+cv.addEventListener('keydown', (e) => {
+  const step = 0.006 / view.zoom;
+  const k = { ArrowUp: [step, 0], ArrowDown: [-step, 0], ArrowLeft: [0, -step], ArrowRight: [0, step] }[e.key];
+  if (k) { e.preventDefault(); view.lat += k[0]; view.lon += k[1]; drawMap(); }
+  if (e.key === '+' || e.key === '=') { view.zoom = Math.min(9, view.zoom * 1.4); drawMap(); }
+  if (e.key === '-') { view.zoom = Math.max(0.35, view.zoom / 1.4); drawMap(); }
+});
+
+/* ── 카드 레일 ────────────────────────────────────────── */
+function renderRail() {
+  const states = allStates();
+  states.sort(sortMode === 'near'
+    ? (a, b) => a.km - b.km
+    // 붐비는 순: 관람 가능한 곳을 먼저 놓고 그 안에서 혼잡도순.
+    // 그러지 않으면 강남역처럼 늘 붐비는 원거리 거점이 맨 위를 차지한다.
+    : (a, b) => (VIEWABLE.has(b.area) - VIEWABLE.has(a.area))
+             || (b.level - a.level) || (b.people - a.people));
+
+  $('#rail').innerHTML = states.map((s) => {
+    const badge = s.o
+      ? `<span class="badge lv${s.level}">${esc(s.o.congestion.level)}</span>`
+      : s.vote
+        ? `<span class="badge lv${s.level}">${LEVELS[s.level - 1]} (제보)</span>`
+        : '<span class="badge lv0">정보 없음</span>';
+
+    const bits = [];
+    if (s.o?.congestion?.ppltn) {
+      bits.push(`<span>추정 <b>${s.o.congestion.ppltn.min.toLocaleString()}~${s.o.congestion.ppltn.max.toLocaleString()}명</b></span>`);
+    }
+    if (s.o?.flow?.in && s.o?.flow?.out) {
+      const i = s.o.flow.in.min, o = s.o.flow.out.min;
+      if (i > o * 1.3)      bits.push('<span class="flow-in">↑ 몰려드는 중</span>');
+      else if (o > i * 1.3) bits.push('<span class="flow-out">↓ 빠져나가는 중</span>');
+    }
+    if (s.vote) bits.push(`<span>제보 <b>${s.vote.count}건</b></span>`);
+
+    const pics = photosOf(s.area);
+    const thumbs = pics.length ? `<div class="thumbs">${
+      pics.slice(0, 3).map((r) => `<img src="${r.photo}" alt="" loading="lazy">`).join('') +
+      (pics.length > 3 ? `<div class="thumb-more">+${pics.length - 3}</div>` : '')}</div>` : '';
+
+    return `<button class="card${s.area === selected ? ' active' : ''}" data-area="${esc(s.area)}">
+      <div class="card-top">
+        <span class="card-name">${esc(s.area)}<br><span class="card-dist">${
+          VIEWABLE.has(s.area) ? `발사지점 ${s.km}km` : `이동 거점 · ${s.km}km`}</span></span>
+        ${badge}
+      </div>
+      <div class="card-desc">${esc(NOTES[s.area] || '')}</div>
+      ${bits.length ? `<div class="metrics">${bits.join('')}</div>` : ''}
+      ${thumbs}
+    </button>`;
+  }).join('');
+}
+
+function selectArea(area) {
+  selected = area;
+  const s = COORDS.find((c) => c.area === area);
+  if (s) { view.lat = s.lat; view.lon = s.lon; view.zoom = Math.max(view.zoom, 2.4); }
+  drawMap(); renderRail();
+  const card = document.querySelector(`.card[data-area="${CSS.escape(area)}"]`);
+  card?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  openSheet('detail', area);
+}
+
+$('#sortNear').onclick  = () => setSort('near');
+$('#sortCrowd').onclick = () => setSort('crowd');
+function setSort(m) {
+  sortMode = m;
+  $('#sortNear').setAttribute('aria-pressed', String(m === 'near'));
+  $('#sortCrowd').setAttribute('aria-pressed', String(m === 'crowd'));
+  $('#listTitle').textContent = m === 'near' ? '가까운 순' : '붐비는 순';
+  renderRail();
+  $('#rail').scrollTo({ left: 0, behavior: 'smooth' });
+}
+
+/* ── 공공데이터 ───────────────────────────────────────── */
+/**
+ * Worker가 5분마다 수집해 KV에 담아둔 값을 한 번에 받는다.
+ * 접속자가 아무리 많아도 서울시 API 호출 수는 늘지 않는다.
+ */
+async function loadOfficial() {
+  if (!WORKER_URL) return;
+  try {
+    const res = await fetch(WORKER_URL, { cache: 'no-store' });
+    if (!res.ok) return;
+    const { areas, meta } = await res.json();
+    if (areas) official = areas;
+    drawMap(); renderRail();
+    if (meta?.updatedAt) {
+      const t = new Date(meta.updatedAt);
+      $('#mapHint').textContent =
+        `원 크기 = 인원 · ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')} 기준`;
+    }
+  } catch { /* 현장 네트워크는 자주 끊긴다. 제보 기능은 계속 쓴다. */ }
+}
+
+/* ── 상세 시트 ────────────────────────────────────────── */
+function detailSheet(area) {
+  const c = COORDS.find((x) => x.area === area) || { area, km: 0 };
+  const o = official[area];
+  const vote = crowdVote(area);
+  const list = reports.filter((r) => r.placeId === area && !r.hidden).slice(0, 30);
+
+  let html = `<div class="sheet-head">
+      <span class="sheet-title">${esc(area)}</span>
+      <button class="close" data-close aria-label="닫기">&times;</button>
+    </div>
+    <div class="card-desc">${esc(NOTES[area] || '')} · 발사지점에서 ${c.km}km</div>`;
+
+  if (o) {
+    html += `<div class="block">
+      <div class="block-label">공공데이터 · ${esc(o.congestion.time || '')}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span class="badge lv${lvNum(o.congestion.level)}">${esc(o.congestion.level)}</span>
+        ${o.congestion.ppltn ? `<span class="metrics"><b>${o.congestion.ppltn.min.toLocaleString()}~${o.congestion.ppltn.max.toLocaleString()}명</b></span>` : ''}
+      </div>
+      ${o.congestion.message ? `<div class="msg">${esc(o.congestion.message)}</div>` : ''}
+    </div>`;
+
+    if (o.forecast?.length) {
+      const peak = o.forecast.reduce((a, f) => (f.ppltn?.max || 0) > (a.ppltn?.max || 0) ? f : a, o.forecast[0]);
+      const max = Math.max(...o.forecast.map((f) => f.ppltn?.max || 0), 1);
+      html += `<div class="block">
+        <div class="block-label">시간대별 예측 · 막대 높이는 예상 인원</div>
+        <div class="fc-top">최다 ${(peak.ppltn?.max || 0).toLocaleString()}명 · ${esc((peak.time||'').slice(11,13))}시</div>
+        <div class="fc">${o.forecast.map((f) => {
+          const hh = (f.time || '').slice(11, 13);
+          const lv = lvNum(f.level);
+          const bh = Math.max(6, Math.round((f.ppltn?.max || 0) / max * 72));
+          return `<div class="fc-col ${hh === '20' ? 'peak' : ''}">
+            <div class="fc-bar" style="height:${bh}px;background:${cssLv(lv || 1)}" title="${esc(f.time)} ${esc(f.level)}"></div>
+            <div class="fc-time">${hh}시</div></div>`;
+        }).join('')}</div></div>`;
+    }
+
+    const extra = [];
+    if (o.road) extra.push(`도로 ${esc(o.road.level)} — ${esc(o.road.message || '')}`);
+    if (o.bikes) extra.push(`따릉이 잔여 ${o.bikes}대`);
+    if (extra.length) html += `<div class="block"><div class="block-label">이동</div><div class="msg">${extra.join('<br>')}</div></div>`;
+  } else if (WORKER_URL) {
+    html += `<div class="block"><div class="notice">이 장소의 공공데이터가 아직 수집되지 않았습니다. 아래 현장 제보를 참고하세요.</div></div>`;
+  }
+
+  if (vote) {
+    html += `<div class="block">
+      <div class="block-label">현장 제보 · 최근 30분 ${vote.count}건</div>
+      <span class="badge lv${vote.level}">${LEVELS[vote.level - 1]}</span></div>`;
+  }
+
+  html += `<div class="block">
+    <div class="block-label">제보 타임라인</div>
+    ${list.length ? `<div class="reports">${list.map((r) => `
+      <div class="report">
+        ${r.photo ? `<img src="${r.photo}" alt="현장 사진" data-zoom="${esc(r.id)}" loading="lazy">` : '<span></span>'}
+        <div class="report-meta">
+          <span class="badge lv${r.level}">${LEVELS[r.level - 1]}</span>
+          <span>${esc(r.nickname || '익명')}</span><span>${ago(r.ts)}</span>
+          <button class="report-flag" data-flag="${esc(r.id)}">신고</button>
+        </div>
+        <div class="report-text">${esc(r.comment || '')}</div>
+      </div>`).join('')}</div>`
+      : '<div class="empty">아직 제보가 없습니다.<br>첫 번째로 현장 상황을 알려주세요.</div>'}
+  </div>
+  <div class="block"><button class="submit" data-report-for="${esc(area)}">이 장소 제보하기</button></div>`;
+  return html;
+}
+
+/* ── 제보 폼 ──────────────────────────────────────────── */
+let form = { level: 0, photo: null, area: null };
+
+function reportSheet(area) {
+  form = { level: 0, photo: null, area: area || COORDS[0].area };
+  return `<div class="sheet-head">
+      <span class="sheet-title">현장 상황 제보</span>
+      <button class="close" data-close aria-label="닫기">&times;</button></div>
+    <div class="block">
+      <div class="block-label">어디에 계신가요</div>
+      <select id="f-place">${COORDS.map((c) =>
+        `<option value="${esc(c.area)}"${c.area === form.area ? ' selected' : ''}>${esc(c.area)}</option>`).join('')}</select>
+    </div>
+    <div class="block">
+      <div class="block-label">지금 얼마나 붐비나요</div>
+      <div class="lv-pick">${LEVELS.map((l, i) =>
+        `<button class="lv-btn p${i+1}" data-lv="${i+1}" aria-pressed="false">${l}</button>`).join('')}</div>
+    </div>
+    <div class="block">
+      <div class="block-label">사진 <span style="text-transform:none;letter-spacing:0">(선택)</span></div>
+      <div id="photo-slot"><button class="photo-btn" id="f-photo-btn">📷 사진 찍거나 고르기</button></div>
+      <input type="file" id="f-photo" accept="image/*" hidden>
+    </div>
+    <div class="block">
+      <div class="block-label">한마디 <span style="text-transform:none;letter-spacing:0">(선택)</span></div>
+      <input type="text" id="f-comment" maxlength="80" placeholder="예: 돗자리 깔 자리 아직 있어요"></div>
+    <div class="block">
+      <div class="block-label">닉네임 <span style="text-transform:none;letter-spacing:0">(선택)</span></div>
+      <input type="text" id="f-nick" maxlength="12" placeholder="익명"></div>
+    <div class="block">
+      <button class="submit" id="f-submit" disabled>제보 올리기</button>
+      <div class="notice" style="margin-top:10px">위치는 고른 장소만 저장되며 GPS는 수집하지 않습니다.</div>
+    </div>`;
+}
+
+/** 저장소 문서 한도 256KiB, base64는 +33%. 넘으면 단계적으로 더 줄인다. */
+async function shrink(file) {
+  const bmp = await createImageBitmap(file);
+  const LIMIT = 180 * 1024;
+  for (const [side, q] of [[1024,.7],[1024,.55],[800,.5],[640,.45]]) {
+    const scale = Math.min(1, side / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * scale);
+    c.height = Math.round(bmp.height * scale);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const url = c.toDataURL('image/jpeg', q);
+    if (url.length <= LIMIT) { bmp.close?.(); return url; }
+  }
+  bmp.close?.(); return null;
+}
+
+function newId() {
+  const r = crypto?.getRandomValues
+    ? [...crypto.getRandomValues(new Uint8Array(8))].map((n) => n.toString(36)).join('')
+    : Math.random().toString(36).slice(2);
+  return Date.now().toString(36) + '-' + r.replace(/[^a-z0-9]/g, '');
+}
+
+/* ── 시트 열고 닫기 ───────────────────────────────────── */
+function openSheet(type, area) {
+  sheet = { type, area };
+  $('#modal').innerHTML = `<div class="sheet-bg" data-close><div class="sheet" role="dialog" aria-modal="true">${
+    type === 'detail' ? detailSheet(area) : reportSheet(area)}</div></div>`;
+  document.body.style.overflow = 'hidden';
+  $('#modal').querySelector('button, select, input')?.focus({ preventScroll: true });
+}
+function closeSheet() { sheet = null; $('#modal').innerHTML = ''; document.body.style.overflow = ''; }
+
+/* ── 이벤트 위임 ──────────────────────────────────────── */
+document.addEventListener('click', async (e) => {
+  const t = e.target;
+
+  const card = t.closest('.card');
+  if (card) return selectArea(card.dataset.area);
+
+  if (t.id === 'openReport') return openSheet('report', selected);
+
+  if (t.classList.contains('sheet-bg') || t.closest('button[data-close]')) return closeSheet();
+
+  const forArea = t.closest('[data-report-for]');
+  if (forArea) return openSheet('report', forArea.dataset.reportFor);
+
+  const zoom = t.closest('[data-zoom]');
+  if (zoom) {
+    const r = reports.find((x) => x.id === zoom.dataset.zoom);
+    if (r?.photo) {
+      const lb = document.createElement('div');
+      lb.className = 'lightbox';
+      lb.innerHTML = `<img src="${r.photo}" alt="현장 사진">`;
+      lb.addEventListener('click', () => lb.remove());
+      document.body.appendChild(lb);
+    }
+    return;
+  }
+
+  const flag = t.closest('[data-flag]');
+  if (flag) {
+    const r = reports.find((x) => x.id === flag.dataset.flag);
+    if (r && db) {
+      const flags = (r.flags || 0) + 1;
+      await db.doc(`reports/${r.id}`).update({ flags, hidden: flags >= 3 });
+      flag.textContent = '신고됨'; flag.disabled = true;
+    }
+    return;
+  }
+
+  const lv = t.closest('[data-lv]');
+  if (lv) {
+    form.level = Number(lv.dataset.lv);
+    document.querySelectorAll('[data-lv]').forEach((b) => b.setAttribute('aria-pressed', String(b === lv)));
+    const sb = document.getElementById('f-submit'); if (sb) sb.disabled = false;
+    return;
+  }
+
+  if (t.id === 'f-photo-btn') return document.getElementById('f-photo').click();
+
+  if (t.classList.contains('photo-clear')) {
+    form.photo = null;
+    document.getElementById('photo-slot').innerHTML =
+      '<button class="photo-btn" id="f-photo-btn">📷 사진 찍거나 고르기</button>';
+    return;
+  }
+
+  if (t.id === 'f-submit') {
+    const btn = t;
+    btn.disabled = true; btn.textContent = '올리는 중…';
+    const rec = {
+      id: newId(),
+      placeId: document.getElementById('f-place').value,
+      level: form.level,
+      comment: document.getElementById('f-comment').value.trim().slice(0, 80),
+      nickname: document.getElementById('f-nick').value.trim().slice(0, 12),
+      photo: form.photo, ts: Date.now(), flags: 0, hidden: false,
+    };
+    try {
+      if (db) await db.doc(`reports/${rec.id}`).set(rec);
+      else { reports = [rec, ...reports]; drawMap(); renderRail(); }
+      closeSheet();
+    } catch {
+      btn.disabled = false; btn.textContent = '제보 올리기';
+      const slot = btn.parentElement;
+      if (slot && !slot.querySelector('.send-err')) {
+        const n = document.createElement('div');
+        n.className = 'notice send-err';
+        n.style.cssText = 'margin-top:10px;color:var(--c4)';
+        n.textContent = '제보를 올리지 못했습니다. 잠시 후 다시 시도해 주세요.';
+        slot.appendChild(n);
+      }
+    }
+  }
+});
+
+document.addEventListener('change', async (e) => {
+  if (e.target.id !== 'f-photo') return;
+  const file = e.target.files?.[0]; if (!file) return;
+  const slot = document.getElementById('photo-slot');
+  slot.innerHTML = '<div class="notice">사진 줄이는 중…</div>';
+  try {
+    const url = await shrink(file);
+    if (!url) throw new Error('too large');
+    form.photo = url;
+    slot.innerHTML = `<div class="photo-preview"><img src="${url}" alt="올릴 사진 미리보기">
+      <button class="photo-clear" aria-label="사진 빼기">&times;</button></div>`;
+  } catch {
+    form.photo = null;
+    slot.innerHTML = `<button class="photo-btn" id="f-photo-btn">📷 사진 찍거나 고르기</button>
+      <div class="notice" style="margin-top:8px">사진을 처리하지 못했습니다. 다른 사진을 골라주세요.</div>`;
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const lb = document.querySelector('.lightbox');
+  if (lb) return lb.remove();
+  if (sheet) closeSheet();
+});
+
+window.addEventListener('resize', drawMap);
+
+/* ── 시작 ─────────────────────────────────────────────── */
+fitDefault();
+drawMap();
+renderRail();
+tickCountdown();
+setInterval(tickCountdown, 1000);
+
+loadOfficial();
+setInterval(loadOfficial, 60 * 1000);   // Worker가 KV를 읽어줄 뿐이라 자주 물어도 API는 안 늘어난다
+
+(async () => {
+  db = await claude.use('db');
+  if (!db) return;
+  db.collection('reports').orderBy('ts', 'desc').limit(300)
+    .onSnapshot((snap) => {
+      reports = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      drawMap(); renderRail();
+      if (sheet?.type === 'detail') {
+        const box = document.querySelector('.sheet');
+        if (box) box.innerHTML = detailSheet(sheet.area);
+      }
+    }, () => {});
+})();
+</script>

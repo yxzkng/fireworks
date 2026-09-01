@@ -1,0 +1,15 @@
+name = "fireworks-congestion"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+# 5분마다 스스로 서울시 API를 호출해 KV에 저장한다.
+# 접속자 수와 무관하게 호출 수가 일정해진다.
+[triggers]
+crons = ["*/5 * * * *"]
+
+# 수집한 혼잡도를 담아둘 저장소.
+# 배포 전에 아래 명령으로 만들고 id를 채워야 한다:
+#   npx wrangler kv namespace create CITY
+[[kv_namespaces]]
+binding = "CITY"
+id = "여기에_KV_ID를_넣으세요"

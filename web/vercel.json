@@ -1,0 +1,5 @@
+{
+  "crons": [
+    { "path": "/api/congestion?cron=1", "schedule": "*/5 * * * *" }
+  ]
+}

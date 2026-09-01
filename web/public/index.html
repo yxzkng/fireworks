@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>여의도 불꽃 지도</title>
+<meta name="description" content="2026 서울세계불꽃축제 관람 명당별 실시간 혼잡도와 현장 사진 제보">
+<meta property="og:title" content="여의도 불꽃 지도">
+<meta property="og:description" content="9월 5일 불꽃축제 — 지금 어디가 덜 붐비나">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+/* 현장에서 한 손으로 보는 상황판. 장식보다 숫자, 대비, 터치 면적을 우선한다. */
+:root{
+  --ink:#070A0F; --ink-raised:#10151D; --ink-panel:#151B24; --ink-line:#29313D;
+  --text:#F4F6F1; --text-dim:#AAB2B8; --text-faint:#6F7881; --signal:#E7FF43;
+  --c1:#41D7C7; --c1-bg:#0E312E; --c2:#8FCB54; --c2-bg:#1C2D16;
+  --c3:#FFB13B; --c3-bg:#382713; --c4:#FF624D; --c4-bg:#3A1813;
+  --r:8px; --pad:16px;
+  --body:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+html{background:var(--ink)}
+body{margin:0;background:
+  linear-gradient(180deg,#0A0D12 0,#070A0F 42%,#05070A 100%);
+  color:var(--text);font-family:var(--body);font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;padding-bottom:92px}
+
+header{padding:18px var(--pad) 12px;max-width:720px;margin:0 auto;position:relative}
+.head-row{display:flex;align-items:flex-end;gap:14px;position:relative}
+h1{font-weight:800;font-size:22px;line-height:1.05;letter-spacing:0;margin:0}
+.sub{color:var(--text-dim);font-size:12px;margin:6px 0 0;font-weight:500}
+.cd{margin-left:auto;color:var(--signal);font-size:20px;font-weight:800;
+  font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1}
+.cd::before{content:'D-DAY';display:block;color:var(--text-faint);font-size:9px;
+  font-weight:800;letter-spacing:.08em;text-align:right;margin-bottom:4px}
+
+/* ── 지도 ── */
+.map-wrap{position:relative;margin:8px auto 0;max-width:720px;border-radius:var(--r);
+  overflow:hidden;border:1px solid #343D4A;background:var(--ink-raised);
+  box-shadow:0 18px 40px rgba(0,0,0,.34)}
+#map{width:100%;height:390px}
+.map-dim{position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(rgba(7,10,15,.44),rgba(7,10,15,.44))}
+.map-fallback{position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+  padding:20px;color:var(--text-faint);font-size:13px;line-height:1.7;background:var(--ink-raised)}
+.legend{position:absolute;left:10px;bottom:10px;z-index:5;display:flex;gap:8px;flex-wrap:wrap;
+  background:rgba(7,10,15,.88);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);
+  border-radius:6px;padding:7px 9px;font-size:10.5px;color:var(--text-dim);font-weight:650}
+.legend i{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:3px}
+.legend span{display:flex;align-items:center}
+.map-hint{position:absolute;right:10px;bottom:10px;z-index:5;font-size:10.5px;color:var(--text-faint);
+  background:rgba(7,10,15,.88);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);
+  border-radius:6px;padding:6px 9px;font-weight:650}
+
+/* 지도 위 마커 — 원 크기가 인원, 색이 혼잡도 */
+.pin{position:relative;z-index:3;display:grid;place-items:center;border-radius:50%;
+  border:2px solid currentColor;font-weight:850;font-size:12px;cursor:pointer;
+  font-family:var(--body);font-variant-numeric:tabular-nums;box-shadow:0 5px 16px rgba(0,0,0,.42)}
+.pin::before{content:'';position:absolute;inset:0;border-radius:50%;
+  background:currentColor;opacity:.42}
+.pin span{position:relative;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.85);pointer-events:none}
+.pin::before{pointer-events:none}
+.pin.sel{box-shadow:0 0 0 3px rgba(231,255,67,.72),0 8px 20px rgba(0,0,0,.45)}
+.pin-label{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:3px;
+  white-space:nowrap;font-size:10.5px;font-weight:750;color:var(--text);
+  background:rgba(7,10,15,.86);padding:2px 6px;border-radius:4px;pointer-events:none}
+.launch{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;
+  border:2px dashed var(--signal);color:var(--signal);font-size:10px;font-weight:850}
+
+/* ── 정렬 + 가로 슬라이드 ── */
+.list-head{display:flex;align-items:center;gap:10px;margin:20px auto 10px;
+  max-width:720px;padding:0 var(--pad)}
+h2{font-size:15px;font-weight:800;margin:0;flex:1;letter-spacing:0}
+.sorts{display:flex;gap:0;background:var(--ink-panel);border:1px solid var(--ink-line);border-radius:8px;padding:2px}
+.sort-btn{padding:7px 11px;border-radius:6px;border:0;cursor:pointer;background:transparent;
+  color:var(--text-dim);font-family:var(--body);font-size:12px;font-weight:750}
+.sort-btn[aria-pressed=true]{background:var(--text);color:#070A0F}
+.sort-btn:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+.rail{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;
+  padding:2px var(--pad) 8px;margin:0 auto;max-width:720px;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch}
+.rail::-webkit-scrollbar{display:none}
+.card{flex:0 0 82%;max-width:300px;scroll-snap-align:center;text-align:left;
+  background:linear-gradient(180deg,var(--ink-panel),#10151D);border:1px solid var(--ink-line);
+  border-radius:var(--r);padding:14px;color:inherit;font:inherit;cursor:pointer;display:grid;gap:10px;
+  align-content:start;transition:border-color .18s,transform .18s}
+.card:hover{border-color:#495363;transform:translateY(-1px)}
+.card.active{border-color:var(--signal)}
+.card:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.card-top{display:flex;align-items:flex-start;gap:8px}
+.card-name{font-weight:800;font-size:15px;flex:1;line-height:1.35;letter-spacing:0}
+.card-dist{font-size:11px;color:var(--text-faint);font-variant-numeric:tabular-nums;font-weight:650}
+.card-desc{font-size:12.5px;color:var(--text-dim);line-height:1.5}
+
+.badge{flex-shrink:0;font-size:11px;font-weight:850;padding:4px 8px;border-radius:6px;
+  border:1px solid currentColor;white-space:nowrap;line-height:1.15}
+.lv1{color:var(--c1);background:var(--c1-bg)} .lv2{color:var(--c2);background:var(--c2-bg)}
+.lv3{color:var(--c3);background:var(--c3-bg)} .lv4{color:var(--c4);background:var(--c4-bg)}
+.lv0{color:var(--text-faint);background:transparent}
+
+.metrics{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--text-dim);
+  font-variant-numeric:tabular-nums}
+.metrics b{color:var(--text);font-weight:600}
+.flow-in{color:var(--c3)} .flow-out{color:var(--c1)}
+.thumbs{display:flex;gap:5px}
+.thumbs img{width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--ink-line)}
+.thumb-more{width:40px;height:40px;border-radius:6px;border:1px solid var(--ink-line);
+  display:grid;place-items:center;font-size:11px;color:var(--text-dim)}
+
+.fab-bar{position:fixed;left:0;right:0;bottom:0;z-index:40;
+  padding:12px var(--pad) calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(transparent,var(--ink) 30%)}
+.fab{display:block;width:100%;max-width:720px;margin:0 auto;padding:15px;border:0;
+  border-radius:var(--r);background:var(--signal);color:#070A0F;font-family:var(--body);
+  font-size:15px;font-weight:850;cursor:pointer}
+.fab:active{filter:brightness(.93)}
+.fab:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+
+.sheet-bg{position:fixed;inset:0;background:rgba(4,7,16,.72);z-index:50;
+  display:grid;align-items:end;justify-items:center;overflow-y:auto}
+.sheet{width:100%;max-width:720px;background:var(--ink-raised);border:1px solid var(--ink-line);
+  border-bottom:0;border-radius:14px 14px 0 0;
+  padding:20px var(--pad) calc(24px + env(safe-area-inset-bottom));animation:rise .22s ease-out}
+@keyframes rise{from{transform:translateY(14px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}.card{transition:none}}
+.sheet-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:4px}
+.sheet-title{font-size:20px;font-weight:850;flex:1;line-height:1.2}
+.close{background:none;border:0;color:var(--text-dim);font-size:26px;line-height:1;
+  cursor:pointer;padding:0 4px}
+.close:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.block{margin-top:20px}
+.block-label{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-faint);margin-bottom:8px;font-weight:850}
+.msg{font-size:13.5px;color:var(--text-dim);line-height:1.6;background:var(--ink);
+  border-radius:8px;padding:12px;border:1px solid rgba(255,255,255,.04)}
+.fc-top{font-size:11.5px;color:var(--text-dim);margin-bottom:6px;font-variant-numeric:tabular-nums}
+.fc{display:flex;gap:3px;align-items:flex-end;height:76px;border-bottom:1px solid var(--ink-line);
+  padding-bottom:2px}
+.fc-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.fc-bar{width:100%;border-radius:3px 3px 0 0;min-height:4px}
+.fc-time{font-size:9.5px;color:var(--text-faint);font-variant-numeric:tabular-nums}
+.fc-col.peak .fc-time{color:var(--signal);font-weight:800}
+.reports{display:flex;flex-direction:column;gap:12px}
+.report{display:grid;grid-template-columns:auto 1fr;gap:10px;padding-bottom:12px;
+  border-bottom:1px solid var(--ink-line)}
+.report:last-child{border-bottom:0;padding-bottom:0}
+.report img{width:68px;height:68px;object-fit:cover;border-radius:8px;
+  border:1px solid var(--ink-line);grid-row:span 2;cursor:pointer}
+.report-meta{font-size:11.5px;color:var(--text-faint);display:flex;gap:8px;
+  align-items:center;flex-wrap:wrap}
+.report-text{font-size:13.5px;line-height:1.5}
+.report-flag{background:none;border:0;color:var(--text-faint);font-size:11px;
+  cursor:pointer;padding:2px 4px;margin-left:auto}
+.report-flag:hover{color:var(--c4)}
+.lv-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.lv-btn{padding:12px 4px;border-radius:8px;cursor:pointer;border:1px solid var(--ink-line);
+  background:var(--ink);color:var(--text-dim);font-family:var(--body);font-size:12.5px;font-weight:750}
+.lv-btn[aria-pressed=true]{border-color:currentColor}
+.lv-btn[aria-pressed=true].p1{color:var(--c1);background:var(--c1-bg)}
+.lv-btn[aria-pressed=true].p2{color:var(--c2);background:var(--c2-bg)}
+.lv-btn[aria-pressed=true].p3{color:var(--c3);background:var(--c3-bg)}
+.lv-btn[aria-pressed=true].p4{color:var(--c4);background:var(--c4-bg)}
+.lv-btn:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+input[type=text],select{width:100%;padding:12px;border-radius:8px;border:1px solid var(--ink-line);
+  background:var(--ink);color:var(--text);font-family:var(--body);font-size:15px}
+input:focus-visible,select:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
+.photo-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  padding:14px;border-radius:8px;cursor:pointer;border:1px dashed var(--ink-line);
+  background:var(--ink);color:var(--text-dim);font-family:var(--body);font-size:14px}
+.photo-preview{position:relative}
+.photo-preview img{width:100%;border-radius:8px;display:block}
+.photo-clear{position:absolute;top:8px;right:8px;background:rgba(4,7,16,.8);border:0;
+  color:var(--text);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:17px}
+.submit{width:100%;padding:15px;border:0;border-radius:var(--r);background:var(--signal);
+  color:#070A0F;font-family:var(--body);font-size:15px;font-weight:850;cursor:pointer}
+.submit:disabled{opacity:.45;cursor:not-allowed}
+.empty{text-align:center;color:var(--text-faint);font-size:13.5px;padding:22px 12px;line-height:1.6}
+.notice{font-size:12.5px;color:var(--text-faint);padding:10px 12px;background:var(--ink);
+  border-radius:8px;line-height:1.55;border:1px solid rgba(255,255,255,.04)}
+footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
+  color:var(--text-faint);line-height:1.7}
+.lightbox{position:fixed;inset:0;background:rgba(4,7,16,.94);z-index:80;display:grid;
+  place-items:center;padding:20px;cursor:zoom-out}
+.lightbox img{max-width:100%;max-height:90vh;border-radius:8px}
+@media (min-width:760px){
+  body{padding-bottom:104px}
+  header{padding-top:28px}
+  h1{font-size:28px}
+  .sub{font-size:13px}
+  #map{height:470px}
+  .rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
+  .card{max-width:none;min-width:0}
+}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-row">
+    <div>
+      <h1>여의도 불꽃 지도</h1>
+      <p class="sub">9월 5일 토요일 · 실시간 혼잡도</p>
+    </div>
+    <div class="cd" id="cd">—</div>
+  </div>
+</header>
+
+<div class="map-wrap">
+  <div id="map"></div>
+  <div class="map-dim" id="mapDim" hidden></div>
+  <div class="map-fallback" id="mapFallback">지도를 불러오는 중…</div>
+  <div class="legend">
+    <span><i style="background:var(--c1)"></i>여유</span>
+    <span><i style="background:var(--c2)"></i>보통</span>
+    <span><i style="background:var(--c3)"></i>약간 붐빔</span>
+    <span><i style="background:var(--c4)"></i>붐빔</span>
+  </div>
+  <div class="map-hint" id="mapHint">원 크기 = 인원</div>
+</div>
+
+<div class="list-head">
+  <h2 id="listTitle">가까운 순</h2>
+  <div class="sorts">
+    <button class="sort-btn" id="sortNear" aria-pressed="true">가까운 순</button>
+    <button class="sort-btn" id="sortCrowd" aria-pressed="false">붐비는 순</button>
+  </div>
+</div>
+<div class="rail" id="rail"></div>
+
+<footer>
+  혼잡도는 KT·SKT 기지국 신호를 5분 단위로 집계한 서울시 실시간 도시데이터 추정치입니다. 실제 현장과 차이가 있을 수 있습니다.<br>
+  현장 제보는 이용자가 올린 내용으로, 정확성이 보장되지 않습니다. 안전 안내는 반드시 현장 안내방송과 안전요원의 지시를 따르세요.
+</footer>
+
+<div class="fab-bar"><button class="fab" id="openReport">현장 상황 제보하기</button></div>
+<div id="modal"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
+<script>
+const SHOW_TIME = new Date('2026-09-05T20:00:00+09:00');
+const LAUNCH = { lat: 37.5285, lon: 126.9330 };
+const FRESH_MS = 30 * 60 * 1000;
+const LEVELS = ['여유','보통','약간 붐빔','붐빔'];
+
+/* 불꽃이 보이는 곳과 이동 거점을 구분한다 — '붐비는 순'에서 강남역 같은
+   원거리 거점이 1위로 올라오면 자리 찾는 사람에게 쓸모없는 순서가 된다. */
+const VIEWABLE = new Set(['여의도한강공원','여의도','여의서로','노들섬',
+  '이촌한강공원','반포한강공원','양화한강공원','망원한강공원']);
+
+const NOTES = {
+  '여의도한강공원':'발사 지점 정면. 현장감 최고, 가장 혼잡합니다.',
+  '여의도':'여의도 전역 인파. 진입·탈출 판단에 이 숫자를 보세요.',
+  '여의서로':'여의도 서측 도로변. 공원보다 한산한 편입니다.',
+  '노들섬':'측면 조망. 규모가 작아 금방 찹니다.',
+  '이촌한강공원':'강 건너 정면 조망. 여의도보다 여유롭습니다.',
+  '반포한강공원':'원거리 조망. 이동 부담이 적습니다.',
+  '양화한강공원':'측후방 원거리. 늦게 가도 자리가 있는 편입니다.',
+  '망원한강공원':'서측 원거리 조망.',
+  '노량진':'귀가 경유지. 붐비면 우회를 고려하세요.',
+  '용산역':'귀가 환승 거점.','영등포 타임스퀘어':'실내 대기·식사 장소.',
+  '합정역':'서측 환승 거점.','서울역':'귀가 환승 거점.',
+  '홍대 관광특구':'종료 후 이동 인파가 몰리는 곳.','신촌·이대역':'북측 환승 거점.',
+  '고속터미널역':'남측 환승 거점.','잠실한강공원':'원거리. 불꽃은 보이지 않습니다.',
+  '뚝섬한강공원':'원거리. 불꽃은 보이지 않습니다.','강남역':'남측 환승 거점.',
+};
+
+let COORDS = [];
+let cfg = {}, sb = null, map = null, clusterer = null;
+let markers = [];
+let reports = [], official = {};
+let sortMode = 'near', selected = null, sheet = null;
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lvNum = (s) => { const i = LEVELS.indexOf(s); return i < 0 ? 0 : i + 1; };
+const cssLv = (n) => n ? `var(--c${n})` : 'var(--text-faint)';
+
+function ago(ts){
+  const m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 1) return '방금';
+  if (m < 60) return m + '분 전';
+  const h = Math.floor(m / 60);
+  return h < 24 ? h + '시간 전' : Math.floor(h / 24) + '일 전';
+}
+
+function tickCountdown(){
+  const diff = SHOW_TIME - Date.now(), el = $('#cd');
+  if (diff <= 0) { el.textContent = diff > -70*60*1000 ? '진행 중' : '종료'; return; }
+  const s = Math.floor(diff/1000), d = Math.floor(s/86400), h = Math.floor(s%86400/3600);
+  const m = Math.floor(s%3600/60), sec = s%60;
+  el.textContent = d > 0 ? `${d}일 ${h}시간`
+    : `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+/** 최근 30분만, 최신일수록 무겁게. 현장은 빠르게 변한다. */
+function crowdVote(area){
+  const now = Date.now();
+  const fresh = reports.filter(r => r.area === area && !r.hidden && now - r.ts < FRESH_MS);
+  if (!fresh.length) return null;
+  let ws = 0, w = 0;
+  for (const r of fresh) { const k = 1 - (now - r.ts)/FRESH_MS; ws += r.level*k; w += k; }
+  return { level: Math.round(ws/w), count: fresh.length };
+}
+const photosOf = (area) => reports.filter(r => r.area === area && r.photo && !r.hidden);
+
+function stateOf(c){
+  const o = official[c.area], vote = crowdVote(c.area);
+  return {
+    ...c, o, vote,
+    level: o ? lvNum(o.congestion.level) : (vote ? vote.level : 0),
+    people: o?.congestion?.ppltn ? (o.congestion.ppltn.min + o.congestion.ppltn.max)/2 : 0,
+  };
+}
+const allStates = () => COORDS.map(stateOf);
+
+/** 인원 → 원 지름. 제곱근이라 면적이 인원에 비례한다. */
+function sizeOf(people){
+  return Math.round(Math.max(26, Math.min(76, people > 0 ? Math.sqrt(people)*0.22 : 26)));
+}
+
+/* ── 지도 ── */
+function initMap(){
+  const c = new kakao.maps.LatLng(37.528, 126.945);
+  map = new kakao.maps.Map($('#map'), { center: c, level: 6 });
+  map.setMaxLevel(11);
+  $('#mapFallback').hidden = true;
+
+  // 카카오 기본 지도는 밝아서 밤 야외에서 눈부시다.
+  // 지도 이미지를 변형하면(예: CSS invert) 약관 위반 소지가 있으므로,
+  // 위에 어두운 막을 한 겹 덮어 화면만 가라앉힌다. 마커는 그 위에 온다.
+  $('#mapDim').hidden = false;
+
+  kakao.maps.event.addListener(map, 'zoom_changed', drawMarkers);
+  kakao.maps.event.addListener(map, 'dragend', drawMarkers);
+
+  // 발사 지점
+  new kakao.maps.CustomOverlay({
+    map, position: new kakao.maps.LatLng(LAUNCH.lat, LAUNCH.lon), zIndex: 5,
+    content: '<div class="launch">발사</div>',
+  });
+
+  drawMarkers();
+}
+
+function drawMarkers(){
+  if (!map) return;
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+  if (clusterer) clusterer.clear();
+
+  const overlays = allStates().map(s => {
+    const size = sizeOf(s.people);
+    const col = cssLv(s.level);
+    const showLabel = map.getLevel() <= 6 || size >= 44;
+    const html = `<div class="pin${s.area===selected?' sel':''}" data-area="${esc(s.area)}"
+        style="width:${size}px;height:${size}px;color:${col}">
+        <span>${s.people ? Math.round(s.people/1000) + 'k' : ''}</span>
+        ${showLabel ? `<div class="pin-label">${esc(s.area)}</div>` : ''}
+      </div>`;
+    return new kakao.maps.CustomOverlay({
+      position: new kakao.maps.LatLng(s.lat, s.lon), content: html, zIndex: 3, clickable: true,
+    });
+  });
+
+  // 클러스터러가 있으면 겹치는 마커를 묶어준다
+  if (clusterer) { clusterer.addMarkers(overlays); }
+  else { overlays.forEach(o => o.setMap(map)); }
+  markers = overlays;
+}
+
+/* 마커 클릭 — CustomOverlay는 이벤트가 약해서 위임으로 받는다 */
+document.addEventListener('click', (e) => {
+  const pin = e.target.closest('.pin');
+  if (pin) { e.stopPropagation(); selectArea(pin.dataset.area); }
+}, true);
+
+/* ── 카드 ── */
+function renderRail(){
+  const states = allStates();
+  states.sort(sortMode === 'near'
+    ? (a,b) => a.km - b.km
+    // 붐비는 순: 관람 가능한 곳을 먼저. 안 그러면 늘 붐비는 강남역이 1위가 된다.
+    : (a,b) => (VIEWABLE.has(b.area) - VIEWABLE.has(a.area))
+            || (b.level - a.level) || (b.people - a.people));
+
+  $('#rail').innerHTML = states.map(s => {
+    const badge = s.o ? `<span class="badge lv${s.level}">${esc(s.o.congestion.level)}</span>`
+      : s.vote ? `<span class="badge lv${s.level}">${LEVELS[s.level-1]} (제보)</span>`
+      : '<span class="badge lv0">정보 없음</span>';
+    const bits = [];
+    if (s.o?.congestion?.ppltn)
+      bits.push(`<span>추정 <b>${s.o.congestion.ppltn.min.toLocaleString()}~${s.o.congestion.ppltn.max.toLocaleString()}명</b></span>`);
+    if (s.o?.flow?.in && s.o?.flow?.out){
+      const i = s.o.flow.in.min, o = s.o.flow.out.min;
+      if (i > o*1.3) bits.push('<span class="flow-in">↑ 몰려드는 중</span>');
+      else if (o > i*1.3) bits.push('<span class="flow-out">↓ 빠져나가는 중</span>');
+    }
+    if (s.vote) bits.push(`<span>제보 <b>${s.vote.count}건</b></span>`);
+    const pics = photosOf(s.area);
+    const thumbs = pics.length ? `<div class="thumbs">${
+      pics.slice(0,3).map(r => `<img src="${esc(r.photo)}" alt="" loading="lazy">`).join('') +
+      (pics.length > 3 ? `<div class="thumb-more">+${pics.length-3}</div>` : '')}</div>` : '';
+    return `<button class="card${s.area===selected?' active':''}" data-area="${esc(s.area)}">
+      <div class="card-top">
+        <span class="card-name">${esc(s.area)}<br><span class="card-dist">${
+          VIEWABLE.has(s.area) ? `발사지점 ${s.km}km` : `이동 거점 · ${s.km}km`}</span></span>
+        ${badge}</div>
+      <div class="card-desc">${esc(NOTES[s.area]||'')}</div>
+      ${bits.length ? `<div class="metrics">${bits.join('')}</div>` : ''}
+      ${thumbs}</button>`;
+  }).join('');
+}
+
+function selectArea(area){
+  selected = area;
+  const c = COORDS.find(x => x.area === area);
+  if (c && map){
+    map.setLevel(Math.min(map.getLevel(), 5));
+    map.panTo(new kakao.maps.LatLng(c.lat, c.lon));
+  }
+  drawMarkers(); renderRail();
+  document.querySelector(`.card[data-area="${CSS.escape(area)}"]`)
+    ?.scrollIntoView({ inline:'center', block:'nearest', behavior:'smooth' });
+  openSheet('detail', area);
+}
+
+function setSort(m){
+  sortMode = m;
+  $('#sortNear').setAttribute('aria-pressed', String(m==='near'));
+  $('#sortCrowd').setAttribute('aria-pressed', String(m==='crowd'));
+  $('#listTitle').textContent = m==='near' ? '가까운 순' : '붐비는 순';
+  renderRail();
+  $('#rail').scrollTo({ left:0, behavior:'smooth' });
+}
+$('#sortNear').onclick = () => setSort('near');
+$('#sortCrowd').onclick = () => setSort('crowd');
+
+/* ── 혼잡도 ── */
+async function loadOfficial(){
+  try{
+    const res = await fetch('/api/congestion', { cache:'no-store' });
+    if (!res.ok) return;
+    const { areas, meta } = await res.json();
+    if (areas) official = areas;
+    drawMarkers(); renderRail();
+    if (meta?.updatedAt){
+      const t = new Date(meta.updatedAt);
+      $('#mapHint').textContent =
+        `원 크기 = 인원 · ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')} 기준`;
+    }
+  }catch{ /* 현장 네트워크는 자주 끊긴다. 제보 기능은 계속 쓴다. */ }
+}
+
+/* ── 제보 ──
+   전체 조회는 처음 한 번만 한다.
+   그 뒤로는 실시간 이벤트에 실려 오는 행 하나만 반영한다 — 제보가 올라올 때마다
+   접속자 전원이 300행을 다시 읽으면 접속자 수 × 제보 수만큼 조회가 늘어난다. */
+const MAX_REPORTS = 300;
+
+/* 동기화 방식 — 실시간 구독은 무료 티어에서 동시 연결이 200개로 묶여 있어
+   201명째부터 조용히 실패한다. 축제처럼 접속이 몰리는 자리에서는 연결을 붙들지 않는
+   폴링이 안전하다. 30초 지연은 이 서비스에 충분하다(혼잡도 원본이 5분 주기).
+   접속이 적을 때는 구독이 더 빠르므로 'realtime'으로 바꿀 수 있게 남겨둔다. */
+const SYNC_MODE = 'poll';        // 'poll' | 'realtime'
+const POLL_MS   = 30 * 1000;
+
+let lastSeen = null;             // 지금까지 받아본 가장 최근 created_at
+
+async function loadReports(){
+  if (!sb) return;
+  const { data, error } = await sb.from('reports')
+    .select('*').eq('hidden', false).order('created_at', { ascending:false }).limit(MAX_REPORTS);
+  if (error) return;
+  reports = data.map(mapReport);
+  lastSeen = data.length ? data[0].created_at : new Date().toISOString();
+  paint();
+}
+
+/**
+ * 마지막으로 본 시각 이후의 새 제보만 가져온다. 보통 0~2행이라 거의 공짜다.
+ *
+ * 숨김 처리는 이 방식으로 잡히지 않는다 — 신고를 받아도 created_at은 그대로라
+ * 증분 조회에 걸리지 않기 때문이다. 그래서 가끔 화면에 보이는 제보의
+ * 숨김 여부만 따로 확인한다(id 목록만 조회하므로 역시 가볍다).
+ */
+let sweepTick = 0;
+async function pollReports(){
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.from('reports')
+      .select('*').eq('hidden', false)
+      .gt('created_at', lastSeen)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) return;
+
+    if (data.length){
+      lastSeen = data[0].created_at;
+      for (const row of data) mergeRow(row);
+      trimReports();
+      paint();
+    }
+
+    // 20회에 한 번(10분) 숨김 여부를 확인한다.
+    // 더 자주 돌리면 이 조회가 전체 트래픽의 대부분을 차지한다.
+    // 신고된 제보가 10분 늦게 사라지는 것은 감수할 만하다.
+    if (++sweepTick % 20 === 0) await sweepHidden();
+  } catch { /* 현장 네트워크는 자주 끊긴다. 다음 주기에 다시 시도한다. */ }
+}
+
+/** 화면에 있는 제보 중 숨겨진 것을 걷어낸다. id만 받아 오므로 가볍다. */
+async function sweepHidden(){
+  if (!reports.length) return;
+  // 화면에 실제로 노출되는 최근 것만 확인한다. 아래로 밀려난 오래된 제보까지
+  // 매번 검사하면 조회량만 늘고 얻는 게 없다.
+  const ids = reports.slice(0, 80).map(r => r.id);
+  const { data, error } = await sb.from('reports')
+    .select('id').eq('hidden', true).in('id', ids);
+  if (error || !data?.length) return;
+  const gone = new Set(data.map(r => r.id));
+  const before = reports.length;
+  reports = reports.filter(r => !gone.has(r.id));
+  if (reports.length !== before) paint();
+}
+
+/** 행 하나를 로컬 목록에 넣거나 갱신한다. 정렬·상한은 trimReports가 맡는다. */
+function mergeRow(row){
+  const i = reports.findIndex(r => r.id === row.id);
+  const mapped = mapReport(row);
+  if (i >= 0) reports[i] = mapped;          // 신고 수 변경 등
+  else reports.push(mapped);
+}
+
+/** 최신순을 유지하되 목록이 무한정 길어지지 않게 자른다. */
+function trimReports(){
+  reports.sort((a, b) => b.ts - a.ts);
+  if (reports.length > MAX_REPORTS) reports.length = MAX_REPORTS;
+}
+
+/** 실시간 이벤트 한 건을 반영한다. 서버를 다시 부르지 않는다. */
+function applyChange(payload){
+  const row = payload.new || payload.old;
+  if (!row?.id) return;
+
+  // 삭제됐거나 신고로 가려진 제보는 목록에서 뺀다
+  if (payload.eventType === 'DELETE' || payload.new?.hidden){
+    const i = reports.findIndex(r => r.id === row.id);
+    if (i >= 0) { reports.splice(i, 1); paint(); }
+    return;
+  }
+
+  mergeRow(payload.new);
+  trimReports();
+  // 폴링 모드에서도 이 경로로 내 제보가 들어오므로 기준 시각을 함께 올린다
+  if (payload.new.created_at > (lastSeen || '')) lastSeen = payload.new.created_at;
+  paint();
+}
+
+/** 목록이 바뀌었을 때 화면을 다시 그린다. */
+function paint(){
+  drawMarkers(); renderRail(); refreshSheet();
+}
+
+function mapReport(r){
+  return {
+    id: r.id, area: r.area, level: r.level, comment: r.comment,
+    nickname: r.nickname, hidden: r.hidden, flags: r.flags,
+    ts: new Date(r.created_at).getTime(),
+    photo: r.photo_path
+      ? sb.storage.from('photos').getPublicUrl(r.photo_path).data.publicUrl
+      : null,
+  };
+}
+
+/** Storage에 올리므로 아티팩트 때의 256KB 제한이 없다. 그래도 현장 업로드
+    속도를 위해 1600px까지만 줄인다. */
+async function shrink(file){
+  const bmp = await createImageBitmap(file);
+  const side = 1600;
+  const scale = Math.min(1, side / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * scale);
+  c.height = Math.round(bmp.height * scale);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  bmp.close?.();
+  return new Promise(res => c.toBlob(res, 'image/jpeg', 0.82));
+}
+
+/* ── 시트 ── */
+function detailSheet(area){
+  const c = COORDS.find(x => x.area === area) || { area, km:0 };
+  const o = official[area], vote = crowdVote(area);
+  const list = reports.filter(r => r.area === area && !r.hidden).slice(0,30);
+
+  let html = `<div class="sheet-head"><span class="sheet-title">${esc(area)}</span>
+    <button class="close" data-close aria-label="닫기">&times;</button></div>
+    <div class="card-desc">${esc(NOTES[area]||'')} · 발사지점에서 ${c.km}km</div>`;
+
+  if (o){
+    html += `<div class="block">
+      <div class="block-label">공공데이터 · ${esc(o.congestion.time||'')}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span class="badge lv${lvNum(o.congestion.level)}">${esc(o.congestion.level)}</span>
+        ${o.congestion.ppltn ? `<span class="metrics"><b>${o.congestion.ppltn.min.toLocaleString()}~${o.congestion.ppltn.max.toLocaleString()}명</b></span>` : ''}
+      </div>
+      ${o.congestion.message ? `<div class="msg">${esc(o.congestion.message)}</div>` : ''}</div>`;
+
+    if (o.forecast?.length){
+      const peak = o.forecast.reduce((a,f) => (f.ppltn?.max||0) > (a.ppltn?.max||0) ? f : a, o.forecast[0]);
+      const max = Math.max(...o.forecast.map(f => f.ppltn?.max||0), 1);
+      html += `<div class="block">
+        <div class="block-label">시간대별 예측 · 막대 높이는 예상 인원</div>
+        <div class="fc-top">최다 ${(peak.ppltn?.max||0).toLocaleString()}명 · ${esc((peak.time||'').slice(11,13))}시</div>
+        <div class="fc">${o.forecast.map(f => {
+          const hh = (f.time||'').slice(11,13), lv = lvNum(f.level);
+          const bh = Math.max(6, Math.round((f.ppltn?.max||0)/max*72));
+          return `<div class="fc-col ${hh==='20'?'peak':''}">
+            <div class="fc-bar" style="height:${bh}px;background:${cssLv(lv||1)}"></div>
+            <div class="fc-time">${hh}시</div></div>`;
+        }).join('')}</div></div>`;
+    }
+    const extra = [];
+    if (o.road) extra.push(`도로 ${esc(o.road.level)} — ${esc(o.road.message||'')}`);
+    if (o.bikes) extra.push(`따릉이 잔여 ${o.bikes}대`);
+    if (extra.length) html += `<div class="block"><div class="block-label">이동</div>
+      <div class="msg">${extra.join('<br>')}</div></div>`;
+  }
+
+  if (vote) html += `<div class="block">
+    <div class="block-label">현장 제보 · 최근 30분 ${vote.count}건</div>
+    <span class="badge lv${vote.level}">${LEVELS[vote.level-1]}</span></div>`;
+
+  html += `<div class="block"><div class="block-label">제보 타임라인</div>
+    ${list.length ? `<div class="reports">${list.map(r => `
+      <div class="report">
+        ${r.photo ? `<img src="${esc(r.photo)}" alt="현장 사진" data-zoom="${esc(r.id)}" loading="lazy">` : '<span></span>'}
+        <div class="report-meta"><span class="badge lv${r.level}">${LEVELS[r.level-1]}</span>
+          <span>${esc(r.nickname||'익명')}</span><span>${ago(r.ts)}</span>
+          <button class="report-flag" data-flag="${esc(r.id)}">신고</button></div>
+        <div class="report-text">${esc(r.comment||'')}</div></div>`).join('')}</div>`
+      : '<div class="empty">아직 제보가 없습니다.<br>첫 번째로 현장 상황을 알려주세요.</div>'}</div>
+    <div class="block"><button class="submit" data-report-for="${esc(area)}">이 장소 제보하기</button></div>`;
+  return html;
+}
+
+let form = { level:0, blob:null, url:null };
+
+function reportSheet(area){
+  form = { level:0, blob:null, url:null };
+  return `<div class="sheet-head"><span class="sheet-title">현장 상황 제보</span>
+    <button class="close" data-close aria-label="닫기">&times;</button></div>
+    <div class="block"><div class="block-label">어디에 계신가요</div>
+      <select id="f-place">${COORDS.map(c =>
+        `<option value="${esc(c.area)}"${c.area===(area||COORDS[0].area)?' selected':''}>${esc(c.area)}</option>`).join('')}</select></div>
+    <div class="block"><div class="block-label">지금 얼마나 붐비나요</div>
+      <div class="lv-pick">${LEVELS.map((l,i) =>
+        `<button class="lv-btn p${i+1}" data-lv="${i+1}" aria-pressed="false">${l}</button>`).join('')}</div></div>
+    <div class="block"><div class="block-label">사진 <span style="text-transform:none;letter-spacing:0">(선택)</span></div>
+      <div id="photo-slot"><button class="photo-btn" id="f-photo-btn">📷 사진 찍거나 고르기</button></div>
+      <input type="file" id="f-photo" accept="image/*" hidden></div>
+    <div class="block"><div class="block-label">한마디 <span style="text-transform:none;letter-spacing:0">(선택)</span></div>
+      <input type="text" id="f-comment" maxlength="80" placeholder="예: 돗자리 깔 자리 아직 있어요"></div>
+    <div class="block"><div class="block-label">닉네임 <span style="text-transform:none;letter-spacing:0">(선택)</span></div>
+      <input type="text" id="f-nick" maxlength="12" placeholder="익명"></div>
+    <div class="block"><button class="submit" id="f-submit" disabled>제보 올리기</button>
+      <div class="notice" style="margin-top:10px">위치는 고른 장소만 저장되며 GPS는 수집하지 않습니다.</div></div>`;
+}
+
+function openSheet(type, area){
+  sheet = { type, area };
+  $('#modal').innerHTML = `<div class="sheet-bg" data-close><div class="sheet" role="dialog" aria-modal="true">${
+    type==='detail' ? detailSheet(area) : reportSheet(area)}</div></div>`;
+  document.body.style.overflow = 'hidden';
+  $('#modal').querySelector('button,select,input')?.focus({ preventScroll:true });
+}
+function closeSheet(){ sheet = null; $('#modal').innerHTML = ''; document.body.style.overflow=''; }
+function refreshSheet(){
+  if (sheet?.type !== 'detail') return;
+  const box = document.querySelector('.sheet');
+  if (box) box.innerHTML = detailSheet(sheet.area);
+}
+
+document.addEventListener('click', async (e) => {
+  const t = e.target;
+  const card = t.closest('.card');
+  if (card) return selectArea(card.dataset.area);
+  if (t.id === 'openReport') return openSheet('report', selected);
+  if (t.classList.contains('sheet-bg') || t.closest('button[data-close]')) return closeSheet();
+
+  const fa = t.closest('[data-report-for]');
+  if (fa) return openSheet('report', fa.dataset.reportFor);
+
+  const zoom = t.closest('[data-zoom]');
+  if (zoom){
+    const r = reports.find(x => x.id === zoom.dataset.zoom);
+    if (r?.photo){
+      const lb = document.createElement('div');
+      lb.className = 'lightbox';
+      lb.innerHTML = `<img src="${esc(r.photo)}" alt="현장 사진">`;
+      lb.addEventListener('click', () => lb.remove());
+      document.body.appendChild(lb);
+    }
+    return;
+  }
+
+  const flag = t.closest('[data-flag]');
+  if (flag && sb){
+    await sb.rpc('report_flag', { report_id: flag.dataset.flag });
+    flag.textContent = '신고됨'; flag.disabled = true;
+    return;
+  }
+
+  const lv = t.closest('[data-lv]');
+  if (lv){
+    form.level = Number(lv.dataset.lv);
+    document.querySelectorAll('[data-lv]').forEach(b => b.setAttribute('aria-pressed', String(b===lv)));
+    const sbn = $('#f-submit'); if (sbn) sbn.disabled = false;
+    return;
+  }
+
+  if (t.id === 'f-photo-btn') return $('#f-photo').click();
+  if (t.classList.contains('photo-clear')){
+    if (form.url) URL.revokeObjectURL(form.url);
+    form.blob = null; form.url = null;
+    $('#photo-slot').innerHTML = '<button class="photo-btn" id="f-photo-btn">📷 사진 찍거나 고르기</button>';
+    return;
+  }
+
+  if (t.id === 'f-submit'){
+    const btn = t;
+    btn.disabled = true; btn.textContent = '올리는 중…';
+    try{
+      if (!sb) throw new Error('no storage');
+      let path = null;
+      if (form.blob){
+        path = `${Date.now()}-${Math.random().toString(36).slice(2,10)}.jpg`;
+        const { error } = await sb.storage.from('photos')
+          .upload(path, form.blob, { contentType:'image/jpeg', cacheControl:'3600' });
+        if (error) throw error;
+      }
+      // .select()를 붙이면 방금 넣은 행이 그대로 돌아온다 — 다시 조회할 필요가 없다
+      const { data: inserted, error } = await sb.from('reports').insert({
+        area: $('#f-place').value,
+        level: form.level,
+        comment: $('#f-comment').value.trim().slice(0,80) || null,
+        nickname: $('#f-nick').value.trim().slice(0,12) || null,
+        photo_path: path,
+      }).select().single();
+      if (error) throw error;
+      closeSheet();
+      // 구독이 곧 알려주지만, 올린 사람 화면에는 바로 보이는 편이 낫다.
+      // 같은 id면 applyChange가 교체하므로 중복되지 않는다.
+      if (inserted) applyChange({ eventType: 'INSERT', new: inserted });
+    }catch(err){
+      btn.disabled = false; btn.textContent = '제보 올리기';
+      const slot = btn.parentElement;
+      if (slot && !slot.querySelector('.send-err')){
+        const n = document.createElement('div');
+        n.className = 'notice send-err';
+        n.style.cssText = 'margin-top:10px;color:var(--c4)';
+        n.textContent = '제보를 올리지 못했습니다. 잠시 후 다시 시도해 주세요.';
+        slot.appendChild(n);
+      }
+    }
+  }
+});
+
+document.addEventListener('change', async (e) => {
+  if (e.target.id !== 'f-photo') return;
+  const file = e.target.files?.[0]; if (!file) return;
+  const slot = $('#photo-slot');
+  slot.innerHTML = '<div class="notice">사진 줄이는 중…</div>';
+  try{
+    const blob = await shrink(file);
+    if (!blob) throw new Error('shrink failed');
+    if (form.url) URL.revokeObjectURL(form.url);
+    form.blob = blob;
+    form.url = URL.createObjectURL(blob);
+    slot.innerHTML = `<div class="photo-preview"><img src="${form.url}" alt="올릴 사진 미리보기">
+      <button class="photo-clear" aria-label="사진 빼기">&times;</button></div>`;
+  }catch{
+    form.blob = null;
+    slot.innerHTML = `<button class="photo-btn" id="f-photo-btn">📷 사진 찍거나 고르기</button>
+      <div class="notice" style="margin-top:8px">사진을 처리하지 못했습니다. 다른 사진을 골라주세요.</div>`;
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const lb = document.querySelector('.lightbox');
+  if (lb) return lb.remove();
+  if (sheet) closeSheet();
+});
+
+/* ── 시작 ── */
+(async function start(){
+  tickCountdown(); setInterval(tickCountdown, 1000);
+
+  COORDS = await fetch('/area-coords.json').then(r => r.json()).catch(() => []);
+  renderRail();
+
+  cfg = await fetch('/api/config').then(r => r.json()).catch(() => ({}));
+
+  // Supabase — 없으면 제보 기능만 비활성, 나머지는 정상 동작
+  if (cfg.supabaseUrl && cfg.supabaseKey && window.supabase){
+    sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+    await loadReports();
+
+    if (SYNC_MODE === 'realtime'){
+      sb.channel('reports-live')
+        .on('postgres_changes', { event:'*', schema:'public', table:'reports' }, applyChange)
+        .subscribe();
+    } else {
+      setInterval(pollReports, POLL_MS);
+      // 화면을 다시 켰을 때는 기다리지 않고 바로 맞춘다
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) pollReports();
+      });
+    }
+  } else {
+    $('#openReport').textContent = '제보 기능 준비 중';
+    $('#openReport').disabled = true;
+  }
+
+  loadOfficial();
+  setInterval(loadOfficial, 60 * 1000);
+
+  // 카카오맵 — 키가 없거나 로드 실패해도 카드 목록은 그대로 쓸 수 있다
+  if (!cfg.kakaoKey){
+    $('#mapFallback').innerHTML = '지도를 표시하려면 카카오맵 키가 필요합니다.<br>아래 목록은 정상 동작합니다.';
+    return;
+  }
+  const s = document.createElement('script');
+  s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(cfg.kakaoKey)}&autoload=false&libraries=clusterer`;
+  s.onload = () => kakao.maps.load(() => {
+    initMap();
+    // 클러스터러는 라이브러리가 있을 때만
+    if (kakao.maps.MarkerClusterer){
+      clusterer = new kakao.maps.MarkerClusterer({ map, averageCenter:true, minLevel:7, disableClickZoom:false });
+      drawMarkers();
+    }
+  });
+  s.onerror = () => {
+    $('#mapFallback').hidden = false;
+    $('#mapFallback').innerHTML = '지도를 불러오지 못했습니다.<br>카카오 개발자센터에 이 사이트 도메인이 등록됐는지 확인하세요.<br>아래 목록은 정상 동작합니다.';
+  };
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>
