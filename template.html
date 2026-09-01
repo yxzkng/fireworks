@@ -40,11 +40,11 @@
   --map-bg: var(--land);
   --scrim: rgba(16,22,50,.78);
   --maxw: 720px;
-  --w-title: 900;
-  --w-strong: 800;
-  --w-btn: 750;
-  --w-badge: 800;
-  --w-card-name: 800;
+  --w-title: 700;
+  --w-strong: 600;
+  --w-btn: 650;
+  --w-badge: 650;
+  --w-card-name: 700;
   --w-dist: 400;
 
   --r-pill: 999px;              /* 이 테마의 배지·토글은 알약 모양 */
@@ -76,37 +76,12 @@ body {
 .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--pad); }
 
 /* ── 헤더 ─────────────────────────────────────────────── */
-header { padding: 18px var(--pad) 18px; max-width: var(--maxw); min-height: 214px; margin: 0 auto; position: relative; overflow: hidden; }
-header::before {
-  /* 여의도 스카이라인 실루엣 — 63빌딩 포함 */
-  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 92px;
-  background:
-    linear-gradient(90deg, transparent 0 4%, var(--land) 4% 9%, transparent 9% 13%,
-      var(--land) 13% 17%, transparent 17% 20%,
-      var(--land) 20% 29%, transparent 29% 33%,
-      var(--land) 33% 36%, transparent 36% 40%,
-      var(--land) 40% 45%, transparent 45% 49%,
-      var(--land) 49% 60%, transparent 60% 64%,
-      var(--land) 64% 71%, transparent 71% 75%,
-      var(--land) 75% 83%, transparent 83% 87%,
-      var(--land) 87% 96%, transparent 96% 100%) bottom / 100% 46px no-repeat,
-    linear-gradient(180deg, transparent, var(--land) 78%) bottom / 100% 30px no-repeat,
-    radial-gradient(3px 20px at 34.5% 30%, var(--land), transparent 90%) bottom / 100% 92px no-repeat;
-  opacity: .85; pointer-events: none;
+header {
+  padding: 18px var(--pad) 18px; max-width: var(--maxw); min-height: 214px; margin: 0 auto; position: relative; overflow: hidden;
+  background: linear-gradient(180deg, rgba(8,12,32,0) 55%, rgba(8,12,32,.55) 100%), url(/*__BANNER_IMG__*/'') center / cover no-repeat;
 }
-header::after {
-  /* 한강 수면 + 은은한 불꽃 파편 한 발 */
-  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 46px;
-  background:
-    radial-gradient(1.5px 1.5px at 20% 40%, var(--yellow), transparent 60%),
-    radial-gradient(1px 1px at 24% 55%, var(--gold), transparent 60%),
-    radial-gradient(1.5px 1.5px at 17% 62%, var(--yellow), transparent 60%),
-    linear-gradient(180deg, rgba(22,36,63,.2), var(--water) 60%);
-  pointer-events: none;
-}
-.festival-mark { position: relative; z-index: 1; color: var(--text-faint); font-size: 9px; font-weight: 700; letter-spacing: .04em; }
-.festival-mark b { color: var(--text-dim); font-weight: 700; }
-.head-row { display: flex; flex-direction: column; gap: 10px; position: absolute; left: var(--pad); right: var(--pad); bottom: 24px; z-index: 1; }
+.head-row { position: absolute; left: var(--pad); right: var(--pad); bottom: 70px; z-index: 1; }
+.head-title { position: absolute; left: var(--pad); right: var(--pad); bottom: 110px; z-index: 1; }
 h1 { font-family: var(--display); font-weight: 700; font-size: clamp(25px,5.6vw,34px); line-height: 1.22; margin: 0; text-shadow: 0 4px 22px rgba(8,12,32,.5); }
 .event-date { font-size: 13px; font-weight: 700; color: var(--text-dim); margin-top: 3px; }
 .event-date b { color: var(--gold); font-weight: 800; }
@@ -171,7 +146,8 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
 
 @media (max-width: 520px) {
   header { min-height: 200px; padding-top: 16px; }
-  .head-row { bottom: 20px; gap: 10px; }
+  .head-row { bottom: 60px; }
+  .head-title { bottom: 96px; }
   h1 { font-size: 25px; line-height: 1.25; }
   .event-date { font-size: 12px; }
   .head-btn-row { gap: 5px; }
@@ -185,12 +161,11 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
 </style>
 
 <header>
-  <div class="festival-mark">Seoul International Fireworks Festival</div>
+  <div class="head-title">
+    <h1>서울세계불꽃축제 2026</h1>
+    <p class="event-date">9월 5일(토) 20:00 · 여의도 한강공원 <b class="cd" id="cd">—</b></p>
+  </div>
   <div class="head-row">
-    <div>
-      <h1>서울세계불꽃축제 2026</h1>
-      <p class="event-date">9월 5일(토) 20:00 · 여의도 한강공원 <b class="cd" id="cd">—</b></p>
-    </div>
     <div class="head-side">
       <div class="head-btn-row">
         <button class="traffic-btn" id="openTraffic">교통통제 안내</button>
@@ -474,13 +449,25 @@ function crowdVote(area) {
 }
 const photosOf = (area) => reports.filter((r) => r.placeId === area && r.photo && !r.hidden);
 
+/** 두 좌표 사이 거리(km) — 지구를 구로 근사한다 */
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371, rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 /** 지도·카드에 쓸 장소별 통합 상태 */
 function stateOf(c) {
   const o = official[c.area];
   const vote = crowdVote(c.area);
   const level = o ? lvNum(o.congestion.level) : (vote ? vote.level : 0);
   const people = o?.congestion?.ppltn ? (o.congestion.ppltn.min + o.congestion.ppltn.max) / 2 : 0;
-  return { ...c, o, vote, level, people };
+  const km = myLocation
+    ? Math.round(haversineKm(myLocation.lat, myLocation.lon, c.lat, c.lon) * 10) / 10
+    : c.km;
+  return { ...c, o, vote, level, people, km };
 }
 const allStates = () => COORDS.map(stateOf);
 
@@ -723,11 +710,9 @@ function locateMe() {
     myLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
     view.lat = myLocation.lat; view.lon = myLocation.lon; view.zoom = Math.max(view.zoom, 3.2);
     btn.classList.remove('loading'); btn.classList.add('on');
-    $('#mapHint').textContent = '파란 점 = 내 위치';
-    drawMap();
+    drawMap(); renderRail();
   }, () => {
     btn.classList.remove('loading');
-    $('#mapHint').textContent = '위치 권한을 허용하면 내 위치를 표시합니다';
   }, { enableHighAccuracy: true, timeout: 9000, maximumAge: 60000 });
 }
 
@@ -776,7 +761,8 @@ function renderRail() {
     return `<button class="card${s.area === selected ? ' active' : ''}" data-area="${esc(s.area)}">
       <div class="card-top">
         <span class="card-name">${esc(s.area)}<br><span class="card-dist">${
-          VIEWABLE.has(s.area) ? `발사지점 ${s.km}km` : `이동 거점 · ${s.km}km`}</span></span>
+          myLocation ? `내 위치에서 ${s.km}km`
+          : VIEWABLE.has(s.area) ? `발사지점 ${s.km}km` : `이동 거점 · ${s.km}km`}</span></span>
         ${badge}
       </div>
       <div class="card-desc">${esc(NOTES[s.area] || '')}</div>
@@ -830,16 +816,18 @@ async function loadOfficial() {
 
 /* ── 상세 시트 ────────────────────────────────────────── */
 function detailSheet(area) {
-  const c = COORDS.find((x) => x.area === area) || { area, km: 0 };
+  const raw = COORDS.find((x) => x.area === area) || { area, km: 0 };
+  const c = stateOf(raw);
   const o = official[area];
   const vote = crowdVote(area);
   const list = reports.filter((r) => r.placeId === area && !r.hidden).slice(0, 30);
 
+  const distLabel = myLocation ? `내 위치에서 ${c.km}km` : `발사지점에서 ${c.km}km`;
   let html = `<div class="sheet-head">
       <span class="sheet-title">${esc(area)}</span>
       <button class="close" data-close aria-label="닫기">&times;</button>
     </div>
-    <div class="card-desc">${esc(NOTES[area] || '')} · 발사지점에서 ${c.km}km</div>
+    <div class="card-desc">${esc(NOTES[area] || '')} · ${distLabel}</div>
     <a class="map-link" href="${kakaoMapUrl(c)}" target="_blank" rel="noopener">카카오맵에서 이 위치 보기</a>`;
 
   if (o) {

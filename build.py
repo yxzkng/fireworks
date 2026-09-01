@@ -22,6 +22,7 @@ import base64, json, pathlib, shutil
 root = pathlib.Path(__file__).parent
 shared = (root / 'shared.css').read_text().strip()
 TRAFFIC_IMG = root / 'assets' / 'traffic_control_2026.jpg'
+BANNER_IMG = root / 'assets' / 'banner_image.png'
 
 
 def build(src, dst, subs=()):
@@ -40,9 +41,9 @@ def compact(path):
                       ensure_ascii=False, separators=(',', ':'))
 
 
-def data_uri(path):
+def data_uri(path, mime='image/jpeg'):
     b64 = base64.b64encode(path.read_bytes()).decode()
-    return f'data:image/jpeg;base64,{b64}'
+    return f'data:{mime};base64,{b64}'
 
 
 # 아티팩트판 — 자체 캔버스 지도라 좌표 데이터를, 안내도는 base64로 심는다
@@ -50,9 +51,12 @@ build('template.html', 'index.html', subs=[
     ('/*__GEO__*/null', compact('geo.json')),
     ('/*__COORDS__*/null', compact('area-coords.json')),
     ('/*__TRAFFIC_IMG__*/', data_uri(TRAFFIC_IMG)),
+    ('/*__BANNER_IMG__*/\'\'', f"'{data_uri(BANNER_IMG, 'image/png')}'"),
 ])
 
 # Vercel판 — 카카오맵이 좌표를 알아서 다룬다. 안내도는 정적 파일로 낸다.
 build('web/template.html', 'web/public/index.html')
 shutil.copyfile(TRAFFIC_IMG, root / 'web' / 'public' / TRAFFIC_IMG.name)
 print(f'web/public/{TRAFFIC_IMG.name} 복사')
+shutil.copyfile(BANNER_IMG, root / 'web' / 'public' / BANNER_IMG.name)
+print(f'web/public/{BANNER_IMG.name} 복사')

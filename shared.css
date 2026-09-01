@@ -316,7 +316,7 @@
 
 /* ── 지도 컨테이너(엔진 무관 부분) ───────────────────────────────── */
 .map-wrap {
-  position: relative; margin: 8px auto 0; width: calc(100% - (var(--pad) * 2)); max-width: var(--maxw);
+  position: relative; margin: 0 auto; width: calc(100% - (var(--pad) * 2)); max-width: var(--maxw);
   border-radius: var(--r); overflow: hidden;
   background: var(--map-bg); border: 1px solid var(--ink-line);
   box-shadow: 0 22px 58px rgba(6,10,30,.28);

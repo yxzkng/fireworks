@@ -30,12 +30,12 @@
   --map-bg:#111735;
   --scrim:rgba(16,22,50,.78);
   --maxw:720px;
-  --w-title:900;
-  --w-strong:850;
-  --w-btn:750;
-  --w-badge:850;
-  --w-card-name:900;
-  --w-dist:650;
+  --w-title:700;
+  --w-strong:600;
+  --w-btn:650;
+  --w-badge:650;
+  --w-card-name:700;
+  --w-dist:400;
 
   --r-pill:999px;
   --rail-gap:14px;
@@ -61,33 +61,10 @@ body{margin:0;background:
   color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;
   -webkit-font-smoothing:antialiased;padding-bottom:92px}
 
-header{padding:18px var(--pad) 18px;max-width:720px;min-height:214px;margin:0 auto;position:relative;overflow:hidden}
-header::before{
-  content:'';position:absolute;left:0;right:0;bottom:0;height:92px;
-  background:
-    linear-gradient(90deg, transparent 0 4%, var(--midnight) 4% 9%, transparent 9% 13%,
-      var(--midnight) 13% 17%, transparent 17% 20%,
-      var(--midnight) 20% 29%, transparent 29% 33%,
-      var(--midnight) 33% 36%, transparent 36% 40%,
-      var(--midnight) 40% 45%, transparent 45% 49%,
-      var(--midnight) 49% 60%, transparent 60% 64%,
-      var(--midnight) 64% 71%, transparent 71% 75%,
-      var(--midnight) 75% 83%, transparent 83% 87%,
-      var(--midnight) 87% 96%, transparent 96% 100%) bottom / 100% 46px no-repeat,
-    linear-gradient(180deg, transparent, var(--midnight) 78%) bottom / 100% 30px no-repeat,
-    radial-gradient(3px 20px at 34.5% 30%, var(--midnight), transparent 90%) bottom / 100% 92px no-repeat;
-  opacity:.85;pointer-events:none}
-header::after{
-  content:'';position:absolute;left:0;right:0;bottom:0;height:46px;
-  background:
-    radial-gradient(1.5px 1.5px at 20% 40%,var(--yellow),transparent 60%),
-    radial-gradient(1px 1px at 24% 55%,var(--orange),transparent 60%),
-    radial-gradient(1.5px 1.5px at 17% 62%,var(--yellow),transparent 60%),
-    linear-gradient(180deg,rgba(22,36,63,.2),var(--ink-raised) 60%);
-  pointer-events:none}
-.festival-mark{position:relative;z-index:1;color:var(--text-faint);font-size:9px;font-weight:700;letter-spacing:.04em}
-.festival-mark b{color:var(--text-dim);font-weight:700}
-.head-row{display:flex;flex-direction:column;gap:10px;position:absolute;left:var(--pad);right:var(--pad);bottom:24px;z-index:1}
+header{padding:18px var(--pad) 18px;max-width:720px;min-height:214px;margin:0 auto;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,rgba(8,12,32,0) 55%,rgba(8,12,32,.55) 100%),url('/banner_image.png') center/cover no-repeat}
+.head-row{position:absolute;left:var(--pad);right:var(--pad);bottom:70px;z-index:1}
+.head-title{position:absolute;left:var(--pad);right:var(--pad);bottom:110px;z-index:1}
 h1{font-family:var(--serif);font-weight:700;font-size:clamp(25px,5.6vw,34px);line-height:1.22;letter-spacing:0;margin:0;text-shadow:0 4px 22px rgba(8,12,32,.5)}
 .event-date{font-size:13px;font-weight:700;color:var(--text-dim);margin-top:3px}
 .event-date b{color:var(--orange);font-weight:800}
@@ -155,7 +132,8 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 }
 @media (max-width:520px){
   header{min-height:200px;padding-top:16px}
-  .head-row{gap:10px;bottom:20px}
+  .head-row{bottom:60px}
+  .head-title{bottom:96px}
   h1{font-size:25px;line-height:1.25}
   .event-date{font-size:12px}
   .head-btn-row{gap:5px}
@@ -171,12 +149,11 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 <body>
 
 <header>
-  <div class="festival-mark">Seoul International Fireworks Festival</div>
+  <div class="head-title">
+    <h1>서울세계불꽃축제 2026</h1>
+    <p class="event-date">9월 5일(토) 20:00 · 여의도 한강공원 <b class="cd" id="cd">—</b></p>
+  </div>
   <div class="head-row">
-    <div>
-      <h1>서울세계불꽃축제 2026</h1>
-      <p class="event-date">9월 5일(토) 20:00 · 여의도 한강공원 <b class="cd" id="cd">—</b></p>
-    </div>
     <div class="head-side">
       <div class="head-btn-row">
         <button class="traffic-btn" id="openTraffic">교통통제 안내</button>
@@ -387,6 +364,7 @@ let COORDS = [];
 let cfg = {}, sb = null, map = null;
 let markers = [];
 let myLocationOverlay = null;
+let myLocation = null;
 let reports = [], official = {};
 let sortMode = 'near', selected = null, sheet = null;
 
@@ -438,10 +416,22 @@ function crowdVote(area){
 }
 const photosOf = (area) => reports.filter(r => r.area === area && r.photo && !r.hidden);
 
+/** 두 좌표 사이 거리(km) — 지구를 구로 근사한다 */
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371, rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 function stateOf(c){
   const o = official[c.area], vote = crowdVote(c.area);
+  const km = myLocation
+    ? Math.round(haversineKm(myLocation.lat, myLocation.lon, c.lat, c.lon) * 10) / 10
+    : c.km;
   return {
-    ...c, o, vote,
+    ...c, o, vote, km,
     level: o ? lvNum(o.congestion.level) : (vote ? vote.level : 0),
     people: o?.congestion?.ppltn ? (o.congestion.ppltn.min + o.congestion.ppltn.max)/2 : 0,
   };
@@ -514,6 +504,7 @@ function locateMe(){
   btn.classList.add('loading');
   navigator.geolocation.getCurrentPosition((pos) => {
     const lat = pos.coords.latitude, lon = pos.coords.longitude;
+    myLocation = { lat, lon };
     const here = new kakao.maps.LatLng(lat, lon);
     if (myLocationOverlay) myLocationOverlay.setMap(null);
     myLocationOverlay = new kakao.maps.CustomOverlay({
@@ -523,10 +514,9 @@ function locateMe(){
     map.setLevel(Math.min(map.getLevel(), 4));
     map.panTo(here);
     btn.classList.remove('loading'); btn.classList.add('on');
-    $('#mapHint').textContent = '파란 점 = 내 위치';
+    drawMarkers(); renderRail();
   }, () => {
     btn.classList.remove('loading');
-    $('#mapHint').textContent = '위치 권한을 허용하면 내 위치를 표시합니다';
   }, { enableHighAccuracy: true, timeout: 9000, maximumAge: 60000 });
 }
 
@@ -598,7 +588,8 @@ function renderRail(){
     return `<button class="card${s.area===selected?' active':''}" data-area="${esc(s.area)}">
       <div class="card-top">
         <span class="card-name">${esc(s.area)}<br><span class="card-dist">${
-          VIEWABLE.has(s.area) ? `발사지점 ${s.km}km` : `이동 거점 · ${s.km}km`}</span></span>
+          myLocation ? `내 위치에서 ${s.km}km`
+          : VIEWABLE.has(s.area) ? `발사지점 ${s.km}km` : `이동 거점 · ${s.km}km`}</span></span>
         ${badge}</div>
       <div class="card-desc">${esc(NOTES[s.area]||'')}</div>
       ${bits.length ? `<div class="metrics">${bits.join('')}</div>` : ''}
@@ -898,13 +889,15 @@ function renderSubway(area, list){
 
 /* ── 시트 ── */
 function detailSheet(area){
-  const c = COORDS.find(x => x.area === area) || { area, km:0 };
+  const raw = COORDS.find(x => x.area === area) || { area, km:0 };
+  const c = stateOf(raw);
   const o = official[area], vote = crowdVote(area);
   const list = reports.filter(r => r.area === area && !r.hidden).slice(0,30);
 
+  const distLabel = myLocation ? `내 위치에서 ${c.km}km` : `발사지점에서 ${c.km}km`;
   let html = `<div class="sheet-head"><span class="sheet-title">${esc(area)}</span>
     <button class="close" data-close aria-label="닫기">&times;</button></div>
-    <div class="card-desc">${esc(NOTES[area]||'')} · 발사지점에서 ${c.km}km</div>
+    <div class="card-desc">${esc(NOTES[area]||'')} · ${distLabel}</div>
     <a class="map-link" href="${kakaoMapUrl(c)}" target="_blank" rel="noopener">카카오맵에서 이 위치 보기</a>`;
 
   if (o){
