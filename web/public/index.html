@@ -616,6 +616,40 @@ async function shrink(file){
   }
 }
 
+/* 예측 데이터는 목록 응답에 없다 — 용량의 65%를 차지하는데 상세에서만 쓰이기 때문이다.
+   상세를 열 때 그 장소 것만 가져오고, 한 번 받으면 재사용한다. */
+const forecastCache = {};
+
+async function loadForecast(area){
+  if (forecastCache[area]) return forecastCache[area];
+  try {
+    const res = await fetch(`/api/congestion?area=${encodeURIComponent(area)}`);
+    if (!res.ok) return null;
+    const { area: full } = await res.json();
+    if (!full?.forecast?.length) return null;
+    forecastCache[area] = full.forecast;
+    return full.forecast;
+  } catch { return null; }
+}
+
+/** 예측이 도착하면 열려 있는 상세의 해당 자리만 채운다. */
+function renderForecast(list){
+  const slot = document.getElementById('fc-slot');
+  if (!slot || !list?.length) return;
+  const peak = list.reduce((a,f) => (f.ppltn?.max||0) > (a.ppltn?.max||0) ? f : a, list[0]);
+  const max = Math.max(...list.map(f => f.ppltn?.max||0), 1);
+  slot.innerHTML = `
+    <div class="block-label">시간대별 예측 · 막대 높이는 예상 인원</div>
+    <div class="fc-top">최다 ${(peak.ppltn?.max||0).toLocaleString()}명 · ${esc((peak.time||'').slice(11,13))}시</div>
+    <div class="fc">${list.map(f => {
+      const hh = (f.time||'').slice(11,13), lv = lvNum(f.level);
+      const bh = Math.max(6, Math.round((f.ppltn?.max||0)/max*72));
+      return `<div class="fc-col ${hh==='20'?'peak':''}">
+        <div class="fc-bar" style="height:${bh}px;background:${cssLv(lv||1)}"></div>
+        <div class="fc-time">${hh}시</div></div>`;
+    }).join('')}</div>`;
+}
+
 /* ── 시트 ── */
 function detailSheet(area){
   const c = COORDS.find(x => x.area === area) || { area, km:0 };
@@ -635,20 +669,10 @@ function detailSheet(area){
       </div>
       ${o.congestion.message ? `<div class="msg">${esc(o.congestion.message)}</div>` : ''}</div>`;
 
-    if (o.forecast?.length){
-      const peak = o.forecast.reduce((a,f) => (f.ppltn?.max||0) > (a.ppltn?.max||0) ? f : a, o.forecast[0]);
-      const max = Math.max(...o.forecast.map(f => f.ppltn?.max||0), 1);
-      html += `<div class="block">
-        <div class="block-label">시간대별 예측 · 막대 높이는 예상 인원</div>
-        <div class="fc-top">최다 ${(peak.ppltn?.max||0).toLocaleString()}명 · ${esc((peak.time||'').slice(11,13))}시</div>
-        <div class="fc">${o.forecast.map(f => {
-          const hh = (f.time||'').slice(11,13), lv = lvNum(f.level);
-          const bh = Math.max(6, Math.round((f.ppltn?.max||0)/max*72));
-          return `<div class="fc-col ${hh==='20'?'peak':''}">
-            <div class="fc-bar" style="height:${bh}px;background:${cssLv(lv||1)}"></div>
-            <div class="fc-time">${hh}시</div></div>`;
-        }).join('')}</div></div>`;
-    }
+    // 예측은 목록 응답에 없다. 자리만 잡아두고 도착하면 채운다.
+    html += `<div class="block" id="fc-slot">
+      <div class="block-label">시간대별 예측</div>
+      <div class="notice">불러오는 중…</div></div>`;
     const extra = [];
     if (o.road) extra.push(`도로 ${esc(o.road.level)} — ${esc(o.road.message||'')}`);
     if (o.bikes) extra.push(`따릉이 잔여 ${o.bikes}대`);
@@ -702,12 +726,29 @@ function openSheet(type, area){
     type==='detail' ? detailSheet(area) : reportSheet(area)}</div></div>`;
   document.body.style.overflow = 'hidden';
   $('#modal').querySelector('button,select,input')?.focus({ preventScroll:true });
+  if (type === 'detail') fillForecast(area);
+}
+
+/** 예측을 가져와 채운다. 늦게 도착해도 그 사이 시트가 닫혔거나 다른 장소로
+    바뀌었으면 그리지 않는다. */
+async function fillForecast(area){
+  const list = await loadForecast(area);
+  if (sheet?.type !== 'detail' || sheet.area !== area) return;
+  if (list) renderForecast(list);
+  else {
+    const slot = document.getElementById('fc-slot');
+    if (slot) slot.innerHTML =
+      '<div class="block-label">시간대별 예측</div><div class="notice">예측을 불러오지 못했습니다.</div>';
+  }
 }
 function closeSheet(){ sheet = null; $('#modal').innerHTML = ''; document.body.style.overflow=''; }
 function refreshSheet(){
   if (sheet?.type !== 'detail') return;
   const box = document.querySelector('.sheet');
-  if (box) box.innerHTML = detailSheet(sheet.area);
+  if (!box) return;
+  box.innerHTML = detailSheet(sheet.area);
+  // 통째로 다시 그렸으므로 예측 자리도 다시 채운다(캐시가 있으면 즉시).
+  fillForecast(sheet.area);
 }
 
 document.addEventListener('click', async (e) => {
@@ -861,7 +902,9 @@ document.addEventListener('keydown', (e) => {
   }
 
   loadOfficial();
-  setInterval(loadOfficial, 60 * 1000);
+  // 서버가 5분 주기로 수집하므로 그보다 자주 물어봐야 얻는 게 없다.
+  // 갱신 직후를 놓치지 않도록 2분으로 둔다.
+  setInterval(loadOfficial, 2 * 60 * 1000);
 
   // 카카오맵 — 키가 없거나 로드 실패해도 카드 목록은 그대로 쓸 수 있다
   if (!cfg.kakaoKey){

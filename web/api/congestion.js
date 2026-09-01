@@ -142,6 +142,28 @@ export default async function handler(req, res) {
   const areas = {};
   ALL.forEach((a, i) => { if (values[i]) areas[a] = values[i]; });
 
+  // ?area=<이름> 이면 그 장소의 전체(예측 포함)를 준다. 상세 화면을 열 때만 쓴다.
+  const one = req.query?.area;
+  if (one){
+    if (!areas[one]) return res.status(404).json({ error: 'not_found' });
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+    return res.json({ area: areas[one] });
+  }
+
+  // 기본 응답은 목록·지도에 필요한 것만 담는다.
+  // 12시간 예측(forecast)은 상세에서만 쓰이면서 응답의 65%를 차지한다.
+  // 모든 접속자가 1분마다 받아 가면 그게 전송량의 대부분이 된다.
+  const slim = {};
+  for (const [name, d] of Object.entries(areas)){
+    slim[name] = {
+      area: d.area,
+      congestion: d.congestion,
+      flow: d.flow,
+      road: d.road,
+      bikes: d.bikes,
+    };
+  }
+
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
-  return res.json({ areas, meta: meta || null });
+  return res.json({ areas: slim, meta: meta || null });
 }
