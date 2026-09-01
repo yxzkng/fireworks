@@ -167,6 +167,7 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   <div id="map"></div>
   <div class="map-dim" id="mapDim" hidden></div>
   <div class="map-fallback" id="mapFallback">지도를 불러오는 중…</div>
+  <button class="toilet-toggle" id="toggleToilets" type="button" aria-pressed="true" title="화장실 표시">화장실</button>
   <div class="legend">
     <span><i style="background:var(--c1)"></i>여유</span>
     <span><i style="background:var(--c2)"></i>보통</span>
@@ -257,6 +258,23 @@ const LEVELS = ['여유','보통','약간 붐빔','붐빔'];
    원거리 거점이 1위로 올라오면 자리 찾는 사람에게 쓸모없는 순서가 된다. */
 const VIEWABLE = new Set(['여의도한강공원','여의도','여의서로','노들섬',
   '이촌한강공원','반포한강공원','양화한강공원','망원한강공원']);
+
+/* 서울시·지도 서비스 개방화장실 목록과 여의도한강공원 공중화장실 정보를 기준으로,
+   축제 관람 동선에서 찾기 쉬운 지점만 추렸다. 일부 좌표는 시설명 중심점 기준. */
+const TOILETS = [
+  { name:'한강공원 1번', lat:37.5269, lon:126.9342 },
+  { name:'한강공원 2번', lat:37.5277, lon:126.9368 },
+  { name:'한강공원 3번', lat:37.5287, lon:126.9397 },
+  { name:'한강공원 5번', lat:37.5312, lon:126.9438 },
+  { name:'한강공원 6번', lat:37.5331, lon:126.9481 },
+  { name:'한강공원 7번', lat:37.5355, lon:126.9517 },
+  { name:'여의나루역', lat:37.5271, lon:126.9329 },
+  { name:'여의도역', lat:37.5216, lon:126.9243 },
+  { name:'여의도동주민센터', lat:37.5281, lon:126.9292 },
+  { name:'여의도우체국', lat:37.5244, lon:126.9259 },
+  { name:'IFC몰', lat:37.5252, lon:126.9255 },
+  { name:'국회의사당역', lat:37.5281, lon:126.9178 },
+];
 
 const NOTES = {
   '여의도한강공원':'발사 지점 정면. 현장감 최고, 가장 혼잡합니다.',
@@ -363,10 +381,12 @@ function renderHistorical(area){
 let COORDS = [];
 let cfg = {}, sb = null, map = null;
 let markers = [];
+let toiletMarkers = [];
 let myLocationOverlay = null;
 let myLocation = null;
 let reports = [], official = {};
 let sortMode = 'near', selected = null, sheet = null;
+let showToilets = true;
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
@@ -489,6 +509,7 @@ function initMap(){
   });
 
   drawMarkers();
+  drawToilets();
 }
 
 function locateMe(){
@@ -546,6 +567,19 @@ function drawMarkers(){
   markers = overlays;
 }
 
+function drawToilets(){
+  toiletMarkers.forEach(m => m.setMap(null));
+  toiletMarkers = [];
+  if (!map || !showToilets) return;
+  toiletMarkers = TOILETS.map(t => new kakao.maps.CustomOverlay({
+    map,
+    position: new kakao.maps.LatLng(t.lat, t.lon),
+    zIndex: 6,
+    clickable: true,
+    content: `<div class="toilet-pin" data-name="${esc(t.name)}" title="${esc(t.name)}">WC</div>`,
+  }));
+}
+
 /* 마커 클릭 — CustomOverlay는 이벤트가 약해서 위임으로 받는다 */
 document.addEventListener('click', (e) => {
   const pin = e.target.closest('.pin');
@@ -558,6 +592,12 @@ document.addEventListener('click', (e) => {
     drawMarkers();
   }
 }, true);
+
+$('#toggleToilets').onclick = () => {
+  showToilets = !showToilets;
+  $('#toggleToilets').setAttribute('aria-pressed', String(showToilets));
+  drawToilets();
+};
 
 /* ── 카드 ── */
 function renderRail(){

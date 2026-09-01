@@ -178,6 +178,7 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
 <div class="map-wrap">
   <canvas id="map" role="img" aria-label="여의도 일대 장소별 혼잡도 지도" tabindex="0"></canvas>
   <div class="map-hint" id="mapHint">—:— 기준</div>
+  <button class="toilet-toggle" id="toggleToilets" type="button" aria-pressed="true" title="화장실 표시">화장실</button>
   <div class="map-ui">
     <button class="map-btn" id="zin"  aria-label="확대">+</button>
     <button class="map-btn" id="zout" aria-label="축소">−</button>
@@ -284,6 +285,23 @@ const VIEWABLE = new Set([
   '여의도한강공원', '여의도', '여의서로', '노들섬',
   '이촌한강공원', '반포한강공원', '양화한강공원', '망원한강공원',
 ]);
+
+/* 서울시·지도 서비스 개방화장실 목록과 여의도한강공원 공중화장실 정보를 기준으로,
+   축제 관람 동선에서 찾기 쉬운 지점만 추렸다. 일부 좌표는 시설명 중심점 기준. */
+const TOILETS = [
+  { name:'한강공원 1번', lat:37.5269, lon:126.9342 },
+  { name:'한강공원 2번', lat:37.5277, lon:126.9368 },
+  { name:'한강공원 3번', lat:37.5287, lon:126.9397 },
+  { name:'한강공원 5번', lat:37.5312, lon:126.9438 },
+  { name:'한강공원 6번', lat:37.5331, lon:126.9481 },
+  { name:'한강공원 7번', lat:37.5355, lon:126.9517 },
+  { name:'여의나루역', lat:37.5271, lon:126.9329 },
+  { name:'여의도역', lat:37.5216, lon:126.9243 },
+  { name:'여의도동주민센터', lat:37.5281, lon:126.9292 },
+  { name:'여의도우체국', lat:37.5244, lon:126.9259 },
+  { name:'IFC몰', lat:37.5252, lon:126.9255 },
+  { name:'국회의사당역', lat:37.5281, lon:126.9178 },
+];
 
 /* 관람 특성 — 혼잡도만으로는 고를 수 없어서 함께 보여준다 */
 const NOTES = {
@@ -481,6 +499,7 @@ const cv = $('#map');
 const ctx = cv.getContext('2d');
 let view = { lat: 37.528, lon: 126.945, zoom: 1 };   // zoom 1 = 여의도 일대
 let myLocation = null;
+let showToilets = true;
 
 function fitDefault() { view = { lat: 37.528, lon: 126.945, zoom: 1 }; }
 
@@ -627,6 +646,33 @@ function drawMap() {
   ctx.fillStyle = getCss('--gold');
   ctx.fillText('발사', fx, fy - 17);
 
+  if (showToilets) {
+    ctx.save();
+    for (const t of TOILETS) {
+      const [tx, ty] = P(t.lat, t.lon);
+      if (tx < -40 || tx > w + 40 || ty < -40 || ty > h + 40) continue;
+      ctx.fillStyle = getCss('--text');
+      ctx.strokeStyle = getCss('--signal');
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(tx - 15, ty - 15, 30, 30, 8);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = getCss('--ink');
+      ctx.font = '900 17px ' + getCss('--body');
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('WC', tx, ty + 1);
+      if (view.zoom >= 1.6) {
+        ctx.font = '750 10.5px ' + getCss('--body');
+        const tw = ctx.measureText(t.name).width;
+        ctx.fillStyle = 'rgba(7,10,15,.86)';
+        ctx.fillRect(tx - tw / 2 - 5, ty + 20, tw + 10, 15);
+        ctx.fillStyle = getCss('--text');
+        ctx.fillText(t.name, tx, ty + 28);
+      }
+    }
+    ctx.restore();
+  }
+
   if (myLocation) {
     const [mx, my] = P(myLocation.lat, myLocation.lon);
     ctx.save();
@@ -698,6 +744,11 @@ $('#zin').onclick  = () => { view.zoom = Math.min(9, view.zoom * 1.5); drawMap()
 $('#zout').onclick = () => { view.zoom = Math.max(0.35, view.zoom / 1.5); drawMap(); };
 $('#zfit').onclick = () => { fitDefault(); drawMap(); };
 $('#locateMe').onclick = () => locateMe();
+$('#toggleToilets').onclick = () => {
+  showToilets = !showToilets;
+  $('#toggleToilets').setAttribute('aria-pressed', String(showToilets));
+  drawMap();
+};
 
 function locateMe() {
   const btn = $('#locateMe');
