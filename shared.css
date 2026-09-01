@@ -26,16 +26,16 @@
   margin: 20px auto 10px; max-width: var(--maxw); padding: 0 var(--pad);
 }
 .sorts {
-  display: flex; gap: 0; background: rgba(255,248,238,.07);
+  display: flex; gap: 2px; background: rgba(9,14,34,.74);
   border: 1px solid var(--ink-line); border-radius: var(--r-sorts); padding: var(--sorts-pad);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+  box-shadow: 0 8px 22px rgba(5,8,22,.16);
 }
 .sort-btn {
   padding: var(--sort-btn-pad); border-radius: var(--r-pill); border: 0; cursor: pointer;
   background: transparent; color: var(--text-dim);
   font-family: var(--sans); font-size: var(--sort-btn-size); font-weight: var(--w-btn);
 }
-.sort-btn[aria-pressed="true"] { background: var(--signal); color: var(--on-signal) }
+.sort-btn[aria-pressed="true"] { background: var(--signal); color: var(--on-signal); box-shadow: inset 0 -1px 0 rgba(0,0,0,.18) }
 .sort-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 
 /* 장소 카드는 모든 화면에서 2열 그리드로 고정한다. */
@@ -46,17 +46,22 @@
 }
 .card {
   width: 100%; min-width: 0;
-  text-align: left; background: var(--card-bg);
+  text-align: left; background: rgba(20, 27, 61, .92);
   border: 1px solid var(--ink-line); border-radius: var(--r);
   padding: var(--card-pad); color: inherit; font: inherit; cursor: pointer;
   display: grid; gap: var(--card-gap); align-content: start;
   position: relative; overflow: hidden;
-  box-shadow: 0 14px 34px rgba(6, 10, 30, .18), inset 0 1px 0 rgba(255,255,255,.08);
+  box-shadow: 0 10px 24px rgba(5,8,22,.16);
   transition: border-color .18s, transform .18s, background .18s;
 }
 .card > * { position: relative }
+.card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: transparent;
+}
 .card:hover { border-color: var(--text-faint); transform: translateY(-1px) }
-.card.active { border-color: var(--signal); background: linear-gradient(160deg, rgba(255,248,238,.16), rgba(255,248,238,.055) 48%, rgba(16,22,50,.78)) }
+.card.active { border-color: rgba(242,106,27,.72); background: rgba(25, 31, 68, .98) }
+.card.active::before { background: var(--signal) }
 .card:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 
 .card-top { display: flex; align-items: flex-start; gap: 8px }
@@ -67,7 +72,8 @@
 /* ── 혼잡도 배지 ──────────────────────────────────────────────────── */
 .badge {
   font-size: var(--badge-size); font-weight: var(--w-badge); line-height: var(--badge-lh);
-  padding: var(--badge-pad); border-radius: var(--r-pill); white-space: nowrap;
+  padding: var(--badge-pad); border-radius: 4px; white-space: nowrap;
+  border: 1px solid currentColor;
 }
 .lv0 { background: #2A2A2A; color: #9A9A9A }
 .lv1 { background: var(--c1-bg); color: var(--c1) }
@@ -81,15 +87,13 @@
 }
 .program-inner {
   border: 1px solid var(--ink-line); border-radius: var(--r);
-  background:
-    radial-gradient(circle at 100% 0, rgba(127,228,234,.14), transparent 190px),
-    linear-gradient(135deg, rgba(255,255,255,.08), transparent 46%),
-    var(--ink-panel);
-  overflow: hidden; box-shadow: 0 18px 42px rgba(6,10,30,.16);
+  background: rgba(15, 21, 50, .9);
+  overflow: hidden; box-shadow: 0 14px 34px rgba(5,8,22,.15);
 }
 .program-head {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-  padding: 13px 14px; border-bottom: 1px solid var(--ink-line);
+  padding: 14px 14px 12px; border-bottom: 1px solid var(--ink-line);
+  background: rgba(255,248,238,.035);
 }
 .program-title {
   font-family: var(--serif); font-size: 16px; font-weight: var(--w-title); margin: 0;
@@ -101,13 +105,12 @@
 .program-list { display: grid }
 .program-item {
   display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px;
-  padding: 14px; border-bottom: 1px solid rgba(255,255,255,.055);
+  padding: 14px; border-bottom: 1px solid rgba(255,255,255,.07);
 }
 .program-item:last-child { border-bottom: 0 }
 .program-item.featured {
-  background:
-    linear-gradient(90deg, rgba(242,106,27,.18), transparent 62%),
-    rgba(255,255,255,.025);
+  background: rgba(242,106,27,.10);
+  box-shadow: inset 3px 0 0 var(--signal);
 }
 .program-time {
   color: var(--signal); font-size: 13px; font-weight: var(--w-strong);
@@ -122,8 +125,8 @@
   margin-top: 2px;
 }
 .firework-slot {
-  border: 1px solid var(--ink-line); border-radius: var(--r);
-  padding: 8px; background: rgba(255,248,238,.055); min-width: 0;
+  border: 1px solid rgba(255,248,238,.13); border-radius: 6px;
+  padding: 8px; background: rgba(7,12,31,.44); min-width: 0;
 }
 .firework-country { display: block; color: var(--text); font-size: 12.5px; font-weight: var(--w-strong) }
 .firework-time {
@@ -153,16 +156,16 @@
   display: grid; align-items: end; justify-items: center; overflow-y: auto;
 }
 .sheet {
-  width: 100%; max-width: var(--maxw); background: var(--ink-raised);
-  border: 1px solid var(--ink-line); border-bottom: 0;
-  border-radius: 18px 18px 0 0;
+  width: 100%; max-width: var(--maxw); background: #141A3D;
+  border: 1px solid rgba(255,248,238,.18); border-bottom: 0;
+  border-radius: 12px 12px 0 0;
   padding: 20px var(--pad) calc(24px + env(safe-area-inset-bottom));
   max-height: min(88dvh, 760px); overflow-y: auto; overscroll-behavior: contain;
-  animation: rise .22s ease-out;
+  animation: rise .22s ease-out; box-shadow: 0 -18px 48px rgba(0,0,0,.34);
 }
 @keyframes rise { from { transform: translateY(14px); opacity: 0 } }
-.sheet-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 4px }
-.sheet-title { font-family: var(--serif); font-size: 22px; font-weight: var(--w-title); flex: 1; line-height: 1.2 }
+.sheet-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--ink-line) }
+.sheet-title { font-family: var(--serif); font-size: 21px; font-weight: var(--w-title); flex: 1; line-height: 1.25 }
 .close {
   background: none; border: 0; color: var(--text-dim); font-size: 26px;
   line-height: 1; cursor: pointer; padding: 0 4px;
@@ -171,8 +174,8 @@
 
 .block { margin-top: 20px }
 .block-label {
-  font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--text-faint); margin-bottom: 8px; font-weight: var(--w-strong);
+  font-size: 11px; letter-spacing: 0; text-transform: none;
+  color: var(--text-faint); margin-bottom: 8px; font-weight: 750;
 }
 .metrics { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-dim); flex-wrap: wrap }
 .metrics b { color: var(--text); font-variant-numeric: tabular-nums }
@@ -293,7 +296,7 @@
 .submit:disabled { opacity: .5; cursor: default }
 .notice, .msg {
   font-size: 12px; color: var(--text-faint); line-height: 1.5;
-  background: rgba(255,248,238,.055); border: 1px solid var(--ink-line);
+  background: rgba(7,12,31,.36); border: 1px solid var(--ink-line);
   border-radius: var(--r); padding: 10px;
 }
 
@@ -321,6 +324,26 @@
   background: var(--map-bg); border: 1px solid var(--ink-line);
   box-shadow: 0 22px 58px rgba(6,10,30,.28);
 }
+.toilet-pin {
+  position: relative; z-index: 4; display: grid; place-items: center;
+  width: 30px; height: 30px; border-radius: 8px;
+  background: #FFF8EE; color: #101632; border: 2px solid var(--signal);
+  box-shadow: 0 7px 18px rgba(0,0,0,.38); font-size: 18px; font-weight: 900;
+}
+.toilet-pin::after {
+  content: attr(data-name); position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  margin-top: 4px; white-space: nowrap; font-size: 10.5px; font-weight: 750;
+  color: var(--text); background: rgba(7,10,15,.86); border-radius: 4px; padding: 2px 6px;
+}
+.toilet-toggle {
+  position: absolute; top: 10px; right: 10px; z-index: 7;
+  min-height: 34px; border-radius: 8px; border: 1px solid var(--ink-line);
+  background: rgba(11,16,32,.88); color: var(--text); font-family: var(--sans);
+  font-size: 12px; font-weight: 750; padding: 0 10px; cursor: pointer;
+  box-shadow: 0 8px 22px rgba(5,8,22,.25);
+}
+.toilet-toggle[aria-pressed="true"] { border-color: var(--signal); color: var(--signal); background: rgba(36,20,11,.92) }
+.toilet-toggle:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 .legend, .map-hint {
   position: absolute; z-index: 5; font-size: 10.5px; color: var(--text-dim);
   background: var(--scrim); border: 1px solid var(--ink-line);
