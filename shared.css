@@ -71,6 +71,61 @@
 .lv3 { background: var(--c3-bg); color: var(--c3) }
 .lv4 { background: var(--c4-bg); color: var(--c4) }
 
+/* ── 행사 일정 ──────────────────────────────────────────────────── */
+.program {
+  max-width: var(--maxw); margin: 18px auto 0; padding: 0 var(--pad);
+}
+.program-inner {
+  border: 1px solid var(--ink-line); border-radius: var(--r);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.055), transparent 46%),
+    var(--ink-panel);
+  overflow: hidden;
+}
+.program-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 13px 14px; border-bottom: 1px solid var(--ink-line);
+}
+.program-title {
+  font-family: var(--serif); font-size: 16px; font-weight: var(--w-title); margin: 0;
+}
+.program-note {
+  color: var(--text-faint); font-size: 11.5px; font-weight: var(--w-strong);
+  white-space: nowrap;
+}
+.program-list { display: grid }
+.program-item {
+  display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px;
+  padding: 14px; border-bottom: 1px solid rgba(255,255,255,.055);
+}
+.program-item:last-child { border-bottom: 0 }
+.program-item.featured {
+  background:
+    linear-gradient(90deg, rgba(244,183,64,.13), transparent 62%),
+    rgba(255,255,255,.025);
+}
+.program-time {
+  color: var(--signal); font-size: 13px; font-weight: var(--w-strong);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.program-main { display: grid; gap: 6px; min-width: 0 }
+.program-name {
+  color: var(--text); font-size: 14.5px; font-weight: var(--w-card-name); line-height: 1.35;
+}
+.program-fireworks {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;
+  margin-top: 2px;
+}
+.firework-slot {
+  border: 1px solid var(--ink-line); border-radius: var(--r);
+  padding: 8px; background: rgba(0,0,0,.14); min-width: 0;
+}
+.firework-country { display: block; color: var(--text); font-size: 12.5px; font-weight: var(--w-strong) }
+.firework-time {
+  display: block; color: var(--text-dim); font-size: 11.5px; line-height: 1.35;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
 /* ── 하단 고정 제보 버튼 ──────────────────────────────────────────── */
 .fab-bar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
@@ -323,6 +378,12 @@
   .fc-time { font-size: 8.5px }
   .loc-btn { right: 8px; bottom: 8px; width: 40px; height: 40px }
   .legend { left: 8px; right: 8px; bottom: 56px; justify-content: space-between; gap: 5px; padding: 6px 7px }
+  .program { margin-top: 14px }
+  .program-head { align-items: flex-start; flex-direction: column; gap: 3px; padding: 12px }
+  .program-note { white-space: normal }
+  .program-item { grid-template-columns: 1fr; gap: 5px; padding: 12px }
+  .program-fireworks { grid-template-columns: 1fr; gap: 6px }
+  .firework-slot { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px }
   .sheet {
     max-height: 90dvh;
     padding-top: 16px;

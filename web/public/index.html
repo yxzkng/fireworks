@@ -213,6 +213,61 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 .lv3 { background: var(--c3-bg); color: var(--c3) }
 .lv4 { background: var(--c4-bg); color: var(--c4) }
 
+/* ── 행사 일정 ──────────────────────────────────────────────────── */
+.program {
+  max-width: var(--maxw); margin: 18px auto 0; padding: 0 var(--pad);
+}
+.program-inner {
+  border: 1px solid var(--ink-line); border-radius: var(--r);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.055), transparent 46%),
+    var(--ink-panel);
+  overflow: hidden;
+}
+.program-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 13px 14px; border-bottom: 1px solid var(--ink-line);
+}
+.program-title {
+  font-family: var(--serif); font-size: 16px; font-weight: var(--w-title); margin: 0;
+}
+.program-note {
+  color: var(--text-faint); font-size: 11.5px; font-weight: var(--w-strong);
+  white-space: nowrap;
+}
+.program-list { display: grid }
+.program-item {
+  display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px;
+  padding: 14px; border-bottom: 1px solid rgba(255,255,255,.055);
+}
+.program-item:last-child { border-bottom: 0 }
+.program-item.featured {
+  background:
+    linear-gradient(90deg, rgba(244,183,64,.13), transparent 62%),
+    rgba(255,255,255,.025);
+}
+.program-time {
+  color: var(--signal); font-size: 13px; font-weight: var(--w-strong);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.program-main { display: grid; gap: 6px; min-width: 0 }
+.program-name {
+  color: var(--text); font-size: 14.5px; font-weight: var(--w-card-name); line-height: 1.35;
+}
+.program-fireworks {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;
+  margin-top: 2px;
+}
+.firework-slot {
+  border: 1px solid var(--ink-line); border-radius: var(--r);
+  padding: 8px; background: rgba(0,0,0,.14); min-width: 0;
+}
+.firework-country { display: block; color: var(--text); font-size: 12.5px; font-weight: var(--w-strong) }
+.firework-time {
+  display: block; color: var(--text-dim); font-size: 11.5px; line-height: 1.35;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
 /* ── 하단 고정 제보 버튼 ──────────────────────────────────────────── */
 .fab-bar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
@@ -465,6 +520,12 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   .fc-time { font-size: 8.5px }
   .loc-btn { right: 8px; bottom: 8px; width: 40px; height: 40px }
   .legend { left: 8px; right: 8px; bottom: 56px; justify-content: space-between; gap: 5px; padding: 6px 7px }
+  .program { margin-top: 14px }
+  .program-head { align-items: flex-start; flex-direction: column; gap: 3px; padding: 12px }
+  .program-note { white-space: normal }
+  .program-item { grid-template-columns: 1fr; gap: 5px; padding: 12px }
+  .program-fireworks { grid-template-columns: 1fr; gap: 6px }
+  .firework-slot { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px }
   .sheet {
     max-height: 90dvh;
     padding-top: 16px;
@@ -517,6 +578,55 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   <div class="map-hint" id="mapHint">원 크기 = 인원</div>
   <button class="loc-btn" id="locateMe" aria-label="현재 위치 표시" title="현재 위치 표시"></button>
 </div>
+
+<section class="program" aria-labelledby="programTitle">
+  <div class="program-inner">
+    <div class="program-head">
+      <h2 class="program-title" id="programTitle">행사 프로그램</h2>
+      <div class="program-note">21:10–23:00 클린캠페인 진행</div>
+    </div>
+    <div class="program-list">
+      <div class="program-item">
+        <div class="program-time">13:00–18:00</div>
+        <div class="program-main">
+          <div class="program-name">사전행사 · 시민참여 프로그램</div>
+        </div>
+      </div>
+      <div class="program-item">
+        <div class="program-time">19:40–20:00</div>
+        <div class="program-main">
+          <div class="program-name">공식행사</div>
+        </div>
+      </div>
+      <div class="program-item featured">
+        <div class="program-time">20:00–21:10</div>
+        <div class="program-main">
+          <div class="program-name">불꽃쇼</div>
+          <div class="program-fireworks" aria-label="국가별 불꽃쇼 시간">
+            <div class="firework-slot">
+              <span class="firework-country">영국</span>
+              <span class="firework-time">20:00–20:15</span>
+            </div>
+            <div class="firework-slot">
+              <span class="firework-country">미국</span>
+              <span class="firework-time">20:20–20:35</span>
+            </div>
+            <div class="firework-slot">
+              <span class="firework-country">한국</span>
+              <span class="firework-time">20:40–21:10</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="program-item">
+        <div class="program-time">21:10–22:00</div>
+        <div class="program-main">
+          <div class="program-name">애프터 DJ 공연</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <div class="list-head">
   <h2 id="listTitle">가까운 순</h2>
