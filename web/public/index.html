@@ -11,23 +11,24 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
 <style>
-/* 잡지의 축제 현장 지면처럼: 비대칭, 큰 세리프 제목, 차분한 7색 팔레트. */
+/* 2026 포스터의 남보라 밤하늘, 파스텔 연기, 둥근 불꽃 파편을 UI 언어로 번역한다. */
 :root{
-  --noir:#090908; --paper:#F2EEE3; --smoke:#A8A096;
-  --mustard:#C69A2E; --rose:#B86F72; --petrol:#2D6F73; --moss:#6F8548;
-  --ink:var(--noir); --ink-raised:#14120F; --ink-panel:#1B1814; --ink-line:#34312C;
-  --text:var(--paper); --text-dim:var(--paper); --text-faint:var(--smoke); --signal:var(--mustard);
-  --c1:var(--petrol); --c1-bg:#102B2D; --c2:var(--moss); --c2-bg:#202916;
-  --c3:var(--mustard); --c3-bg:#33270C; --c4:var(--rose); --c4-bg:#35160D;
-  --r:6px; --pad:16px;
+  --night:#171D46; --deep-night:#101632; --midnight:#0C112B;
+  --cloud:#8B79A8; --mist:#C79AA8; --paper:#FFF8EE;
+  --orange:#F26A1B; --yellow:#FFD91A; --cyan:#7FE4EA; --mint:#38C9A3; --coral:#F47C8E;
+  --ink:var(--midnight); --ink-raised:#1B214E; --ink-panel:#22285A; --ink-line:rgba(255,248,238,.16);
+  --text:var(--paper); --text-dim:#E7DCEF; --text-faint:#B7A8CB; --signal:var(--orange);
+  --c1:var(--mint); --c1-bg:rgba(56,201,163,.16); --c2:var(--cyan); --c2-bg:rgba(127,228,234,.15);
+  --c3:var(--yellow); --c3-bg:rgba(255,217,26,.15); --c4:var(--coral); --c4-bg:rgba(244,124,142,.16);
+  --r:8px; --pad:16px;
   --sans:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Segoe UI',sans-serif;
   --serif:var(--sans);
 
   /* shared.css가 쓰는 공통 이름 */
-  --on-signal:#171106;
-  --card-bg:linear-gradient(180deg,var(--ink-panel),#13100D);
-  --map-bg:var(--ink-raised);
-  --scrim:rgba(9,9,8,.86);
+  --on-signal:#241000;
+  --card-bg:linear-gradient(160deg,rgba(255,248,238,.105),rgba(255,248,238,.045) 46%,rgba(16,22,50,.78));
+  --map-bg:#111735;
+  --scrim:rgba(16,22,50,.78);
   --maxw:720px;
   --w-title:900;
   --w-strong:850;
@@ -36,11 +37,11 @@
   --w-card-name:900;
   --w-dist:650;
 
-  --r-pill:var(--r);            /* 이 테마는 배지·토글도 각지게 */
-  --rail-gap:18px;
-  --card-gap:10px;
+  --r-pill:999px;
+  --rail-gap:14px;
+  --card-gap:11px;
   --card-pad:14px;
-  --card-pad-wide:18px;
+  --card-pad-wide:16px;
   --card-name-font:var(--sans);
   --card-name-size:16px;
   --card-desc-size:12.5px;
@@ -55,27 +56,53 @@
 }
 html{background:var(--ink)}
 body{margin:0;background:
-  linear-gradient(180deg,#14100D 0,#090908 38%,#070706 100%);
+  radial-gradient(circle at 50% 0,rgba(127,228,234,.11),transparent 28rem),
+  linear-gradient(180deg,var(--night) 0,var(--deep-night) 44%,var(--midnight) 100%);
   color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;
   -webkit-font-smoothing:antialiased;padding-bottom:92px}
 
-header{padding:22px var(--pad) 12px;max-width:720px;margin:0 auto;position:relative}
-header::before{content:'SEOUL FIREWORKS FIELD GUIDE';display:block;margin:0 0 10px;
-  color:var(--rose);font-size:10px;font-weight:800;letter-spacing:.12em}
-.head-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:14px;position:relative}
-h1{font-family:var(--serif);font-weight:900;font-size:29px;line-height:1.05;letter-spacing:0;margin:0}
-.head-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-.head-btn-row{display:flex;gap:6px}
-.traffic-btn,.live-btn{font-family:var(--sans);font-size:11px;font-weight:800;letter-spacing:.02em;
-  color:var(--on-signal);background:var(--signal);border:none;border-radius:var(--r-pill,999px);
-  padding:6px 11px;cursor:pointer;white-space:nowrap}
-.traffic-btn:focus-visible,.live-btn:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-.live-btn{background:#e0293a;color:#fff;text-decoration:none;display:inline-flex;align-items:center}
-.cd::before{content:'D-DAY';display:block;color:var(--text-faint);font-size:9px;
-  font-weight:800;letter-spacing:.08em;text-align:right;margin-bottom:4px}
-#map{width:100%;height:clamp(310px,52dvh,390px)}
+header{padding:18px var(--pad) 18px;max-width:720px;min-height:214px;margin:0 auto;position:relative;overflow:hidden}
+header::before{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:92px;
+  background:
+    linear-gradient(90deg, transparent 0 4%, var(--midnight) 4% 9%, transparent 9% 13%,
+      var(--midnight) 13% 17%, transparent 17% 20%,
+      var(--midnight) 20% 29%, transparent 29% 33%,
+      var(--midnight) 33% 36%, transparent 36% 40%,
+      var(--midnight) 40% 45%, transparent 45% 49%,
+      var(--midnight) 49% 60%, transparent 60% 64%,
+      var(--midnight) 64% 71%, transparent 71% 75%,
+      var(--midnight) 75% 83%, transparent 83% 87%,
+      var(--midnight) 87% 96%, transparent 96% 100%) bottom / 100% 46px no-repeat,
+    linear-gradient(180deg, transparent, var(--midnight) 78%) bottom / 100% 30px no-repeat,
+    radial-gradient(3px 20px at 34.5% 30%, var(--midnight), transparent 90%) bottom / 100% 92px no-repeat;
+  opacity:.85;pointer-events:none}
+header::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:46px;
+  background:
+    radial-gradient(1.5px 1.5px at 20% 40%,var(--yellow),transparent 60%),
+    radial-gradient(1px 1px at 24% 55%,var(--orange),transparent 60%),
+    radial-gradient(1.5px 1.5px at 17% 62%,var(--yellow),transparent 60%),
+    linear-gradient(180deg,rgba(22,36,63,.2),var(--ink-raised) 60%);
+  pointer-events:none}
+.festival-mark{position:relative;z-index:1;color:var(--text-faint);font-size:9px;font-weight:700;letter-spacing:.04em}
+.festival-mark b{color:var(--text-dim);font-weight:700}
+.head-row{display:flex;flex-direction:column;gap:10px;position:absolute;left:var(--pad);right:var(--pad);bottom:24px;z-index:1}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(25px,5.6vw,34px);line-height:1.22;letter-spacing:0;margin:0;text-shadow:0 4px 22px rgba(8,12,32,.5)}
+.event-date{font-size:13px;font-weight:700;color:var(--text-dim);margin-top:3px}
+.event-date b{color:var(--orange);font-weight:800}
+.head-side{display:flex;align-items:center;gap:8px}
+.head-btn-row{display:flex;gap:8px}
+.traffic-btn,.live-btn{font-family:var(--sans);font-size:11.5px;font-weight:700;
+  color:var(--text);background:transparent;border-radius:4px;
+  padding:7px 11px;cursor:pointer;white-space:nowrap}
+.traffic-btn{border:1px solid rgba(255,248,238,.55)}
+.traffic-btn:hover{border-color:var(--text)}
+.traffic-btn:focus-visible,.live-btn:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.live-btn{color:var(--coral);border:1px solid var(--coral);text-decoration:none;display:inline-flex;align-items:center}
+#map{width:100%;height:clamp(250px,38dvh,330px)}
 .map-dim{position:absolute;inset:0;z-index:2;pointer-events:none;
-  background:linear-gradient(rgba(9,9,8,.38),rgba(9,9,8,.46))}
+  background:linear-gradient(rgba(16,22,50,.22),rgba(16,22,50,.38))}
 .map-fallback{position:absolute;inset:0;display:grid;place-items:center;text-align:center;
   padding:20px;color:var(--text-faint);font-size:13px;line-height:1.7;background:var(--ink-raised)}
 
@@ -87,14 +114,14 @@ h1{font-family:var(--serif);font-weight:900;font-size:29px;line-height:1.05;lett
 .pin.cluster{border-color:var(--paper);box-shadow:0 0 0 4px rgba(0,0,0,.28),0 8px 20px rgba(0,0,0,.48)}
 .pin span{position:relative;pointer-events:none;line-height:1}
 .pin small{display:block;margin-top:2px;font-size:9px;font-weight:800;opacity:.9}
-.pin.sel{box-shadow:0 0 0 3px rgba(198,154,46,.76),0 8px 20px rgba(0,0,0,.45)}
+.pin.sel{box-shadow:0 0 0 3px rgba(255,217,26,.76),0 8px 20px rgba(0,0,0,.45)}
 .pin-label{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:3px;
   white-space:nowrap;font-size:10.5px;font-weight:750;color:var(--text);
   background:rgba(7,10,15,.86);padding:2px 6px;border-radius:4px;pointer-events:none}
 .launch{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;
   border:2px dashed var(--signal);color:var(--signal);font-size:10px;font-weight:850}
 h2{font-family:var(--serif);font-size:18px;font-weight:900;margin:0;flex:1;letter-spacing:0}
-.sort-btn[aria-pressed=true]{background:var(--rose);color:var(--paper)}
+.sort-btn[aria-pressed=true]{background:var(--orange);color:#fff}
 @keyframes rise{from{transform:translateY(14px);opacity:0}}
 @media (prefers-reduced-motion:reduce){.sheet{animation:none}.card{transition:none}}
 .lv-btn[aria-pressed=true]{border-color:currentColor}
@@ -114,12 +141,11 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   color:var(--text-faint);line-height:1.7}
 @media (min-width:920px){
   body{padding-bottom:104px}
-  header{padding-top:30px;margin-left:calc((100vw - 720px)/2 + 42px);margin-right:auto}
-  header::before{position:absolute;left:-74px;top:38px;writing-mode:vertical-rl;transform:rotate(180deg);margin:0}
-  h1{font-size:42px;max-width:430px}
-  .sub{font-size:13px}
-  .map-wrap{margin-left:calc((100vw - 720px)/2);margin-right:auto}
-  #map{height:470px}
+  header{min-height:236px;padding-top:24px}
+  header::before{height:175px;inset:26px 120px auto}
+  h1{max-width:470px}
+  .map-wrap{margin-left:auto;margin-right:auto}
+  #map{height:330px}
   .list-head{margin-left:auto;margin-right:auto;max-width:720px}
   .rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;overflow:visible;margin-left:auto;margin-right:auto;max-width:720px;align-items:stretch}
   .card{max-width:none;min-width:0;width:100%;padding:18px}
@@ -128,14 +154,13 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   footer{margin-left:auto;margin-right:auto;max-width:720px}
 }
 @media (max-width:520px){
-  header{padding-top:16px}
-  header::before{font-size:9px;margin-bottom:8px}
-  .head-row{gap:10px}
-  h1{font-size:25px}
-  .cd{font-size:18px}
+  header{min-height:200px;padding-top:16px}
+  .head-row{gap:10px;bottom:20px}
+  h1{font-size:25px;line-height:1.25}
+  .event-date{font-size:12px}
   .head-btn-row{gap:5px}
   .traffic-btn,.live-btn{padding:6px 8px;font-size:10.5px}
-  #map{height:clamp(300px,50dvh,360px)}
+  #map{height:clamp(230px,34dvh,280px)}
   .map-hint{top:8px;right:8px;bottom:auto;max-width:calc(100% - 16px)}
   .pin-label{font-size:10px}
 }
@@ -168,8 +193,9 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   margin: 20px auto 10px; max-width: var(--maxw); padding: 0 var(--pad);
 }
 .sorts {
-  display: flex; gap: 0; background: var(--ink-panel);
+  display: flex; gap: 0; background: rgba(255,248,238,.07);
   border: 1px solid var(--ink-line); border-radius: var(--r-sorts); padding: var(--sorts-pad);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
 }
 .sort-btn {
   padding: var(--sort-btn-pad); border-radius: var(--r-pill); border: 0; cursor: pointer;
@@ -191,10 +217,13 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   border: 1px solid var(--ink-line); border-radius: var(--r);
   padding: var(--card-pad); color: inherit; font: inherit; cursor: pointer;
   display: grid; gap: var(--card-gap); align-content: start;
-  transition: border-color .18s, transform .18s;
+  position: relative; overflow: hidden;
+  box-shadow: 0 14px 34px rgba(6, 10, 30, .18), inset 0 1px 0 rgba(255,255,255,.08);
+  transition: border-color .18s, transform .18s, background .18s;
 }
+.card > * { position: relative }
 .card:hover { border-color: var(--text-faint); transform: translateY(-1px) }
-.card.active { border-color: var(--signal) }
+.card.active { border-color: var(--signal); background: linear-gradient(160deg, rgba(255,248,238,.16), rgba(255,248,238,.055) 48%, rgba(16,22,50,.78)) }
 .card:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 
 .card-top { display: flex; align-items: flex-start; gap: 8px }
@@ -220,9 +249,10 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 .program-inner {
   border: 1px solid var(--ink-line); border-radius: var(--r);
   background:
-    linear-gradient(135deg, rgba(255,255,255,.055), transparent 46%),
+    radial-gradient(circle at 100% 0, rgba(127,228,234,.14), transparent 190px),
+    linear-gradient(135deg, rgba(255,255,255,.08), transparent 46%),
     var(--ink-panel);
-  overflow: hidden;
+  overflow: hidden; box-shadow: 0 18px 42px rgba(6,10,30,.16);
 }
 .program-head {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
@@ -243,7 +273,7 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 .program-item:last-child { border-bottom: 0 }
 .program-item.featured {
   background:
-    linear-gradient(90deg, rgba(244,183,64,.13), transparent 62%),
+    linear-gradient(90deg, rgba(242,106,27,.18), transparent 62%),
     rgba(255,255,255,.025);
 }
 .program-time {
@@ -260,7 +290,7 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 }
 .firework-slot {
   border: 1px solid var(--ink-line); border-radius: var(--r);
-  padding: 8px; background: rgba(0,0,0,.14); min-width: 0;
+  padding: 8px; background: rgba(255,248,238,.055); min-width: 0;
 }
 .firework-country { display: block; color: var(--text); font-size: 12.5px; font-weight: var(--w-strong) }
 .firework-time {
@@ -272,13 +302,14 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 .fab-bar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
   padding: 12px var(--pad) calc(12px + env(safe-area-inset-bottom));
-  background: linear-gradient(transparent, var(--ink) 30%);
+  background: linear-gradient(transparent, rgba(12,17,43,.94) 30%);
 }
 .fab {
   display: block; width: 100%; max-width: var(--maxw); margin: 0 auto;
   padding: 15px; border: 0; border-radius: var(--r); cursor: pointer;
   background: var(--signal); color: var(--on-signal);
   font-family: var(--sans); font-size: 15px; font-weight: var(--w-strong);
+  box-shadow: 0 12px 28px rgba(242,106,27,.28), inset 0 1px 0 rgba(255,255,255,.32);
 }
 .fab:active { transform: translateY(1px) }
 .fab:focus-visible { outline: 2px solid var(--text); outline-offset: 2px }
@@ -291,7 +322,7 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 .sheet {
   width: 100%; max-width: var(--maxw); background: var(--ink-raised);
   border: 1px solid var(--ink-line); border-bottom: 0;
-  border-radius: calc(var(--r) + 2px) calc(var(--r) + 2px) 0 0;
+  border-radius: 18px 18px 0 0;
   padding: 20px var(--pad) calc(24px + env(safe-area-inset-bottom));
   max-height: min(88dvh, 760px); overflow-y: auto; overscroll-behavior: contain;
   animation: rise .22s ease-out;
@@ -313,6 +344,20 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 .metrics { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-dim); flex-wrap: wrap }
 .metrics b { color: var(--text); font-variant-numeric: tabular-nums }
 
+.traffic-no {
+  display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--text-faint); color: var(--ink); font-size: 10px; font-weight: 800;
+  margin-right: 6px; vertical-align: 1px; letter-spacing: 0;
+}
+/* 공식 공지 안내도 — 원문 이미지 그대로. 어두운 UI 위 흰 지도라 살짝 눌러 둔다. */
+.traffic-figure img {
+  display: block; width: 100%; border-radius: var(--r);
+  border: 1px solid var(--ink-line); background: #fff;
+}
+.traffic-figure-cap {
+  margin-top: 6px; font-size: 11px; color: var(--text-faint); line-height: 1.5;
+}
+
 /* ── 예측 그래프 ──────────────────────────────────────────────────── */
 .fc-top {
   font-size: 11.5px; color: var(--text-dim); margin-bottom: 12px;
@@ -328,17 +373,17 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 .fc-col.peak .fc-time { color: var(--signal); font-weight: var(--w-strong) }
 
 /* ── 지하철 도착정보 ──────────────────────────────────────────────── */
-.subway { display: grid; gap: 8px }
+.subway { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px }
+.subway-col { display: grid; gap: 6px; align-content: start; min-width: 0 }
 .subway-row {
-  display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
-  font-size: 12.5px; color: var(--text-dim);
+  display: grid; gap: 1px; font-size: 12.5px; color: var(--text-dim); min-width: 0;
 }
 .subway-dir {
-  font-size: 10px; padding: 2px 6px; border-radius: 4px;
+  font-size: 10px; padding: 2px 6px; border-radius: 4px; justify-self: start;
   background: var(--ink-line); color: var(--text-faint); white-space: nowrap;
 }
 .subway-to { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.subway-msg { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right }
+.subway-msg { font-variant-numeric: tabular-nums; font-size: 11.5px; color: var(--text-faint) }
 
 /* ── 제보 목록 ────────────────────────────────────────────────────── */
 .reports { display: grid; gap: 12px }
@@ -415,7 +460,7 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 .submit:disabled { opacity: .5; cursor: default }
 .notice, .msg {
   font-size: 12px; color: var(--text-faint); line-height: 1.5;
-  background: var(--ink-panel); border: 1px solid rgba(255, 255, 255, .04);
+  background: rgba(255,248,238,.055); border: 1px solid var(--ink-line);
   border-radius: var(--r); padding: 10px;
 }
 
@@ -438,9 +483,10 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 
 /* ── 지도 컨테이너(엔진 무관 부분) ───────────────────────────────── */
 .map-wrap {
-  position: relative; margin: 8px auto 0; max-width: var(--maxw);
+  position: relative; margin: 8px auto 0; width: calc(100% - (var(--pad) * 2)); max-width: var(--maxw);
   border-radius: var(--r); overflow: hidden;
   background: var(--map-bg); border: 1px solid var(--ink-line);
+  box-shadow: 0 22px 58px rgba(6,10,30,.28);
 }
 .legend, .map-hint {
   position: absolute; z-index: 5; font-size: 10.5px; color: var(--text-dim);
@@ -454,20 +500,18 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 .loc-btn {
   position: absolute; right: 10px; bottom: 10px; z-index: 6;
   width: 42px; height: 42px; display: grid; place-items: center;
-  border: 1px solid var(--ink-line); border-radius: var(--r);
-  background: var(--scrim); color: var(--text); cursor: pointer;
-  box-shadow: 0 8px 22px rgba(0,0,0,.28); backdrop-filter: blur(10px);
+  border: 0; background: none; color: var(--text); cursor: pointer;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.5));
 }
 .loc-btn::before {
-  content: ''; width: 16px; height: 16px; border: 2px solid currentColor;
-  border-radius: 50%; box-shadow: 0 0 0 4px rgba(255,255,255,.08);
-}
-.loc-btn::after {
-  content: ''; position: absolute; width: 2px; height: 26px;
-  background: currentColor; transform: rotate(45deg); opacity: .72;
+  content: '';
+  width: 20px; height: 20px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M256 0c17.7 0 32 14.3 32 32V67.3C368.5 80 432 143.5 444.7 224H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H444.7C432 368.5 368.5 432 288 444.7V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V444.7C143.5 432 80 368.5 67.3 288H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H67.3C80 143.5 143.5 80 224 67.3V32c0-17.7 14.3-32 32-32zM256 128a128 128 0 1 0 0 256 128 128 0 1 0 0-256zm0 96a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>") no-repeat center / contain;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M256 0c17.7 0 32 14.3 32 32V67.3C368.5 80 432 143.5 444.7 224H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H444.7C432 368.5 368.5 432 288 444.7V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V444.7C143.5 432 80 368.5 67.3 288H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H67.3C80 143.5 143.5 80 224 67.3V32c0-17.7 14.3-32 32-32zM256 128a128 128 0 1 0 0 256 128 128 0 1 0 0-256zm0 96a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>") no-repeat center / contain;
 }
 .loc-btn.loading { opacity: .72; cursor: wait }
-.loc-btn.on { color: var(--signal); border-color: var(--signal) }
+.loc-btn.on { color: var(--signal) }
 .loc-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 .me-pin {
   position: relative; width: 22px; height: 22px; border-radius: 50%;
@@ -483,8 +527,7 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 }
 
 /* ── 공통 ────────────────────────────────────────────────────────── */
-.sub { color: var(--text-dim); font-size: 12px; margin: 8px 0 0; font-weight: 500 }
-.cd { color: var(--signal); font-size: 20px; font-weight: var(--w-strong); line-height: 1; font-variant-numeric: tabular-nums }
+.cd { font-variant-numeric: tabular-nums }
 .flow-in { color: var(--c3) }
 .flow-out { color: var(--c1) }
 
@@ -550,17 +593,17 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 <body>
 
 <header>
+  <div class="festival-mark">Seoul International Fireworks Festival</div>
   <div class="head-row">
     <div>
-      <h1>여의도 불꽃 지도</h1>
-      <p class="sub">9월 5일 토요일 · 실시간 혼잡도</p>
+      <h1>서울세계불꽃축제 2026</h1>
+      <p class="event-date">9월 5일(토) 20:00 · 여의도 한강공원 <b class="cd" id="cd">—</b></p>
     </div>
     <div class="head-side">
       <div class="head-btn-row">
         <button class="traffic-btn" id="openTraffic">교통통제 안내</button>
         <a class="live-btn" id="openLive" href="https://www.youtube.com/live/nLZKpuCxmpM?si=klSB3459OY0cg_Y_" target="_blank" rel="noopener noreferrer">불꽃 축제 생중계</a>
       </div>
-      <div class="cd" id="cd">—</div>
     </div>
   </div>
 </header>
@@ -575,9 +618,18 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
     <span><i style="background:var(--c3)"></i>약간 붐빔</span>
     <span><i style="background:var(--c4)"></i>붐빔</span>
   </div>
-  <div class="map-hint" id="mapHint">원 크기 = 인원</div>
+  <div class="map-hint" id="mapHint">—:— 기준</div>
   <button class="loc-btn" id="locateMe" aria-label="현재 위치 표시" title="현재 위치 표시"></button>
 </div>
+
+<div class="list-head">
+  <h2 id="listTitle">가까운 순</h2>
+  <div class="sorts">
+    <button class="sort-btn" id="sortNear" aria-pressed="true">가까운 순</button>
+    <button class="sort-btn" id="sortCrowd" aria-pressed="false">붐비는 순</button>
+  </div>
+</div>
+<div class="rail" id="rail"></div>
 
 <section class="program" aria-labelledby="programTitle">
   <div class="program-inner">
@@ -628,18 +680,12 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   </div>
 </section>
 
-<div class="list-head">
-  <h2 id="listTitle">가까운 순</h2>
-  <div class="sorts">
-    <button class="sort-btn" id="sortNear" aria-pressed="true">가까운 순</button>
-    <button class="sort-btn" id="sortCrowd" aria-pressed="false">붐비는 순</button>
-  </div>
-</div>
-<div class="rail" id="rail"></div>
+
 
 <footer>
   혼잡도는 KT·SKT 기지국 신호를 5분 단위로 집계한 서울시 실시간 도시데이터 추정치입니다. 실제 현장과 차이가 있을 수 있습니다.<br>
-  현장 제보는 이용자가 올린 내용으로, 정확성이 보장되지 않습니다. 안전 안내는 반드시 현장 안내방송과 안전요원의 지시를 따르세요.
+  현장 제보는 이용자가 올린 내용으로, 정확성이 보장되지 않습니다. 안전 안내는 반드시 현장 안내방송과 안전요원의 지시를 따르세요.<br>
+  본 서비스는 서울세계불꽃축제 공식 홈페이지 및 한화그룹과 관련이 없는 비공식 정보 서비스입니다.
 </footer>
 
 <div class="fab-bar"><button class="fab" id="openReport">현장 상황 제보하기</button></div>
@@ -796,11 +842,11 @@ function ago(ts){
 
 function tickCountdown(){
   const diff = SHOW_TIME - Date.now(), el = $('#cd');
-  if (diff <= 0) { el.textContent = diff > -70*60*1000 ? '진행 중' : '종료'; return; }
+  if (diff <= 0) { el.textContent = diff > -70*60*1000 ? '· 진행 중' : '· 종료'; return; }
   const s = Math.floor(diff/1000), d = Math.floor(s/86400), h = Math.floor(s%86400/3600);
   const m = Math.floor(s%3600/60), sec = s%60;
-  el.textContent = d > 0 ? `${d}일 ${h}시간`
-    : `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  el.textContent = d > 0 ? `· D-${d}`
+    : `· ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')} 전`;
 }
 
 /** 최근 30분만, 최신일수록 무겁게. 현장은 빠르게 변한다. */
@@ -1021,7 +1067,7 @@ async function loadOfficial(){
     if (meta?.updatedAt){
       const t = new Date(meta.updatedAt);
       $('#mapHint').textContent =
-        `원 크기 = 인원 · ${count}곳 · ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')} 기준`;
+        `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')} 기준`;
     } else if (!count) {
       $('#mapHint').textContent = '혼잡도 데이터 없음';
     }
@@ -1250,13 +1296,25 @@ async function loadSubway(area){
 function renderSubway(area, list){
   const slot = document.getElementById('sw-slot');
   if (!slot || !list?.length) return;
+
+  // 상·하행을 섞어 보여주면 어느 쪽 열차인지 매번 읽어야 한다. 두 열로 나눈다.
+  // 외선/내선(2호선)처럼 '상행'이 아닌 표기도 있어 그대로 열 제목에 쓴다.
+  const dirs = [...new Set(list.map(a => a.dir).filter(Boolean))];
+  const cols = (dirs.length ? dirs : ['']).map(d => ({
+    dir: d,
+    items: list.filter(a => (a.dir || '') === d).slice(0, 3),
+  }));
+
   slot.innerHTML = `
     <div class="block-label">${esc(STATION_OF[area]||'')}역 다음 열차</div>
-    <div class="subway">${list.slice(0,6).map(a => `
-      <div class="subway-row">
-        <span class="subway-dir">${esc(a.dir||'')}</span>
-        <span class="subway-to">${esc((a.to||'').split(' - ')[1] || a.to || '')}</span>
-        <span class="subway-msg">${esc(a.msg||'')}</span>
+    <div class="subway">${cols.map(c => `
+      <div class="subway-col">
+        <div class="subway-dir">${esc(c.dir || '방면')}</div>
+        ${c.items.map(a => `
+          <div class="subway-row">
+            <span class="subway-to">${esc((a.to||'').split(' - ')[1] || a.to || '')}</span>
+            <span class="subway-msg">${esc(a.msg||'')}</span>
+          </div>`).join('')}
       </div>`).join('')}</div>`;
 }
 
@@ -1413,11 +1471,16 @@ function trafficSheet(){
   return `<div class="sheet-head"><span class="sheet-title">교통통제 안내</span>
     <button class="close" data-close aria-label="닫기">&times;</button></div>
     <div class="card-desc">한화 불꽃축제 공식 공지 · 등록일 2026-08-21</div>
-    ${items.map(it => `<div class="block">
-      <div class="block-label">${esc(it.t)}${it.o ? ` · ${esc(it.o)}` : ''}</div>
+    ${items.map((it, i) => `<div class="block">
+      <div class="block-label"><b class="traffic-no">${i + 1}</b>${esc(it.t)}${it.o ? ` · ${esc(it.o)}` : ''}</div>
       <div class="msg">${it.rows.map(([k,v]) => `<b>${esc(k)}</b> ${esc(v)}`).join('<br>')}</div>
       ${it.note ? `<div class="notice" style="margin-top:6px">${esc(it.note)}</div>` : ''}
     </div>`).join('')}
+    <div class="block traffic-figure">
+      <div class="block-label">교통통제 안내도</div>
+      <img src="/traffic_control_2026.jpg" alt="여의도 일대 교통통제 구간 안내도 — 번호는 위 목록과 같다" loading="lazy">
+      <div class="traffic-figure-cap">한화 불꽃축제 공식 공지 이미지</div>
+    </div>
     <div class="block">
       <a class="map-link" href="https://www.hanwhafireworks.com/notice/6" target="_blank" rel="noopener">공식 공지 원문 보기</a>
     </div>`;

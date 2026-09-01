@@ -26,8 +26,9 @@
   margin: 20px auto 10px; max-width: var(--maxw); padding: 0 var(--pad);
 }
 .sorts {
-  display: flex; gap: 0; background: var(--ink-panel);
+  display: flex; gap: 0; background: rgba(255,248,238,.07);
   border: 1px solid var(--ink-line); border-radius: var(--r-sorts); padding: var(--sorts-pad);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
 }
 .sort-btn {
   padding: var(--sort-btn-pad); border-radius: var(--r-pill); border: 0; cursor: pointer;
@@ -49,10 +50,13 @@
   border: 1px solid var(--ink-line); border-radius: var(--r);
   padding: var(--card-pad); color: inherit; font: inherit; cursor: pointer;
   display: grid; gap: var(--card-gap); align-content: start;
-  transition: border-color .18s, transform .18s;
+  position: relative; overflow: hidden;
+  box-shadow: 0 14px 34px rgba(6, 10, 30, .18), inset 0 1px 0 rgba(255,255,255,.08);
+  transition: border-color .18s, transform .18s, background .18s;
 }
+.card > * { position: relative }
 .card:hover { border-color: var(--text-faint); transform: translateY(-1px) }
-.card.active { border-color: var(--signal) }
+.card.active { border-color: var(--signal); background: linear-gradient(160deg, rgba(255,248,238,.16), rgba(255,248,238,.055) 48%, rgba(16,22,50,.78)) }
 .card:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 
 .card-top { display: flex; align-items: flex-start; gap: 8px }
@@ -78,9 +82,10 @@
 .program-inner {
   border: 1px solid var(--ink-line); border-radius: var(--r);
   background:
-    linear-gradient(135deg, rgba(255,255,255,.055), transparent 46%),
+    radial-gradient(circle at 100% 0, rgba(127,228,234,.14), transparent 190px),
+    linear-gradient(135deg, rgba(255,255,255,.08), transparent 46%),
     var(--ink-panel);
-  overflow: hidden;
+  overflow: hidden; box-shadow: 0 18px 42px rgba(6,10,30,.16);
 }
 .program-head {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
@@ -101,7 +106,7 @@
 .program-item:last-child { border-bottom: 0 }
 .program-item.featured {
   background:
-    linear-gradient(90deg, rgba(244,183,64,.13), transparent 62%),
+    linear-gradient(90deg, rgba(242,106,27,.18), transparent 62%),
     rgba(255,255,255,.025);
 }
 .program-time {
@@ -118,7 +123,7 @@
 }
 .firework-slot {
   border: 1px solid var(--ink-line); border-radius: var(--r);
-  padding: 8px; background: rgba(0,0,0,.14); min-width: 0;
+  padding: 8px; background: rgba(255,248,238,.055); min-width: 0;
 }
 .firework-country { display: block; color: var(--text); font-size: 12.5px; font-weight: var(--w-strong) }
 .firework-time {
@@ -130,13 +135,14 @@
 .fab-bar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
   padding: 12px var(--pad) calc(12px + env(safe-area-inset-bottom));
-  background: linear-gradient(transparent, var(--ink) 30%);
+  background: linear-gradient(transparent, rgba(12,17,43,.94) 30%);
 }
 .fab {
   display: block; width: 100%; max-width: var(--maxw); margin: 0 auto;
   padding: 15px; border: 0; border-radius: var(--r); cursor: pointer;
   background: var(--signal); color: var(--on-signal);
   font-family: var(--sans); font-size: 15px; font-weight: var(--w-strong);
+  box-shadow: 0 12px 28px rgba(242,106,27,.28), inset 0 1px 0 rgba(255,255,255,.32);
 }
 .fab:active { transform: translateY(1px) }
 .fab:focus-visible { outline: 2px solid var(--text); outline-offset: 2px }
@@ -149,7 +155,7 @@
 .sheet {
   width: 100%; max-width: var(--maxw); background: var(--ink-raised);
   border: 1px solid var(--ink-line); border-bottom: 0;
-  border-radius: calc(var(--r) + 2px) calc(var(--r) + 2px) 0 0;
+  border-radius: 18px 18px 0 0;
   padding: 20px var(--pad) calc(24px + env(safe-area-inset-bottom));
   max-height: min(88dvh, 760px); overflow-y: auto; overscroll-behavior: contain;
   animation: rise .22s ease-out;
@@ -171,6 +177,20 @@
 .metrics { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-dim); flex-wrap: wrap }
 .metrics b { color: var(--text); font-variant-numeric: tabular-nums }
 
+.traffic-no {
+  display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--text-faint); color: var(--ink); font-size: 10px; font-weight: 800;
+  margin-right: 6px; vertical-align: 1px; letter-spacing: 0;
+}
+/* 공식 공지 안내도 — 원문 이미지 그대로. 어두운 UI 위 흰 지도라 살짝 눌러 둔다. */
+.traffic-figure img {
+  display: block; width: 100%; border-radius: var(--r);
+  border: 1px solid var(--ink-line); background: #fff;
+}
+.traffic-figure-cap {
+  margin-top: 6px; font-size: 11px; color: var(--text-faint); line-height: 1.5;
+}
+
 /* ── 예측 그래프 ──────────────────────────────────────────────────── */
 .fc-top {
   font-size: 11.5px; color: var(--text-dim); margin-bottom: 12px;
@@ -186,17 +206,17 @@
 .fc-col.peak .fc-time { color: var(--signal); font-weight: var(--w-strong) }
 
 /* ── 지하철 도착정보 ──────────────────────────────────────────────── */
-.subway { display: grid; gap: 8px }
+.subway { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px }
+.subway-col { display: grid; gap: 6px; align-content: start; min-width: 0 }
 .subway-row {
-  display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
-  font-size: 12.5px; color: var(--text-dim);
+  display: grid; gap: 1px; font-size: 12.5px; color: var(--text-dim); min-width: 0;
 }
 .subway-dir {
-  font-size: 10px; padding: 2px 6px; border-radius: 4px;
+  font-size: 10px; padding: 2px 6px; border-radius: 4px; justify-self: start;
   background: var(--ink-line); color: var(--text-faint); white-space: nowrap;
 }
 .subway-to { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.subway-msg { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right }
+.subway-msg { font-variant-numeric: tabular-nums; font-size: 11.5px; color: var(--text-faint) }
 
 /* ── 제보 목록 ────────────────────────────────────────────────────── */
 .reports { display: grid; gap: 12px }
@@ -273,7 +293,7 @@
 .submit:disabled { opacity: .5; cursor: default }
 .notice, .msg {
   font-size: 12px; color: var(--text-faint); line-height: 1.5;
-  background: var(--ink-panel); border: 1px solid rgba(255, 255, 255, .04);
+  background: rgba(255,248,238,.055); border: 1px solid var(--ink-line);
   border-radius: var(--r); padding: 10px;
 }
 
@@ -296,9 +316,10 @@
 
 /* ── 지도 컨테이너(엔진 무관 부분) ───────────────────────────────── */
 .map-wrap {
-  position: relative; margin: 8px auto 0; max-width: var(--maxw);
+  position: relative; margin: 8px auto 0; width: calc(100% - (var(--pad) * 2)); max-width: var(--maxw);
   border-radius: var(--r); overflow: hidden;
   background: var(--map-bg); border: 1px solid var(--ink-line);
+  box-shadow: 0 22px 58px rgba(6,10,30,.28);
 }
 .legend, .map-hint {
   position: absolute; z-index: 5; font-size: 10.5px; color: var(--text-dim);
@@ -312,20 +333,18 @@
 .loc-btn {
   position: absolute; right: 10px; bottom: 10px; z-index: 6;
   width: 42px; height: 42px; display: grid; place-items: center;
-  border: 1px solid var(--ink-line); border-radius: var(--r);
-  background: var(--scrim); color: var(--text); cursor: pointer;
-  box-shadow: 0 8px 22px rgba(0,0,0,.28); backdrop-filter: blur(10px);
+  border: 0; background: none; color: var(--text); cursor: pointer;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.5));
 }
 .loc-btn::before {
-  content: ''; width: 16px; height: 16px; border: 2px solid currentColor;
-  border-radius: 50%; box-shadow: 0 0 0 4px rgba(255,255,255,.08);
-}
-.loc-btn::after {
-  content: ''; position: absolute; width: 2px; height: 26px;
-  background: currentColor; transform: rotate(45deg); opacity: .72;
+  content: '';
+  width: 20px; height: 20px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M256 0c17.7 0 32 14.3 32 32V67.3C368.5 80 432 143.5 444.7 224H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H444.7C432 368.5 368.5 432 288 444.7V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V444.7C143.5 432 80 368.5 67.3 288H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H67.3C80 143.5 143.5 80 224 67.3V32c0-17.7 14.3-32 32-32zM256 128a128 128 0 1 0 0 256 128 128 0 1 0 0-256zm0 96a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>") no-repeat center / contain;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M256 0c17.7 0 32 14.3 32 32V67.3C368.5 80 432 143.5 444.7 224H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H444.7C432 368.5 368.5 432 288 444.7V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V444.7C143.5 432 80 368.5 67.3 288H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H67.3C80 143.5 143.5 80 224 67.3V32c0-17.7 14.3-32 32-32zM256 128a128 128 0 1 0 0 256 128 128 0 1 0 0-256zm0 96a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>") no-repeat center / contain;
 }
 .loc-btn.loading { opacity: .72; cursor: wait }
-.loc-btn.on { color: var(--signal); border-color: var(--signal) }
+.loc-btn.on { color: var(--signal) }
 .loc-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 .me-pin {
   position: relative; width: 22px; height: 22px; border-radius: 50%;
@@ -341,8 +360,7 @@
 }
 
 /* ── 공통 ────────────────────────────────────────────────────────── */
-.sub { color: var(--text-dim); font-size: 12px; margin: 8px 0 0; font-weight: 500 }
-.cd { color: var(--signal); font-size: 20px; font-weight: var(--w-strong); line-height: 1; font-variant-numeric: tabular-nums }
+.cd { font-variant-numeric: tabular-nums }
 .flow-in { color: var(--c3) }
 .flow-out { color: var(--c1) }
 
