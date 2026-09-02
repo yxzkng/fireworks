@@ -21,9 +21,9 @@ import base64, json, pathlib, shutil
 
 root = pathlib.Path(__file__).parent
 shared = (root / 'shared.css').read_text().strip()
-TRAFFIC_IMG = root / 'assets' / 'traffic_control_2026.jpg'
-BANNER_IMG = root / 'assets' / 'banner_image.png'
-TOILET_IMG = root / 'assets' / 'toilet.png'
+TRAFFIC_IMG = root / 'assets' / 'traffic_control_2026.webp'
+BANNER_IMG = root / 'assets' / 'banner_image.webp'
+TOILET_IMG = root / 'assets' / 'toilet.webp'
 
 
 def build(src, dst, subs=()):
@@ -42,7 +42,7 @@ def compact(path):
                       ensure_ascii=False, separators=(',', ':'))
 
 
-def data_uri(path, mime='image/jpeg'):
+def data_uri(path, mime='image/webp'):
     b64 = base64.b64encode(path.read_bytes()).decode()
     return f'data:{mime};base64,{b64}'
 
@@ -52,8 +52,8 @@ build('template.html', 'index.html', subs=[
     ('/*__GEO__*/null', compact('geo.json')),
     ('/*__COORDS__*/null', compact('area-coords.json')),
     ('/*__TRAFFIC_IMG__*/', data_uri(TRAFFIC_IMG)),
-    ('/*__TOILET_IMG__*/\'\'', f"'{data_uri(TOILET_IMG, 'image/png')}'"),
-    ('/*__BANNER_IMG__*/\'\'', f"'{data_uri(BANNER_IMG, 'image/png')}'"),
+    ('/*__TOILET_IMG__*/\'\'', f"'{data_uri(TOILET_IMG)}'"),
+    ('/*__BANNER_IMG__*/\'\'', f"'{data_uri(BANNER_IMG)}'"),
 ])
 
 # Vercel판 — 카카오맵이 좌표를 알아서 다룬다. 안내도는 정적 파일로 낸다.
