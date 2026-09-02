@@ -209,6 +209,20 @@
 .fc-col.peak .fc-time { color: var(--signal); font-weight: var(--w-strong) }
 
 /* ── 지하철 도착정보 ──────────────────────────────────────────────── */
+.block-label-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-bottom: 8px;
+}
+.block-label-row .block-label { margin-bottom: 0 }
+.refresh-btn {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ink-line);
+  background: rgba(7,12,31,.36); color: var(--text-dim); cursor: pointer;
+  display: grid; place-items: center; padding: 0; font-family: var(--sans);
+  font-size: 16px; line-height: 1; flex: 0 0 auto;
+}
+.refresh-btn:hover { color: var(--text); border-color: var(--text-faint) }
+.refresh-btn.loading { opacity: .62; cursor: wait }
+.refresh-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 .subway { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px }
 .subway-col { display: grid; gap: 6px; align-content: start; min-width: 0 }
 .subway-row {

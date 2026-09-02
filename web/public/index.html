@@ -354,6 +354,20 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
 .fc-col.peak .fc-time { color: var(--signal); font-weight: var(--w-strong) }
 
 /* ── 지하철 도착정보 ──────────────────────────────────────────────── */
+.block-label-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-bottom: 8px;
+}
+.block-label-row .block-label { margin-bottom: 0 }
+.refresh-btn {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ink-line);
+  background: rgba(7,12,31,.36); color: var(--text-dim); cursor: pointer;
+  display: grid; place-items: center; padding: 0; font-family: var(--sans);
+  font-size: 16px; line-height: 1; flex: 0 0 auto;
+}
+.refresh-btn:hover { color: var(--text); border-color: var(--text-faint) }
+.refresh-btn.loading { opacity: .62; cursor: wait }
+.refresh-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 .subway { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px }
 .subway-col { display: grid; gap: 6px; align-content: start; min-width: 0 }
 .subway-row {
@@ -1366,11 +1380,11 @@ const STATION_OF = {
 };
 const subwayCache = {};
 
-async function loadSubway(area){
+async function loadSubway(area, force = false){
   if (!STATION_OF[area]) return null;
-  if (subwayCache[area]) return subwayCache[area];
+  if (!force && subwayCache[area]) return subwayCache[area];
   try {
-    const res = await fetch(`/api/subway?area=${encodeURIComponent(area)}`);
+    const res = await fetch(`/api/subway?area=${encodeURIComponent(area)}${force ? `&t=${Date.now()}` : ''}`, { cache:'no-store' });
     if (!res.ok) return null;
     const { arrivals } = await res.json();
     if (!arrivals?.length) return null;
@@ -1392,7 +1406,10 @@ function renderSubway(area, list){
   }));
 
   slot.innerHTML = `
-    <div class="block-label">${esc(STATION_OF[area]||'')}역 다음 열차</div>
+    <div class="block-label-row">
+      <div class="block-label">${esc(STATION_OF[area]||'')}역 다음 열차</div>
+      <button class="refresh-btn" data-refresh-subway="${esc(area)}" type="button" aria-label="도착정보 새로고침" title="도착정보 새로고침">↻</button>
+    </div>
     <div class="subway">${cols.map(c => `
       <div class="subway-col">
         <div class="subway-dir">${esc(c.dir || '방면')}</div>
@@ -1439,7 +1456,10 @@ function detailSheet(area){
 
   // 근처에 역이 있는 장소만 표시. 자리만 잡아두고 도착하면 채운다.
   if (STATION_OF[area]) html += `<div class="block" id="sw-slot">
-    <div class="block-label">${esc(STATION_OF[area])}역 다음 열차</div>
+    <div class="block-label-row">
+      <div class="block-label">${esc(STATION_OF[area])}역 다음 열차</div>
+      <button class="refresh-btn" data-refresh-subway="${esc(area)}" type="button" aria-label="도착정보 새로고침" title="도착정보 새로고침">↻</button>
+    </div>
     <div class="notice">불러오는 중…</div></div>`;
 
   if (vote) html += `<div class="block">
@@ -1606,8 +1626,30 @@ async function fillSubway(area){
   else {
     const slot = document.getElementById('sw-slot');
     if (slot) slot.innerHTML =
-      `<div class="block-label">${esc(STATION_OF[area])}역 다음 열차</div><div class="notice">도착정보를 불러오지 못했습니다.</div>`;
+      `<div class="block-label-row">
+        <div class="block-label">${esc(STATION_OF[area])}역 다음 열차</div>
+        <button class="refresh-btn" data-refresh-subway="${esc(area)}" type="button" aria-label="도착정보 새로고침" title="도착정보 새로고침">↻</button>
+      </div><div class="notice">도착정보를 불러오지 못했습니다.</div>`;
   }
+}
+
+async function refreshSubway(area, btn){
+  if (!STATION_OF[area]) return;
+  delete subwayCache[area];
+  btn?.classList.add('loading');
+  btn?.setAttribute('disabled', '');
+  const slot = document.getElementById('sw-slot');
+  if (slot) slot.innerHTML = `<div class="block-label-row">
+    <div class="block-label">${esc(STATION_OF[area])}역 다음 열차</div>
+    <button class="refresh-btn loading" data-refresh-subway="${esc(area)}" type="button" aria-label="도착정보 새로고침" title="도착정보 새로고침" disabled>↻</button>
+  </div><div class="notice">불러오는 중…</div>`;
+  const list = await loadSubway(area, true);
+  if (sheet?.type !== 'detail' || sheet.area !== area) return;
+  if (list) renderSubway(area, list);
+  else if (slot) slot.innerHTML = `<div class="block-label-row">
+    <div class="block-label">${esc(STATION_OF[area])}역 다음 열차</div>
+    <button class="refresh-btn" data-refresh-subway="${esc(area)}" type="button" aria-label="도착정보 새로고침" title="도착정보 새로고침">↻</button>
+  </div><div class="notice">도착정보를 불러오지 못했습니다.</div>`;
 }
 function closeSheet(){ sheet = null; $('#modal').innerHTML = ''; document.body.style.overflow=''; }
 function refreshSheet(){
@@ -1627,6 +1669,8 @@ document.addEventListener('click', async (e) => {
   if (card) return selectArea(card.dataset.area);
   if (t.id === 'openReport') return openSheet('report', selected);
   if (t.id === 'openTraffic') return openSheet('traffic', null);
+  const subwayRefresh = t.closest('[data-refresh-subway]');
+  if (subwayRefresh) return refreshSubway(subwayRefresh.dataset.refreshSubway, subwayRefresh);
   if (t.classList.contains('sheet-bg') || t.closest('button[data-close]')) return closeSheet();
 
   const fa = t.closest('[data-report-for]');
