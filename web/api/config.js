@@ -5,7 +5,7 @@
  * 환경변수에서 읽어 전달한다. 여기 담기는 값은 모두 공개용이다
  * (카카오 JS 키와 Supabase anon 키는 원래 브라우저에 노출되는 값이며,
  *  실제 보호는 카카오 도메인 등록과 Supabase RLS가 담당한다).
- * 서울시 인증키와 CRON_SECRET은 절대 여기 넣지 않는다.
+ * 서울시 인증키는 절대 여기 넣지 않는다.
  */
 export default function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=3600');

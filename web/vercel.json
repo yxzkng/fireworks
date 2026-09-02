@@ -1,7 +1,4 @@
 {
-  "crons": [
-    { "path": "/api/congestion?cron=1", "schedule": "*/5 * * * *" }
-  ],
   "functions": {
     "api/congestion.js": { "maxDuration": 10 },
     "api/subway.js": { "maxDuration": 10 }
