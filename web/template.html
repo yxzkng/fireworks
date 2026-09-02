@@ -259,21 +259,9 @@ const LEVELS = ['여유','보통','약간 붐빔','붐빔'];
 const VIEWABLE = new Set(['여의도한강공원','여의도','여의서로','노들섬',
   '이촌한강공원','반포한강공원','양화한강공원','망원한강공원']);
 
-/* 서울시·지도 서비스 개방화장실 목록과 여의도한강공원 공중화장실 정보를 기준으로,
-   축제 관람 동선에서 찾기 쉬운 지점만 추렸다. 일부 좌표는 시설명 중심점 기준. */
+/* 카카오 장소 검색 실패 시 쓰는 임시 fallback. 실제 배포 화면은 Kakao Places 결과로 교체한다. */
 const TOILETS = [
-  { name:'한강공원 1번', lat:37.5269, lon:126.9342 },
-  { name:'한강공원 2번', lat:37.5277, lon:126.9368 },
-  { name:'한강공원 3번', lat:37.5287, lon:126.9397 },
-  { name:'한강공원 5번', lat:37.5312, lon:126.9438 },
-  { name:'한강공원 6번', lat:37.5331, lon:126.9481 },
-  { name:'한강공원 7번', lat:37.5355, lon:126.9517 },
-  { name:'여의나루역', lat:37.5271, lon:126.9329 },
-  { name:'여의도역', lat:37.5216, lon:126.9243 },
-  { name:'여의도동주민센터', lat:37.5281, lon:126.9292 },
-  { name:'여의도우체국', lat:37.5244, lon:126.9259 },
-  { name:'IFC몰', lat:37.5252, lon:126.9255 },
-  { name:'국회의사당역', lat:37.5281, lon:126.9178 },
+  { name:'여의도 공중화장실', lat:37.5280, lon:126.9345, url:'https://map.kakao.com/link/search/여의도%20공중화장실' },
 ];
 
 const NOTES = {
@@ -382,6 +370,7 @@ let COORDS = [];
 let cfg = {}, sb = null, map = null;
 let markers = [];
 let toiletMarkers = [];
+let toiletPlaces = TOILETS;
 let myLocationOverlay = null;
 let myLocation = null;
 let reports = [], official = {};
@@ -510,6 +499,7 @@ function initMap(){
 
   drawMarkers();
   drawToilets();
+  loadToiletsFromKakao();
 }
 
 function locateMe(){
@@ -571,17 +561,61 @@ function drawToilets(){
   toiletMarkers.forEach(m => m.setMap(null));
   toiletMarkers = [];
   if (!map || !showToilets) return;
-  toiletMarkers = TOILETS.map(t => new kakao.maps.CustomOverlay({
+  toiletMarkers = toiletPlaces.map(t => new kakao.maps.CustomOverlay({
     map,
     position: new kakao.maps.LatLng(t.lat, t.lon),
     zIndex: 6,
     clickable: true,
-    content: `<div class="toilet-pin" data-name="${esc(t.name)}" title="${esc(t.name)}"></div>`,
+    content: `<div class="toilet-pin" data-toilet-url="${esc(t.url || kakaoSearchUrl(t.name))}" data-name="${esc(t.name)}" title="${esc(t.name)}"></div>`,
   }));
+}
+
+function kakaoSearchUrl(q){
+  return `https://map.kakao.com/link/search/${encodeURIComponent(q)}`;
+}
+
+function loadToiletsFromKakao(){
+  if (!window.kakao?.maps?.services) return;
+  const ps = new kakao.maps.services.Places();
+  const center = new kakao.maps.LatLng(37.5285, 126.9340);
+  const keywords = ['여의도 공중화장실', '여의도 개방화장실', '여의도한강공원 화장실'];
+  const found = new Map();
+  let pending = keywords.length;
+
+  keywords.forEach(keyword => {
+    ps.keywordSearch(keyword, (data, status) => {
+      if (status === kakao.maps.services.Status.OK) {
+        data.forEach(p => {
+          const lat = Number(p.y), lon = Number(p.x);
+          if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+          if (lat < 37.515 || lat > 37.540 || lon < 126.910 || lon > 126.960) return;
+          const key = p.id || `${p.place_name}-${p.x}-${p.y}`;
+          found.set(key, {
+            name: p.place_name || keyword,
+            lat,
+            lon,
+            url: p.place_url || kakaoSearchUrl(p.place_name || keyword),
+          });
+        });
+      }
+      pending -= 1;
+      if (pending === 0 && found.size) {
+        toiletPlaces = [...found.values()];
+        drawToilets();
+      }
+    }, { location: center, radius: 4200, size: 15 });
+  });
 }
 
 /* 마커 클릭 — CustomOverlay는 이벤트가 약해서 위임으로 받는다 */
 document.addEventListener('click', (e) => {
+  const toilet = e.target.closest('.toilet-pin');
+  if (toilet?.dataset.toiletUrl) {
+    e.stopPropagation();
+    window.open(toilet.dataset.toiletUrl, '_blank', 'noopener');
+    return;
+  }
+
   const pin = e.target.closest('.pin');
   if (!pin) return;
   e.stopPropagation();
@@ -1315,7 +1349,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   const s = document.createElement('script');
-  s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(cfg.kakaoKey)}&autoload=false`;
+  s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(cfg.kakaoKey)}&autoload=false&libraries=services`;
   s.onload = () => kakao.maps.load(() => {
     initMap();
   });

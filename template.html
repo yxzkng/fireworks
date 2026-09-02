@@ -286,21 +286,10 @@ const VIEWABLE = new Set([
   '이촌한강공원', '반포한강공원', '양화한강공원', '망원한강공원',
 ]);
 
-/* 서울시·지도 서비스 개방화장실 목록과 여의도한강공원 공중화장실 정보를 기준으로,
-   축제 관람 동선에서 찾기 쉬운 지점만 추렸다. 일부 좌표는 시설명 중심점 기준. */
+/* 단일 HTML 아티팩트는 카카오 SDK 없이 캔버스로 그리므로 검색 링크용 대표 핀만 둔다.
+   실제 배포 화면(web/template.html)은 Kakao Places 검색 결과 좌표로 화장실을 그린다. */
 const TOILETS = [
-  { name:'한강공원 1번', lat:37.5269, lon:126.9342 },
-  { name:'한강공원 2번', lat:37.5277, lon:126.9368 },
-  { name:'한강공원 3번', lat:37.5287, lon:126.9397 },
-  { name:'한강공원 5번', lat:37.5312, lon:126.9438 },
-  { name:'한강공원 6번', lat:37.5331, lon:126.9481 },
-  { name:'한강공원 7번', lat:37.5355, lon:126.9517 },
-  { name:'여의나루역', lat:37.5271, lon:126.9329 },
-  { name:'여의도역', lat:37.5216, lon:126.9243 },
-  { name:'여의도동주민센터', lat:37.5281, lon:126.9292 },
-  { name:'여의도우체국', lat:37.5244, lon:126.9259 },
-  { name:'IFC몰', lat:37.5252, lon:126.9255 },
-  { name:'국회의사당역', lat:37.5281, lon:126.9178 },
+  { name:'여의도 공중화장실', lat:37.5280, lon:126.9345, url:'https://map.kakao.com/link/search/여의도%20공중화장실' },
 ];
 
 /* 관람 특성 — 혼잡도만으로는 고를 수 없어서 함께 보여준다 */
@@ -595,6 +584,7 @@ function drawMap() {
   // 장소 원 — 클러스터 단위
   const groups = cluster(allStates(), P, w, h);
   hit = [];
+  toiletHit = [];
   for (const g of groups) {
     const items = g.items;
     const people = items.reduce((a, i) => a + i.people, 0);
@@ -654,6 +644,7 @@ function drawMap() {
     for (const t of TOILETS) {
       const [tx, ty] = P(t.lat, t.lon);
       if (tx < -40 || tx > w + 40 || ty < -40 || ty > h + 40) continue;
+      toiletHit.push({ x: tx, y: ty, r: 18, url: t.url });
       if (toiletIcon.complete && toiletIcon.naturalWidth) {
         ctx.drawImage(toiletIcon, tx - 17, ty - 17, 34, 34);
       } else {
@@ -699,6 +690,7 @@ function drawMap() {
   }
 }
 let hit = [];
+let toiletHit = [];
 
 const cssCache = {};
 function getCss(v) {
@@ -728,6 +720,8 @@ cv.addEventListener('pointerup', (e) => {
   if (wasDrag) return;                      // 드래그였으면 클릭으로 치지 않는다
   const r = cv.getBoundingClientRect();
   const px = e.clientX - r.left, py = e.clientY - r.top;
+  const toilet = toiletHit.find((t) => Math.hypot(t.x - px, t.y - py) <= t.r);
+  if (toilet?.url) return window.open(toilet.url, '_blank', 'noopener');
   const g = hit.find((g) => Math.hypot(g.x - px, g.y - py) <= g.r);
   if (!g) return;
   if (g.items.length === 1) selectArea(g.items[0].area);
