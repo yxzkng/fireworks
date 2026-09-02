@@ -135,4 +135,4 @@ curl "https://<주소>.vercel.app/api/congestion" | head -c 300
 | `api/congestion.js` | 서울시 혼잡도 수집(Cron) + 배포 |
 | `api/config.js` | 공개 키를 브라우저에 전달 |
 | `schema.sql` | Supabase 테이블·정책·신고 함수 |
-| `vercel.json` | Cron 5분 주기 설정 |
+| `vercel.json` | Cron 5분 주기 설정. `maxDuration: 10`은 Hobby 플랜 함수 실행 상한(명시해 두면 플랫폼 기본값이 바뀌어도 동작이 같다) — congestion/subway 쪽 fetch 타임아웃이 이 안에서 끝나도록 짜여 있다 |
