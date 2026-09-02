@@ -500,6 +500,9 @@ const ctx = cv.getContext('2d');
 let view = { lat: 37.528, lon: 126.945, zoom: 1 };   // zoom 1 = 여의도 일대
 let myLocation = null;
 let showToilets = true;
+const toiletIcon = new Image();
+toiletIcon.src = /*__TOILET_IMG__*/'';
+toiletIcon.onload = () => drawMap();
 
 function fitDefault() { view = { lat: 37.528, lon: 126.945, zoom: 1 }; }
 
@@ -651,16 +654,20 @@ function drawMap() {
     for (const t of TOILETS) {
       const [tx, ty] = P(t.lat, t.lon);
       if (tx < -40 || tx > w + 40 || ty < -40 || ty > h + 40) continue;
-      ctx.fillStyle = getCss('--text');
-      ctx.strokeStyle = getCss('--signal');
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.roundRect(tx - 15, ty - 15, 30, 30, 8);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = getCss('--ink');
-      ctx.font = '900 17px ' + getCss('--body');
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('WC', tx, ty + 1);
+      if (toiletIcon.complete && toiletIcon.naturalWidth) {
+        ctx.drawImage(toiletIcon, tx - 17, ty - 17, 34, 34);
+      } else {
+        ctx.fillStyle = getCss('--text');
+        ctx.strokeStyle = getCss('--signal');
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(tx - 15, ty - 15, 30, 30, 8);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = getCss('--ink');
+        ctx.font = '900 17px ' + getCss('--body');
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('WC', tx, ty + 1);
+      }
       if (view.zoom >= 1.6) {
         ctx.font = '750 10.5px ' + getCss('--body');
         const tw = ctx.measureText(t.name).width;
