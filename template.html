@@ -644,29 +644,23 @@ function drawMap() {
     for (const t of TOILETS) {
       const [tx, ty] = P(t.lat, t.lon);
       if (tx < -40 || tx > w + 40 || ty < -40 || ty > h + 40) continue;
-      toiletHit.push({ x: tx, y: ty, r: 18, url: t.url });
+      toiletHit.push({ x: tx, y: ty, r: 14, url: t.url });
+      ctx.globalAlpha = .86;
       if (toiletIcon.complete && toiletIcon.naturalWidth) {
-        ctx.drawImage(toiletIcon, tx - 17, ty - 17, 34, 34);
+        ctx.drawImage(toiletIcon, tx - 13, ty - 13, 26, 26);
       } else {
         ctx.fillStyle = getCss('--text');
         ctx.strokeStyle = getCss('--signal');
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.roundRect(tx - 15, ty - 15, 30, 30, 8);
+        ctx.roundRect(tx - 13, ty - 13, 26, 26, 8);
         ctx.fill(); ctx.stroke();
         ctx.fillStyle = getCss('--ink');
-        ctx.font = '900 17px ' + getCss('--body');
+        ctx.font = '900 13px ' + getCss('--body');
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('WC', tx, ty + 1);
       }
-      if (view.zoom >= 1.6) {
-        ctx.font = '750 10.5px ' + getCss('--body');
-        const tw = ctx.measureText(t.name).width;
-        ctx.fillStyle = 'rgba(7,10,15,.86)';
-        ctx.fillRect(tx - tw / 2 - 5, ty + 20, tw + 10, 15);
-        ctx.fillStyle = getCss('--text');
-        ctx.fillText(t.name, tx, ty + 28);
-      }
+      ctx.globalAlpha = 1;
     }
     ctx.restore();
   }

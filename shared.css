@@ -326,15 +326,11 @@
 }
 .toilet-pin {
   position: relative; z-index: 4; display: grid; place-items: center;
-  width: 34px; height: 34px; border-radius: 10px;
+  width: 26px; height: 26px; border-radius: 8px;
   background: url('/toilet.png') center / contain no-repeat;
-  border: 0; box-shadow: 0 7px 18px rgba(0,0,0,.38);
+  border: 0; box-shadow: 0 5px 14px rgba(0,0,0,.28);
+  opacity: .86;
   color: transparent; font-size: 0;
-}
-.toilet-pin::after {
-  content: attr(data-name); position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
-  margin-top: 4px; white-space: nowrap; font-size: 10.5px; font-weight: 750;
-  color: var(--text); background: rgba(7,10,15,.86); border-radius: 4px; padding: 2px 6px;
 }
 .toilet-toggle {
   position: absolute; top: 10px; right: 10px; z-index: 7;
