@@ -1,5 +1,10 @@
 {
   "crons": [
     { "path": "/api/congestion?cron=1", "schedule": "*/5 * * * *" }
-  ]
+  ],
+  "//": "Hobby 플랜의 함수 실행 상한은 10초다. 명시해 두면 플랫폼 기본값이 바뀌어도 동작이 같다. 코드는 이 안에서 끝나도록 짜여 있다(서울시 타임아웃 5초).",
+  "functions": {
+    "api/congestion.js": { "maxDuration": 10 },
+    "api/subway.js": { "maxDuration": 10 }
+  }
 }

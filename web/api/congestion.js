@@ -38,6 +38,14 @@ async function kvSet(key, value, options) {
   try { await client.set(key, value, options); } catch {}
 }
 
+/** 없을 때만 넣는다. 참이면 이 요청이 락을 쥔 것이다. */
+async function kvSetIfAbsent(key, value, ttlSec) {
+  const client = await getKv();
+  if (!client) return false;
+  try { return (await client.set(key, value, { nx: true, ex: ttlSec })) !== null; }
+  catch { return false; }
+}
+
 /** 이번 분에 어떤 등급을 갱신할지. 하루 총량이 1,000회를 넘지 않게 맞춰져 있다. */
 function tiersToFetch(kst) {
   const h = kst.getUTCHours(), m = kst.getUTCMinutes();
@@ -98,7 +106,9 @@ function distill(cd) {
 async function collect(area, key) {
   const url = `http://openapi.seoul.go.kr:8088/${key}/json/citydata/1/5/${encodeURIComponent(area)}`;
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+    // cron도 같은 10초 제한을 받는다. 정시에는 19곳을 부르므로
+    // 한 곳이 오래 붙들면 나머지가 통째로 날아간다.
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) return { area, ok: false, why: `status ${res.status}` };
     const raw = await res.json();
 
@@ -118,7 +128,9 @@ async function collect(area, key) {
 
 async function fetchLive(area, key) {
   const url = `http://openapi.seoul.go.kr:8088/${key}/json/citydata/1/5/${encodeURIComponent(area)}`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  // 접속자 요청 경로에서 쓰인다. 12초를 기다리면 함수 제한(10초)에 걸려
+  // 응답 자체를 못 준다. 여기서는 빨리 포기하고 빈손으로 돌아가는 편이 낫다.
+  const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
   if (!res.ok) return null;
   const raw = await res.json();
   const code = raw?.RESULT?.['RESULT.CODE'];
@@ -151,10 +163,12 @@ export default async function handler(req, res) {
     const targets = req.query?.all === '1' ? ALL : tiersToFetch(kst);
     if (!targets.length) return res.json({ skipped: true });
 
-    // 서울시를 한꺼번에 때리지 않도록 4개씩 나눠 부른다
+    // 서울시를 한꺼번에 때리지 않도록 나눠 부르되, 배치가 너무 잘게 쪼개지면
+    // 왕복이 쌓여 10초 제한에 걸린다(19곳을 4개씩이면 5배치 = 최악 30초).
+    // 10개씩 2배치면 최악 12초대이고, 실제로는 병렬이라 6초 안팎에서 끝난다.
     const results = [];
-    for (let i = 0; i < targets.length; i += 4) {
-      results.push(...await Promise.all(targets.slice(i, i + 4).map((a) => collect(a, process.env.SEOUL_API_KEY))));
+    for (let i = 0; i < targets.length; i += 10) {
+      results.push(...await Promise.all(targets.slice(i, i + 10).map((a) => collect(a, process.env.SEOUL_API_KEY))));
     }
 
     const day = kst.toISOString().slice(0, 10);
@@ -191,19 +205,46 @@ export default async function handler(req, res) {
   const areas = {};
   ALL.forEach((a, i) => { if (values[i]) areas[a] = values[i]; });
 
+  // 캐시가 통째로 비었을 때만 서버가 직접 채운다(배포 직후, KV 장애 복구 직후 등).
+  //
+  // 이 경로는 반드시 한 번에 한 요청만 지나가야 한다. 락이 없으면 접속자
+  // 50명이 각자 19곳을 부르는 950회가 되어, 하루 1,000회 예산이 한순간에
+  // 사라진다 — 하필 캐시가 비어 있는 최악의 순간에.
   if (!Object.keys(areas).length && process.env.SEOUL_API_KEY) {
-    const results = [];
-    for (let i = 0; i < ALL.length; i += 4) {
-      results.push(...await Promise.all(ALL.slice(i, i + 4).map((a) => collectBestEffort(a, process.env.SEOUL_API_KEY))));
+    const gotLock = await kvSetIfAbsent('fill:lock', 1, 60);
+
+    if (!gotLock) {
+      // 남이 채우는 중이다. 채워질 때까지 기다렸다 그 값을 쓴다.
+      // 락 보유자는 HOT 4곳을 병렬로 부르므로 보통 1~2초, 느려도 5초(타임아웃)면
+      // 끝난다. 그보다 짧게 기다리면 다 같이 빈손으로 돌아가 화면이 회색이 된다.
+      // 매번 19곳을 확인하면 KV 명령만 늘어나니, 대표로 HOT 한 곳만 본다.
+      const probe = HOT[0];
+      for (let i = 0; i < 24; i++) {
+        await new Promise((r) => setTimeout(r, 250));
+        if (await kvGet(`area:${probe}`)) {
+          const filled = await Promise.all(ALL.map((a) => kvGet(`area:${a}`)));
+          ALL.forEach((a, i2) => { if (filled[i2]) areas[a] = filled[i2]; });
+          meta = (await kvGet('meta')) || meta;
+          break;
+        }
+      }
+    } else {
+      // 함수 제한(Hobby 10초) 안에 끝나야 한다. 19곳을 4개씩 5배치로 부르면
+      // 서울시가 느릴 때 15초가 넘어 함수가 통째로 죽는다 — 그러면 락만
+      // 남고 아무도 캐시를 못 채운다. 그래서 여기서는 HOT만 채운다.
+      // 나머지는 5분 주기 cron이 채우고, 첫 화면에 가장 중요한 것도 HOT이다.
+      const targets = HOT;
+      const results = await Promise.all(
+        targets.map((a) => collectBestEffort(a, process.env.SEOUL_API_KEY)));
+      results.forEach((r) => { if (r.ok && r.data) areas[r.area] = r.data; });
+      meta = {
+        updatedAt: new Date().toISOString(),
+        failed: results.filter((r) => !r.ok),
+        callsToday: results.length,
+        filledFromEmptyCache: true,
+      };
+      await kvSet('meta', meta);
     }
-    results.forEach((r) => { if (r.ok && r.data) areas[r.area] = r.data; });
-    meta = {
-      updatedAt: new Date().toISOString(),
-      failed: results.filter((r) => !r.ok),
-      callsToday: results.length,
-      filledFromEmptyCache: true,
-    };
-    await kvSet('meta', meta);
   }
 
   // ?area=<이름> 이면 그 장소의 전체(예측 포함)를 준다. 상세 화면을 열 때만 쓴다.

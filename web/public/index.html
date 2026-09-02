@@ -1155,7 +1155,11 @@ $('#sortCrowd').onclick = () => setSort('crowd');
 /* ── 혼잡도 ── */
 async function loadOfficial(){
   try{
-    const res = await fetch('/api/congestion', { cache:'no-store' });
+    // no-store를 쓰면 접속자 전원의 폴링이 매번 origin까지 간다 —
+    // 1,000명이면 KV 명령이 하루 700만 회로 무료 한도(30만)를 훌쩍 넘는다.
+    // 서버가 붙이는 s-maxage=60에 맡기면 origin 요청이 분당 1회로 고정되고,
+    // 접속자 수와 무관해진다. 원본이 5분 주기라 60초 지연은 손해가 아니다.
+    const res = await fetch('/api/congestion');
     if (!res.ok) {
       $('#mapHint').textContent = `혼잡도 API 오류 ${res.status}`;
       return;
@@ -1372,19 +1376,43 @@ function renderForecast(list){
 
 /* 지하철 도착정보 — 근처에 역이 있는 장소만 상세에 뜬다.
    전체 폴링이 아니라 상세를 열 때만 부르고, 서버가 30초 캐시한다. */
+/* 서버(api/subway.js)와 반드시 같아야 한다. 여기 없는 장소는 상세에
+   지하철 블록 자체를 그리지 않는다 — 일일 1,000회 한도 때문에 서버가
+   발사지점 코앞 두 역만 응답한다. */
 const STATION_OF = {
-  '여의도한강공원':'여의나루', '여의도':'여의도', '노량진':'노량진',
-  '용산역':'용산', '영등포 타임스퀘어':'영등포시장', '합정역':'합정',
-  '서울역':'서울역', '홍대 관광특구':'홍대입구', '신촌·이대역':'신촌',
-  '고속터미널역':'고속터미널', '강남역':'강남',
+  '여의도한강공원':'여의나루',   // 0.4km — 관람 핵심
+  '여의도':'여의도',             // 0.8km — 5·9호선 환승
 };
+
+/* 도착정보를 노출하는 창(불꽃 당일 17~24시).
+   축제 전날이나 새벽에 '다음 열차'를 띄워도 쓸 데가 없고, 그 조회가
+   서버 예산(하루 1,000회)을 갉아 정작 러시 때 모자라게 된다.
+   서버 TTL 구간(17시부터 조밀해진다)과 맞춰 둔 값이다. */
+const SUBWAY_WINDOW = { fromHour: 17, toHour: 24 };
+
+/** 지금 지하철 블록을 보여줄 때인가. KST 기준으로 판단한다. */
+function subwayVisible(now = new Date()){
+  const kst = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + 9 * 3600000);
+  const sameDay = kst.toDateString() === new Date(
+    SHOW_TIME.getTime() + (SHOW_TIME.getTimezoneOffset() * 60000) + 9 * 3600000
+  ).toDateString();
+  if (!sameDay) return false;
+  const h = kst.getHours();
+  return h >= SUBWAY_WINDOW.fromHour && h < SUBWAY_WINDOW.toHour;
+}
+
+/** 역이 있고, 지금이 그 시간대인가. */
+const subwayShown = (area) => !!STATION_OF[area] && subwayVisible();
 const subwayCache = {};
 
 async function loadSubway(area, force = false){
   if (!STATION_OF[area]) return null;
   if (!force && subwayCache[area]) return subwayCache[area];
   try {
-    const res = await fetch(`/api/subway?area=${encodeURIComponent(area)}${force ? `&t=${Date.now()}` : ''}`, { cache:'no-store' });
+    // 평소에는 CDN 캐시(s-maxage)를 그대로 탄다. 새로고침 버튼을 눌렀을 때만
+    // ?t= 로 캐시를 우회한다 — 그 경로는 서버의 락·예산이 따로 막아준다.
+    const res = await fetch(`/api/subway?area=${encodeURIComponent(area)}${force ? `&t=${Date.now()}` : ''}`,
+                            force ? { cache:'no-store' } : undefined);
     if (!res.ok) return null;
     const { arrivals } = await res.json();
     if (!arrivals?.length) return null;
@@ -1454,8 +1482,9 @@ function detailSheet(area){
       <div class="msg">${extra.join('<br>')}</div></div>`;
   }
 
-  // 근처에 역이 있는 장소만 표시. 자리만 잡아두고 도착하면 채운다.
-  if (STATION_OF[area]) html += `<div class="block" id="sw-slot">
+  // 근처에 역이 있고, 지금이 그 시간대일 때만 표시.
+  // 자리만 잡아두고 도착하면 채운다.
+  if (subwayShown(area)) html += `<div class="block" id="sw-slot">
     <div class="block-label-row">
       <div class="block-label">${esc(STATION_OF[area])}역 다음 열차</div>
       <button class="refresh-btn" data-refresh-subway="${esc(area)}" type="button" aria-label="도착정보 새로고침" title="도착정보 새로고침">↻</button>
@@ -1619,7 +1648,7 @@ async function fillForecast(area){
 }
 /** 지하철 도착정보를 가져와 채운다. 근처에 역이 없는 장소는 조용히 건너뛴다. */
 async function fillSubway(area){
-  if (!STATION_OF[area]) return;
+  if (!subwayShown(area)) return;
   const list = await loadSubway(area);
   if (sheet?.type !== 'detail' || sheet.area !== area) return;
   if (list) renderSubway(area, list);
@@ -1634,7 +1663,8 @@ async function fillSubway(area){
 }
 
 async function refreshSubway(area, btn){
-  if (!STATION_OF[area]) return;
+  // 이 버튼은 캐시를 우회하므로(force) 시간대 밖에서는 막는다.
+  if (!subwayShown(area)) return;
   delete subwayCache[area];
   btn?.classList.add('loading');
   btn?.setAttribute('disabled', '');
