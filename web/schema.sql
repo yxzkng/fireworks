@@ -127,6 +127,15 @@ grant execute on function report_flag(uuid) to anon;
 --          allowed_mime_types = array['image/jpeg']
 --    where id = 'photos';
 
+-- ── 관리자 삭제 (/web/public/admin.html + /web/api/admin.js) ──────
+-- anon 키로는 위 정책상 아무도 못 지운다(의도적). 관리자 삭제는
+-- service_role 키로 RLS를 우회해 서버(api/admin.js)에서만 수행한다.
+-- Vercel 프로젝트에 아래 환경변수를 설정하세요.
+--
+--   SUPABASE_SERVICE_ROLE_KEY   Supabase 대시보드 > Settings > API > service_role
+--                                (절대 브라우저에 노출되면 안 됨 — NEXT_PUBLIC_ 접두사 금지)
+--   ADMIN_PASSWORD               관리자 페이지(/admin.html) 로그인 비밀번호
+
 -- 실시간 구독 켜기 — 한 사람의 제보가 모든 접속자 화면에 바로 뜬다
 alter publication supabase_realtime add table reports;
 

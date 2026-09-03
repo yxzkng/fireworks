@@ -37,7 +37,7 @@
   --w-card-name:700;
   --w-dist:400;
 
-  --r-pill:999px;
+  --r-pill:6px;
   --rail-gap:14px;
   --card-gap:11px;
   --card-pad:14px;
@@ -68,22 +68,26 @@ body{margin:0;background:
   color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;
   -webkit-font-smoothing:antialiased;padding-bottom:92px}
 
-header{padding:18px var(--pad) 18px;max-width:720px;min-height:214px;margin:0 auto;position:relative;overflow:hidden;
+/* 버튼 행 아래 여백은 header 하단 padding(18px)만 남긴다 — 지도를
+   생중계 버튼 바로 아래까지 끌어올리기 위해서다. min-height도 줄어든
+   여백(52px)만큼 함께 낮춰야 배너에 빈 공간이 남지 않는다. */
+header{padding:18px var(--pad) 18px;max-width:720px;min-height:162px;margin:0 auto;position:relative;overflow:hidden;
   background:linear-gradient(180deg,rgba(8,12,32,0) 55%,rgba(8,12,32,.55) 100%),url('/banner_image.webp') center/cover no-repeat}
-.head-row{position:absolute;left:var(--pad);right:var(--pad);bottom:70px;z-index:1}
-.head-title{position:absolute;left:var(--pad);right:var(--pad);bottom:110px;z-index:1}
+.head-row{position:absolute;left:var(--pad);right:var(--pad);bottom:18px;z-index:1}
+.head-title{position:absolute;left:var(--pad);right:var(--pad);bottom:58px;z-index:1}
 h1{font-family:var(--serif);font-weight:700;font-size:clamp(25px,5.6vw,34px);line-height:1.22;letter-spacing:0;margin:0;text-shadow:0 4px 22px rgba(8,12,32,.5)}
 .event-date{font-size:13px;font-weight:700;color:var(--text-dim);margin-top:3px}
 .event-date b{color:var(--orange);font-weight:800}
 .head-side{display:flex;align-items:center;gap:8px}
 .head-btn-row{display:flex;gap:8px}
 .traffic-btn,.live-btn{font-family:var(--sans);font-size:11.5px;font-weight:700;
-  color:var(--text);background:transparent;border-radius:4px;
+  color:var(--text);background:rgba(8,12,32,.34);border-radius:6px;
   padding:7px 11px;cursor:pointer;white-space:nowrap}
-.traffic-btn{border:1px solid rgba(255,248,238,.55)}
-.traffic-btn:hover{border-color:var(--text)}
+.traffic-btn{border:1px solid rgba(255,248,238,.34)}
+.traffic-btn:hover{background:rgba(255,248,238,.08);border-color:rgba(255,248,238,.55)}
 .traffic-btn:focus-visible,.live-btn:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
-.live-btn{color:var(--coral);border:1px solid var(--coral);text-decoration:none;display:inline-flex;align-items:center}
+.live-btn{color:var(--text);border:1px solid rgba(255,248,238,.34);text-decoration:none;display:inline-flex;align-items:center}
+.live-btn:hover{background:rgba(255,248,238,.08);border-color:rgba(255,248,238,.55)}
 #map{width:100%;height:clamp(250px,38dvh,330px)}
 .form-map{width:100%;height:clamp(180px,30dvh,240px);border-radius:var(--r);
   border:1px solid var(--ink-line);overflow:hidden}
@@ -92,22 +96,27 @@ h1{font-family:var(--serif);font-weight:700;font-size:clamp(25px,5.6vw,34px);lin
 .map-fallback{position:absolute;inset:0;display:grid;place-items:center;text-align:center;
   padding:20px;color:var(--text-faint);font-size:13px;line-height:1.7;background:var(--ink-raised)}
 
-/* 지도 위 마커 — 원 크기가 인원, 색이 혼잡도 */
+/* 지도 위 마커 — 원 크기가 인원, 색이 혼잡도. 중심은 진하고 가장자리로 갈수록 옅어진다. */
 .pin{position:relative;z-index:3;display:grid;place-items:center;border-radius:50%;
-  border:2px solid rgba(255,255,255,.78);font-weight:850;font-size:12px;cursor:pointer;
-  font-family:var(--sans);font-variant-numeric:tabular-nums;background:var(--pin-color);
-  color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.85);box-shadow:0 5px 16px rgba(0,0,0,.42)}
-.pin.cluster{border-color:var(--paper);box-shadow:0 0 0 4px rgba(0,0,0,.28),0 8px 20px rgba(0,0,0,.48)}
+  font-weight:850;font-size:12px;cursor:pointer;
+  font-family:var(--sans);font-variant-numeric:tabular-nums;
+  background:radial-gradient(circle,
+    color-mix(in srgb, var(--pin-color) 86%, transparent) 0%,
+    color-mix(in srgb, var(--pin-color) 55%, transparent) 65%,
+    color-mix(in srgb, var(--pin-color) 0%, transparent) 100%);
+  color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.85)}
+.pin.cluster{box-shadow:0 0 0 4px rgba(0,0,0,.28),0 8px 20px rgba(0,0,0,.48)}
 .pin span{position:relative;pointer-events:none;line-height:1}
 .pin small{display:block;margin-top:2px;font-size:9px;font-weight:800;opacity:.9}
 .pin.sel{box-shadow:0 0 0 3px rgba(255,217,26,.76),0 8px 20px rgba(0,0,0,.45)}
 .pin-label{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:3px;
   white-space:nowrap;font-size:10.5px;font-weight:750;color:var(--text);
   background:rgba(7,10,15,.86);padding:2px 6px;border-radius:4px;pointer-events:none}
-.launch{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;
-  border:2px dashed var(--signal);color:var(--signal);font-size:10px;font-weight:850}
+.launch{width:42px;height:44px;transform:translate(-50%,-74%);pointer-events:none;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,.55))}
+.launch img{display:block;width:100%;height:100%;object-fit:contain}
 h2{font-family:var(--serif);font-size:18px;font-weight:900;margin:0;flex:1;letter-spacing:0}
-.sort-btn[aria-pressed=true]{background:var(--orange);color:var(--on-signal)}
+.sort-btn[aria-pressed=true]{background:rgba(255,248,238,.13);color:var(--text)}
 @keyframes rise{from{transform:translateY(14px);opacity:0}}
 @media (prefers-reduced-motion:reduce){.sheet{animation:none}.card{transition:none}}
 .lv-btn[aria-pressed=true]{border-color:currentColor}
@@ -119,15 +128,15 @@ input[type=text],select{width:100%;padding:12px;border-radius:8px;border:1px sol
   background:var(--ink);color:var(--text);font-family:var(--sans);font-size:15px}
 input:focus-visible,select:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
 .map-link{display:inline-flex;align-items:center;justify-content:center;width:100%;
-  margin-top:12px;padding:12px;border-radius:var(--r);border:1px solid var(--signal);
-  color:var(--on-signal);background:var(--signal);font-family:var(--sans);
+  margin-top:12px;padding:12px;border-radius:var(--r);border:1px solid rgba(255,248,238,.22);
+  color:var(--text);background:rgba(255,248,238,.12);font-family:var(--sans);
   font-size:14px;font-weight:var(--w-strong);text-decoration:none}
 .map-link:focus-visible{outline:2px solid var(--text);outline-offset:2px}
 footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   color:var(--text-faint);line-height:1.7}
 @media (min-width:920px){
   body{padding-bottom:104px}
-  header{min-height:236px;padding-top:24px}
+  header{min-height:184px;padding-top:24px}
   header::before{height:175px;inset:26px 120px auto}
   h1{max-width:470px}
   .map-wrap{margin-left:auto;margin-right:auto}
@@ -140,14 +149,14 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   footer{margin-left:auto;margin-right:auto;max-width:720px}
 }
 @media (max-width:520px){
-  header{min-height:200px;padding-top:16px}
-  .head-row{bottom:60px}
-  .head-title{bottom:96px}
-  h1{font-size:25px;line-height:1.25}
-  .event-date{font-size:12px}
+  header{min-height:140px;padding-top:12px}
+  .head-row{bottom:18px}
+  .head-title{bottom:50px}
+  h1{font-size:23px;line-height:1.22}
+  .event-date{font-size:11.5px}
   .head-btn-row{gap:5px}
-  .traffic-btn,.live-btn{padding:6px 8px;font-size:10.5px}
-  #map{height:clamp(230px,34dvh,280px)}
+  .traffic-btn,.live-btn{padding:5px 8px;font-size:10.5px}
+  #map{height:clamp(280px,44dvh,340px)}
   .pin-label{font-size:10px}
 }
 
@@ -176,11 +185,11 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   <div class="map-dim" id="mapDim" hidden></div>
   <div class="map-fallback" id="mapFallback">지도를 불러오는 중…</div>
   <div class="map-tools" aria-label="지도 조작" style="position:absolute;top:8px;right:8px;z-index:20;display:grid;gap:5px">
-    <button class="map-btn zoom-in" id="zin" aria-label="확대" title="확대" style="width:34px;height:34px;background:#FFF8EE;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
-    <button class="map-btn zoom-out" id="zout" aria-label="축소" title="축소" style="width:34px;height:34px;background:#FFF8EE;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
-    <button class="map-btn fit" id="zfit" aria-label="여의도로 되돌리기" title="여의도로 되돌리기" style="width:34px;height:34px;background:#FFF8EE;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
-    <button class="toilet-toggle" id="toggleToilets" type="button" aria-pressed="true" aria-label="화장실 표시" title="화장실 표시" style="width:34px;height:34px;background:#FFD91A;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
-    <button class="loc-btn" id="locateMe" aria-label="현재 위치 표시" title="현재 위치 표시" style="width:34px;height:34px;background:#FFF8EE;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
+    <button class="map-btn zoom-in" id="zin" aria-label="확대" title="확대"></button>
+    <button class="map-btn zoom-out" id="zout" aria-label="축소" title="축소"></button>
+    <button class="map-btn fit" id="zfit" aria-label="여의도로 되돌리기" title="여의도로 되돌리기"></button>
+    <button class="toilet-toggle" id="toggleToilets" type="button" aria-pressed="false" aria-label="화장실 표시" title="화장실 표시"></button>
+    <button class="loc-btn" id="locateMe" aria-label="현재 위치 표시" title="현재 위치 표시"></button>
   </div>
   <div class="legend">
     <span><i style="background:var(--c1)"></i>여유</span>
@@ -249,8 +258,6 @@ footer{margin:28px auto 0;max-width:720px;padding:0 var(--pad);font-size:11.5px;
   </div>
 </section>
 
-
-
 <footer>
   혼잡도는 KT·SKT 기지국 신호를 5분 단위로 집계한 서울시 실시간 도시데이터 추정치입니다. 실제 현장과 차이가 있을 수 있습니다.<br>
   현장 제보는 이용자가 올린 내용으로, 정확성이 보장되지 않습니다. 안전 안내는 반드시 현장 안내방송과 안전요원의 지시를 따르세요.<br>
@@ -278,19 +285,6 @@ const TOILETS = [
   { name:'여의도 공중화장실', lat:37.5280, lon:126.9345, url:'https://map.kakao.com/link/search/여의도%20공중화장실' },
 ];
 
-const NOTES = {
-  '여의도한강공원':'발사 지점 정면. 현장감 최고, 가장 혼잡합니다.',
-  '여의도':'여의도 전역 인파. 진입·탈출 판단에 이 숫자를 보세요.',
-  '여의서로':'여의도 서측 도로변. 공원보다 한산한 편입니다.',
-  '노들섬':'측면 조망. 규모가 작아 금방 찹니다.',
-  '이촌한강공원':'강 건너 정면 조망. 여의도보다 여유롭습니다.',
-  '반포한강공원':'원거리 조망. 이동 부담이 적습니다.',
-  '양화한강공원':'측후방 원거리. 늦게 가도 자리가 있는 편입니다.',
-  '망원한강공원':'서측 원거리 조망.',
-  '노량진':'귀가 경유지. 붐비면 우회를 고려하세요.',
-  '합정역':'서측 환승 거점.',
-};
-
 let COORDS = [];
 let cfg = {}, sb = null, map = null;
 let markers = [];
@@ -301,7 +295,7 @@ let myLocation = null;
 let reports = [], official = {};
 let sortMode = 'near', selected = null, sheet = null;
 let reportSortMode = 'recent';   // 상세시트 제보 타임라인: 'recent' | 'near'
-let showToilets = true;
+let showToilets = false;
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
@@ -330,11 +324,25 @@ function ago(ts){
   const h = Math.floor(m / 60);
   return h < 24 ? h + '시간 전' : Math.floor(h / 24) + '일 전';
 }
+/* 서울시가 주는 관측 시각을 그대로 보여준다.
+   '31분 전'처럼 경과 시간으로 쓰면 우리 갱신이 늦은 것처럼 읽히는데,
+   실제로는 서울시가 내려주는 값 자체가 그 시각 기준이다(5분 주기가 공식
+   설명이지만 20~30분씩 밀려 오는 일이 잦다). 우리는 3분마다 부르고 있다.
+   'YYYY-MM-DD HH:MM' 형태의 KST 문자열이라 타임존 표기가 없어,
+   Date로 파싱하지 않고 시:분만 잘라 쓴다(브라우저 로컬 타임존 왜곡 방지). */
 function officialAge(o){
-  const raw = o?.congestion?.time || o?.updatedAt || o?.time;
-  if (!raw) return '공공데이터';
-  const t = new Date(raw);
-  return Number.isNaN(t.getTime()) ? `공공 ${raw}` : `공공 ${ago(t.getTime())}`;
+  // 서울시 관측 시각. 'YYYY-MM-DD HH:MM' KST 문자열이라 시:분만 잘라 쓴다.
+  const seoul = o?.congestion?.time;
+  if (seoul){
+    const hhmm = String(seoul).match(/(\d{1,2}:\d{2})/);
+    if (hhmm) return `서울시 기준 ${hhmm[1]}`;
+  }
+  // 관측 시각이 없을 때만 우리 수집 시각으로 물러선다. 이쪽은 ISO(UTC)라
+  // 문자열을 자르면 9시간 어긋난다 — Date로 파싱해 경과 시간으로 보여준다.
+  const ours = seoul || o?.updatedAt || o?.time;
+  if (!ours) return '공공데이터';
+  const t = new Date(ours);
+  return Number.isNaN(t.getTime()) ? `공공 ${ours}` : `공공 ${ago(t.getTime())}`;
 }
 function trustChips(s, pics){
   const chips = [];
@@ -371,17 +379,6 @@ function haversineKm(lat1, lon1, lat2, lon2) {
   const a = Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-/** 제보 좌표와 가장 가까운 사전 정의 장소명을 찾는다 — 기존 area 기반 기능(공식
-    혼잡도 매칭, 지하철·예측 슬롯 등)과의 호환을 위해 계속 area도 함께 저장한다. */
-function nearestArea(lat, lon){
-  let best = COORDS[0], bestKm = Infinity;
-  for (const c of COORDS){
-    const km = haversineKm(lat, lon, c.lat, c.lon);
-    if (km < bestKm) { bestKm = km; best = c; }
-  }
-  return best ? best.area : '여의도한강공원';
 }
 
 function stateOf(c){
@@ -444,7 +441,7 @@ function initMap(){
   // 발사 지점
   new kakao.maps.CustomOverlay({
     map, position: new kakao.maps.LatLng(LAUNCH.lat, LAUNCH.lon), zIndex: 5,
-    content: '<div class="launch">발사</div>',
+    content: '<div class="launch" title="불꽃 발사지점"><img src="/firework_marker.png" alt="불꽃 발사지점"></div>',
   });
 
   drawMarkers();
@@ -629,7 +626,6 @@ function renderRail(){
           myLocation ? `내 위치에서 ${s.km}km`
           : VIEWABLE.has(s.area) ? `발사지점 ${s.km}km` : `이동 거점 · ${s.km}km`}</span></span>
         ${badge}</div>
-      <div class="card-desc">${esc(NOTES[s.area]||'')}</div>
       ${trust}
       ${bits.length ? `<div class="metrics">${bits.join('')}</div>` : ''}
       ${thumbs}</button>`;
@@ -893,25 +889,13 @@ const STATION_OF = {
   '여의도':'여의도',             // 0.8km — 5·9호선 환승
 };
 
-/* 도착정보를 노출하는 창(불꽃 당일 17~24시).
-   축제 전날이나 새벽에 '다음 열차'를 띄워도 쓸 데가 없고, 그 조회가
-   서버 예산(하루 1,000회)을 갉아 정작 러시 때 모자라게 된다.
-   서버 TTL 구간(17시부터 조밀해진다)과 맞춰 둔 값이다. */
-const SUBWAY_WINDOW = { fromHour: 17, toHour: 24 };
+/* 예전에는 불꽃 당일 17~24시에만 띄웠다. 하루 1,000회 한도를 아끼려던
+   것인데, 지하철 키는 활용사례 승인을 받아 호출 제한이 없다(api/subway.js
+   상단 참고). 상세를 열 때만 부르고 서버가 10초 캐시하므로 상시 노출해도
+   부담이 없어, 날짜·시간 제한을 걷어냈다. 역이 있는 장소면 언제나 뜬다. */
 
-/** 지금 지하철 블록을 보여줄 때인가. KST 기준으로 판단한다. */
-function subwayVisible(now = new Date()){
-  const kst = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + 9 * 3600000);
-  const sameDay = kst.toDateString() === new Date(
-    SHOW_TIME.getTime() + (SHOW_TIME.getTimezoneOffset() * 60000) + 9 * 3600000
-  ).toDateString();
-  if (!sameDay) return false;
-  const h = kst.getHours();
-  return h >= SUBWAY_WINDOW.fromHour && h < SUBWAY_WINDOW.toHour;
-}
-
-/** 역이 있고, 지금이 그 시간대인가. */
-const subwayShown = (area) => !!STATION_OF[area] && subwayVisible();
+/** 역이 있으면 보여준다. */
+const subwayShown = (area) => !!STATION_OF[area];
 const subwayCache = {};
 
 async function loadSubway(area, force = false){
@@ -968,7 +952,7 @@ function detailSheet(area){
   const distLabel = myLocation ? `내 위치에서 ${c.km}km` : `발사지점에서 ${c.km}km`;
   let html = `<div class="sheet-head"><span class="sheet-title">${esc(area)}</span>
     <button class="close" data-close aria-label="닫기">&times;</button></div>
-    <div class="card-desc">${esc(NOTES[area]||'')} · ${distLabel}</div>
+    <div class="card-desc">${distLabel}</div>
     <a class="map-link" href="${kakaoMapUrl(c)}" target="_blank" rel="noopener">카카오맵에서 이 위치 보기</a>`;
 
   if (o){
@@ -1044,7 +1028,7 @@ function sortReports(list){
   });
 }
 
-let form = { level:0, blob:null, thumb:null, url:null, category:null, lat:null, lon:null };
+let form = { level:0, blob:null, thumb:null, url:null, area:null, category:null, lat:null, lon:null };
 let formMap = null, formMarker = null;
 
 /* 연속 제보 제한 — 실수로 여러 번 누르거나 장난으로 도배하는 것을 막는다.
@@ -1096,15 +1080,15 @@ function reportSheet(area){
   const start = COORDS.find(c => c.area === (area || COORDS[0]?.area)) || COORDS[0] || LAUNCH;
   form = {
     level: 0, blob: null, thumb: null, url: null,
-    category: start.cat || CATEGORIES[0],
+    area: start.area, category: start.cat || CATEGORIES[0],
     lat: start.lat, lon: start.lon,
   };
   return `<div class="sheet-head"><span class="sheet-title">현장 상황 제보</span>
     <button class="close" data-close aria-label="닫기">&times;</button></div>
     <div class="block"><div class="block-label">어떤 곳인가요</div>
-      <div class="cat-pick">${CATEGORIES.map(c =>
-        `<button class="cat-btn" data-cat="${esc(c)}" aria-pressed="${String(c===form.category)}">${esc(c)}</button>`).join('')}</div></div>
-    <div class="block"><div class="block-label">지도를 눌러 위치를 짚어주세요</div>
+      <div class="cat-pick">${COORDS.map(c =>
+        `<button class="cat-btn" data-place="${esc(c.area)}" aria-pressed="${String(c.area===form.area)}">${esc(c.area)}</button>`).join('')}</div></div>
+    <div class="block"><div class="block-label">지도를 눌러 정확한 위치를 짚어주세요</div>
       <div id="f-map" class="form-map"></div>
       <div class="notice" id="f-map-hint" style="margin-top:8px">기본 위치: ${esc(start.area || '발사지점')} 부근 — 지도를 눌러 더 정확한 위치로 옮길 수 있어요.</div></div>
     <div class="block"><div class="block-label">지금 얼마나 붐비나요</div>
@@ -1137,7 +1121,7 @@ function initFormMap(){
     form.lat = lat; form.lon = lon;
     placeFormMarker(lat, lon);
     const hint = document.getElementById('f-map-hint');
-    if (hint) hint.textContent = `선택한 위치: 위도 ${lat.toFixed(5)}, 경도 ${lon.toFixed(5)}`;
+    if (hint) hint.textContent = `${form.area} 안에서 위치를 옮겼어요 — 위도 ${lat.toFixed(5)}, 경도 ${lon.toFixed(5)}`;
   });
 }
 
@@ -1289,7 +1273,6 @@ document.addEventListener('click', async (e) => {
     return;
   }
 
-
   const flag = t.closest('[data-flag]');
   if (flag && sb){
     await sb.rpc('report_flag', { report_id: flag.dataset.flag });
@@ -1305,10 +1288,19 @@ document.addEventListener('click', async (e) => {
     return;
   }
 
-  const cat = t.closest('[data-cat]');
-  if (cat){
-    form.category = cat.dataset.cat;
-    document.querySelectorAll('[data-cat]').forEach(b => b.setAttribute('aria-pressed', String(b===cat)));
+  const place = t.closest('[data-place]');
+  if (place){
+    const c = COORDS.find(x => x.area === place.dataset.place);
+    if (c){
+      form.area = c.area;
+      form.category = c.cat;
+      form.lat = c.lat; form.lon = c.lon;
+      placeFormMarker(c.lat, c.lon);
+      if (formMap) formMap.panTo(new kakao.maps.LatLng(c.lat, c.lon));
+      const hint = document.getElementById('f-map-hint');
+      if (hint) hint.textContent = `기본 위치: ${c.area} 부근 — 지도를 눌러 더 정확한 위치로 옮길 수 있어요.`;
+    }
+    document.querySelectorAll('[data-place]').forEach(b => b.setAttribute('aria-pressed', String(b===place)));
     return;
   }
 
@@ -1352,7 +1344,7 @@ document.addEventListener('click', async (e) => {
       }
       // .select()를 붙이면 방금 넣은 행이 그대로 돌아온다 — 다시 조회할 필요가 없다
       const { data: inserted, error } = await sb.from('reports').insert({
-        area: nearestArea(form.lat, form.lon),
+        area: form.area,
         category: form.category,
         lat: form.lat,
         lon: form.lon,

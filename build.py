@@ -9,7 +9,9 @@
   web/template.html  ──┘                   └─> web/public/index.html (Vercel)
 
 지도 좌표(geo.json, area-coords.json)는 크기가 있어서 아티팩트 쪽 템플릿에만
-placeholder로 두고 빌드 때 끼워 넣는다. Vercel 쪽은 카카오맵을 쓰므로 필요 없다.
+placeholder로 두고 빌드 때 끼워 넣는다. Vercel 쪽은 카카오맵이 좌표를 알아서
+다루지만 area-coords.json은 정적 파일로 fetch하므로, 소스 쪽이 바뀌면 여기서
+web/public/area-coords.json에도 그대로 복사해 둘 어긋나지 않게 한다.
 
 교통통제 안내도 이미지도 같은 이유로 갈린다. 아티팩트는 외부 이미지를 못 불러오므로
 base64로 심고, Vercel 쪽은 web/public/에 복사해 두고 경로로 참조한다.
@@ -24,6 +26,7 @@ shared = (root / 'shared.css').read_text().strip()
 TRAFFIC_IMG = root / 'assets' / 'traffic_control_2026.webp'
 BANNER_IMG = root / 'assets' / 'banner_image.webp'
 TOILET_IMG = root / 'assets' / 'toilet.webp'
+FIREWORK_MARKER = root / 'assets' / 'firework_marker.png'
 
 
 def build(src, dst, subs=()):
@@ -54,6 +57,7 @@ build('template.html', 'index.html', subs=[
     ('/*__TRAFFIC_IMG__*/', data_uri(TRAFFIC_IMG)),
     ('/*__TOILET_IMG__*/\'\'', f"'{data_uri(TOILET_IMG)}'"),
     ('/*__BANNER_IMG__*/\'\'', f"'{data_uri(BANNER_IMG)}'"),
+    ('/*__FIREWORK_MARKER__*/\'\'', f"'{data_uri(FIREWORK_MARKER, mime='image/png')}'"),
 ])
 
 # Vercel판 — 카카오맵이 좌표를 알아서 다룬다. 안내도는 정적 파일로 낸다.
@@ -64,3 +68,7 @@ shutil.copyfile(BANNER_IMG, root / 'web' / 'public' / BANNER_IMG.name)
 print(f'web/public/{BANNER_IMG.name} 복사')
 shutil.copyfile(TOILET_IMG, root / 'web' / 'public' / TOILET_IMG.name)
 print(f'web/public/{TOILET_IMG.name} 복사')
+shutil.copyfile(FIREWORK_MARKER, root / 'web' / 'public' / FIREWORK_MARKER.name)
+print(f'web/public/{FIREWORK_MARKER.name} 복사')
+shutil.copyfile(root / 'area-coords.json', root / 'web' / 'public' / 'area-coords.json')
+print('web/public/area-coords.json 복사')

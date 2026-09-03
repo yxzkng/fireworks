@@ -19,19 +19,10 @@ const STATION_OF = {
 
 const TTL = 10;   // single-flight용 짧은 캐시. 신선도가 핵심이라 길게 두지 않는다.
 
-/* 노출 창 — 클라이언트(template.html의 SUBWAY_WINDOW)와 같은 값이다.
-   화면에서 이미 막지만 창 밖 요청까지 서울시로 보내지 않도록 서버도 같이 막는다.
-   축제 날짜가 바뀌면 SHOW_DATE만 고치면 된다(환경변수로도 덮을 수 있다). */
-const SHOW_DATE = process.env.SHOW_DATE || '2026-09-05';   // KST 기준 날짜
-const WINDOW_FROM_HOUR = 17;
-const WINDOW_TO_HOUR = 24;
-
-/** 지금이 도착정보를 내려줄 시간대인가. kst는 KST로 옮겨둔 Date다. */
-function inWindow(kst) {
-  if (kst.toISOString().slice(0, 10) !== SHOW_DATE) return false;
-  const h = kst.getUTCHours();
-  return h >= WINDOW_FROM_HOUR && h < WINDOW_TO_HOUR;
-}
+/* 예전에는 축제 당일 17~24시에만 응답했다(하루 1,000회 한도를 아끼려던 것).
+   이 키는 활용사례 승인을 받아 호출 제한이 없고, 상세를 열 때만 부르는 데다
+   10초 캐시가 동시 요청을 묶어주므로 상시 응답으로 바꿨다.
+   클라이언트(template.html)의 subwayShown도 같이 제한을 걷어냈다. */
 
 let kvClientPromise;
 async function getKv() {
@@ -92,17 +83,6 @@ export default async function handler(req, res) {
 
   const key = process.env.SEOUL_SUBWAY_KEY;
   if (!key) return res.status(503).json({ error: 'subway_key_not_configured' });
-
-  const kst = new Date(Date.now() + 9 * 3600 * 1000);
-
-  // 창 밖에서는 서울시를 부르지 않는다. 캐시가 남아 있으면 그건 내려준다
-  // (호출이 늘지 않으므로 막을 이유가 없다).
-  if (!inWindow(kst)) {
-    const cached = await kvGet(`subway:${station}`) || await kvGet(`subway:stale:${station}`);
-    res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=1200');
-    if (cached) return res.json({ station, arrivals: cached, stale: true, outsideWindow: true });
-    return res.status(503).json({ error: 'outside_window', from: WINDOW_FROM_HOUR, to: WINDOW_TO_HOUR });
-  }
 
   const cacheKey = `subway:${station}`;
   // 만료된 뒤에도 한동안 남겨두는 사본. 락을 못 잡은 요청이 빈손으로

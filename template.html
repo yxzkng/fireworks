@@ -52,7 +52,7 @@
   --w-card-name: 700;
   --w-dist: 400;
 
-  --r-pill: 999px;              /* 이 테마의 배지·토글은 알약 모양 */
+  --r-pill: 6px;
   --rail-gap: 14px;
   --card-gap: 11px;
   --card-pad: 14px;
@@ -64,7 +64,7 @@
   --badge-size: 11.5px;
   --badge-lh: normal;
   --badge-pad: 3px 9px;
-  --r-sorts: 999px;
+  --r-sorts: 8px;
   --sorts-pad: 3px;
   --sort-btn-pad: 6px 12px;
   --sort-btn-size: 12.5px;
@@ -101,13 +101,14 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(25px,5.6vw,
 .head-btn-row { display: flex; gap: 8px; }
 .traffic-btn, .live-btn {
   font-family: var(--body); font-size: 11.5px; font-weight: 700;
-  color: var(--text); background: transparent; border-radius: 4px;
+  color: var(--text); background: rgba(8,12,32,.34); border-radius: 6px;
   padding: 7px 11px; cursor: pointer; white-space: nowrap;
 }
-.traffic-btn { border: 1px solid rgba(255,248,238,.55); }
-.traffic-btn:hover { border-color: var(--text); }
+.traffic-btn { border: 1px solid rgba(255,248,238,.34); }
+.traffic-btn:hover { background: rgba(255,248,238,.08); border-color: rgba(255,248,238,.55); }
 .traffic-btn:focus-visible, .live-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.live-btn { color: var(--coral); border: 1px solid var(--coral); text-decoration: none; display: inline-flex; align-items: center; }
+.live-btn { color: var(--text); border: 1px solid rgba(255,248,238,.34); text-decoration: none; display: inline-flex; align-items: center; }
+.live-btn:hover { background: rgba(255,248,238,.08); border-color: rgba(255,248,238,.55); }
 #map { display: block; width: 100%; height: clamp(250px, 38dvh, 330px); cursor: grab; }
 #map:active { cursor: grabbing; }
 #map:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
@@ -128,8 +129,8 @@ input[type="text"], select, textarea {
 input:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 .map-link {
   display: inline-flex; align-items: center; justify-content: center; width: 100%;
-  margin-top: 12px; padding: 12px; border-radius: var(--r); border: 1px solid var(--signal);
-  color: var(--on-signal); background: var(--signal); font-family: var(--body);
+  margin-top: 12px; padding: 12px; border-radius: var(--r); border: 1px solid rgba(255,248,238,.22);
+  color: var(--text); background: rgba(255,248,238,.12); font-family: var(--body);
   font-size: 14px; font-weight: var(--w-strong); text-decoration: none;
 }
 .map-link:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
@@ -145,14 +146,14 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
 }
 
 @media (max-width: 520px) {
-  header { min-height: 200px; padding-top: 16px; }
-  .head-row { bottom: 60px; }
-  .head-title { bottom: 96px; }
-  h1 { font-size: 25px; line-height: 1.25; }
-  .event-date { font-size: 12px; }
+  header { min-height: 168px; padding-top: 12px; }
+  .head-row { bottom: 46px; }
+  .head-title { bottom: 78px; }
+  h1 { font-size: 23px; line-height: 1.22; }
+  .event-date { font-size: 11.5px; }
   .head-btn-row { gap: 5px; }
-  .traffic-btn, .live-btn { padding: 6px 8px; font-size: 10.5px; }
-  #map { height: clamp(230px, 34dvh, 280px); }
+  .traffic-btn, .live-btn { padding: 5px 8px; font-size: 10.5px; }
+  #map { height: clamp(280px, 44dvh, 340px); }
 }
 
 /*__SHARED_CSS__*/
@@ -179,11 +180,11 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
   <canvas id="map" role="img" aria-label="여의도 일대 장소별 혼잡도 지도" tabindex="0"></canvas>
   <div class="map-hint" id="mapHint">—:— 기준</div>
   <div class="map-tools" aria-label="지도 조작" style="position:absolute;top:8px;right:8px;z-index:20;display:grid;gap:5px">
-    <button class="map-btn zoom-in" id="zin"  aria-label="확대" title="확대" style="width:34px;height:34px;background:#FFF8EE;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
-    <button class="map-btn zoom-out" id="zout" aria-label="축소" title="축소" style="width:34px;height:34px;background:#FFF8EE;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
-    <button class="map-btn fit" id="zfit" aria-label="여의도로 되돌리기" title="여의도로 되돌리기" style="width:34px;height:34px;background:#FFF8EE;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
-    <button class="toilet-toggle" id="toggleToilets" type="button" aria-pressed="true" aria-label="화장실 표시" title="화장실 표시" style="width:34px;height:34px;background:#FFD91A;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
-    <button class="loc-btn" id="locateMe" aria-label="현재 위치 표시" title="현재 위치 표시" style="width:34px;height:34px;background:#FFF8EE;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
+    <button class="map-btn zoom-in" id="zin"  aria-label="확대" title="확대"></button>
+    <button class="map-btn zoom-out" id="zout" aria-label="축소" title="축소"></button>
+    <button class="map-btn fit" id="zfit" aria-label="여의도로 되돌리기" title="여의도로 되돌리기"></button>
+    <button class="toilet-toggle" id="toggleToilets" type="button" aria-pressed="false" aria-label="화장실 표시" title="화장실 표시"></button>
+    <button class="loc-btn" id="locateMe" aria-label="현재 위치 표시" title="현재 위치 표시"></button>
   </div>
   <div class="legend">
     <span><i style="background:var(--c1)"></i>여유</span>
@@ -251,8 +252,6 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
   </div>
 </section>
 
-
-
 <footer>
   혼잡도는 KT·SKT 기지국 신호를 5분 단위로 집계한 서울시 실시간 도시데이터 추정치입니다. 실제 현장과 차이가 있을 수 있습니다.<br>
   현장 제보는 이용자가 올린 내용으로, 정확성이 보장되지 않습니다. 안전 안내는 반드시 현장 안내방송과 안전요원의 지시를 따르세요.<br>
@@ -292,20 +291,6 @@ const TOILETS = [
   { name:'여의도 공중화장실', lat:37.5280, lon:126.9345, url:'https://map.kakao.com/link/search/여의도%20공중화장실' },
 ];
 
-/* 관람 특성 — 혼잡도만으로는 고를 수 없어서 함께 보여준다 */
-const NOTES = {
-  '여의도한강공원': '발사 지점 정면. 현장감 최고, 가장 혼잡합니다.',
-  '여의도':        '여의도 전역 인파. 진입·탈출 판단에 이 숫자를 보세요.',
-  '여의서로':      '여의도 서측 도로변. 공원보다 한산한 편입니다.',
-  '노들섬':        '측면 조망. 규모가 작아 금방 찹니다.',
-  '이촌한강공원':   '강 건너 정면 조망. 여의도보다 여유롭습니다.',
-  '반포한강공원':   '원거리 조망. 이동 부담이 적습니다.',
-  '양화한강공원':   '측후방 원거리. 늦게 가도 자리가 있는 편입니다.',
-  '망원한강공원':   '서측 원거리 조망.',
-  '노량진':        '귀가 경유지. 붐비면 우회를 고려하세요.',
-  '합정역':        '서측 환승 거점.',
-};
-
 /* ── 상태 ─────────────────────────────────────────────── */
 let db = null;
 let reports = [];
@@ -337,11 +322,25 @@ function ago(ts) {
   const h = Math.floor(m / 60);
   return h < 24 ? h + '시간 전' : Math.floor(h / 24) + '일 전';
 }
+/* 서울시가 주는 관측 시각을 그대로 보여준다.
+   '31분 전'처럼 경과 시간으로 쓰면 우리 갱신이 늦은 것처럼 읽히는데,
+   실제로는 서울시가 내려주는 값 자체가 그 시각 기준이다(5분 주기가 공식
+   설명이지만 20~30분씩 밀려 오는 일이 잦다). 우리는 3분마다 부르고 있다.
+   'YYYY-MM-DD HH:MM' 형태의 KST 문자열이라 타임존 표기가 없어,
+   Date로 파싱하지 않고 시:분만 잘라 쓴다(브라우저 로컬 타임존 왜곡 방지). */
 function officialAge(o) {
-  const raw = o?.congestion?.time || o?.updatedAt || o?.time;
-  if (!raw) return '공공데이터';
-  const t = new Date(raw);
-  return Number.isNaN(t.getTime()) ? `공공 ${raw}` : `공공 ${ago(t.getTime())}`;
+  // 서울시 관측 시각. 'YYYY-MM-DD HH:MM' KST 문자열이라 시:분만 잘라 쓴다.
+  const seoul = o?.congestion?.time;
+  if (seoul) {
+    const hhmm = String(seoul).match(/(\d{1,2}:\d{2})/);
+    if (hhmm) return `서울시 기준 ${hhmm[1]}`;
+  }
+  // 관측 시각이 없을 때만 우리 수집 시각으로 물러선다. 이쪽은 ISO(UTC)라
+  // 문자열을 자르면 9시간 어긋난다 — Date로 파싱해 경과 시간으로 보여준다.
+  const ours = seoul || o?.updatedAt || o?.time;
+  if (!ours) return '공공데이터';
+  const t = new Date(ours);
+  return Number.isNaN(t.getTime()) ? `공공 ${ours}` : `공공 ${ago(t.getTime())}`;
 }
 function trustChips(s, pics) {
   const chips = [];
@@ -407,10 +406,13 @@ const cv = $('#map');
 const ctx = cv.getContext('2d');
 let view = { lat: 37.528, lon: 126.945, zoom: 1 };   // zoom 1 = 여의도 일대
 let myLocation = null;
-let showToilets = true;
+let showToilets = false;
 const toiletIcon = new Image();
 toiletIcon.src = /*__TOILET_IMG__*/'';
 toiletIcon.onload = () => drawMap();
+const fireworkMarker = new Image();
+fireworkMarker.src = /*__FIREWORK_MARKER__*/'';
+fireworkMarker.onload = () => drawMap();
 
 function fitDefault() { view = { lat: 37.528, lon: 126.945, zoom: 1 }; }
 
@@ -512,9 +514,13 @@ function drawMap() {
     const col = canvasLv(lead.level);
 
     ctx.beginPath(); ctx.arc(g.x, g.y, r, 0, 7);
-    ctx.fillStyle = col; ctx.fill();
-    ctx.lineWidth = selected && items.some((i) => i.area === selected) ? 3 : 2;
-    ctx.strokeStyle = 'rgba(255,255,255,.82)'; ctx.stroke();
+    ctx.fillStyle = circleGradient(g.x, g.y, r, col);
+    ctx.fill();
+    if (selected && items.some((i) => i.area === selected)) {
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = 'rgba(255,217,26,.85)';
+      ctx.stroke();
+    }
 
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -544,19 +550,21 @@ function drawMap() {
 
   // 발사 지점은 맨 위에 — 큰 원에 가려지면 기준점을 잃는다
   const [fx, fy] = P(LAUNCH.lat, LAUNCH.lon);
-  ctx.save();
-  ctx.strokeStyle = getCss('--gold'); ctx.lineWidth = 2; ctx.setLineDash([3, 3]);
-  ctx.beginPath(); ctx.arc(fx, fy, 12, 0, 7); ctx.stroke();
-  ctx.restore();
-  ctx.fillStyle = getCss('--gold');
-  ctx.beginPath(); ctx.arc(fx, fy, 3, 0, 7); ctx.fill();
-  ctx.font = '700 10px ' + getCss('--body');
-  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-  const lw = ctx.measureText('발사').width;
-  ctx.fillStyle = 'rgba(11,16,32,.85)';
-  ctx.fillRect(fx - lw / 2 - 4, fy - 27, lw + 8, 13);
-  ctx.fillStyle = getCss('--gold');
-  ctx.fillText('발사', fx, fy - 17);
+  if (fireworkMarker.complete && fireworkMarker.naturalWidth) {
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.55)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 3;
+    ctx.drawImage(fireworkMarker, fx - 21, fy - 33, 42, 44);
+    ctx.restore();
+  } else {
+    ctx.save();
+    ctx.strokeStyle = getCss('--gold'); ctx.lineWidth = 2; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.arc(fx, fy, 12, 0, 7); ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = getCss('--gold');
+    ctx.beginPath(); ctx.arc(fx, fy, 3, 0, 7); ctx.fill();
+  }
 
   if (showToilets) {
     ctx.save();
@@ -609,6 +617,23 @@ const cssCache = {};
 function getCss(v) {
   if (!cssCache[v]) cssCache[v] = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
   return cssCache[v];
+}
+
+/** #rrggbb → 'r,g,b'. 그라데이션 stop에서 alpha만 바꿔 쓰기 위함. */
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  const n = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16);
+  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+}
+
+/** 장소 원용 방사형 그라데이션 — 중심은 진하고 가장자리로 갈수록 옅어진다. */
+function circleGradient(x, y, r, hex) {
+  const rgb = hexToRgb(hex);
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, `rgba(${rgb},.86)`);
+  g.addColorStop(0.65, `rgba(${rgb},.5)`);
+  g.addColorStop(1, `rgba(${rgb},0)`);
+  return g;
 }
 
 /* 지도 조작 — 드래그, 휠, 핀치 */
@@ -731,7 +756,6 @@ function renderRail() {
           : VIEWABLE.has(s.area) ? `발사지점 ${s.km}km` : `이동 거점 · ${s.km}km`}</span></span>
         ${badge}
       </div>
-      <div class="card-desc">${esc(NOTES[s.area] || '')}</div>
       ${trust}
       ${bits.length ? `<div class="metrics">${bits.join('')}</div>` : ''}
       ${thumbs}
@@ -794,7 +818,7 @@ function detailSheet(area) {
       <span class="sheet-title">${esc(area)}</span>
       <button class="close" data-close aria-label="닫기">&times;</button>
     </div>
-    <div class="card-desc">${esc(NOTES[area] || '')} · ${distLabel}</div>
+    <div class="card-desc">${distLabel}</div>
     <a class="map-link" href="${kakaoMapUrl(c)}" target="_blank" rel="noopener">카카오맵에서 이 위치 보기</a>`;
 
   if (o) {
@@ -994,7 +1018,6 @@ document.addEventListener('click', async (e) => {
     }
     return;
   }
-
 
   const flag = t.closest('[data-flag]');
   if (flag) {

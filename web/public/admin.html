@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제보 관리</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: #f4f4f5; color: #18181b;
+  }
+  h1 { font-size: 18px; margin: 0 0 16px; }
+  #login { max-width: 320px; margin: 80px auto; display: flex; flex-direction: column; gap: 8px; }
+  #login input { padding: 10px 12px; border: 1px solid #d4d4d8; border-radius: 8px; font-size: 15px; }
+  #login button, .btn { padding: 10px 12px; border: none; border-radius: 8px; background: #18181b; color: #fff; font-size: 14px; cursor: pointer; }
+  #login button:disabled, .btn:disabled { opacity: .5; cursor: default; }
+  #error { color: #dc2626; font-size: 13px; min-height: 16px; }
+  #app { display: none; max-width: 720px; margin: 0 auto; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; }
+  .toolbar .btn { background: #52525b; }
+  .card { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.06); display: flex; gap: 12px; }
+  .card.flagged { outline: 2px solid #f59e0b; }
+  .card.hidden-row { outline: 2px solid #dc2626; }
+  .card img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; background: #e4e4e7; flex-shrink: 0; }
+  .card .noimg { width: 96px; height: 96px; border-radius: 8px; background: #e4e4e7; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #a1a1aa; text-align: center; }
+  .meta { flex: 1; min-width: 0; font-size: 13px; line-height: 1.5; }
+  .meta .top { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 4px; }
+  .badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #f4f4f5; color: #52525b; }
+  .badge.flag { background: #fef3c7; color: #92400e; }
+  .badge.hide { background: #fee2e2; color: #991b1b; }
+  .comment { color: #3f3f46; word-break: break-word; }
+  .row-actions { display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+  .row-actions button { padding: 8px 10px; border-radius: 8px; border: none; font-size: 12px; cursor: pointer; }
+  .del { background: #dc2626; color: #fff; }
+  #empty { text-align: center; color: #71717a; padding: 40px 0; display: none; }
+  #loading { text-align: center; color: #71717a; padding: 40px 0; }
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h1>관리자 로그인</h1>
+  <input id="pw" type="password" placeholder="비밀번호" autocomplete="current-password">
+  <button id="loginBtn">확인</button>
+  <div id="error"></div>
+</div>
+
+<div id="app">
+  <div class="toolbar">
+    <h1>제보 관리 (<span id="count">0</span>)</h1>
+    <button class="btn" id="refreshBtn">새로고침</button>
+  </div>
+  <div id="loading">불러오는 중…</div>
+  <div id="empty">제보가 없습니다.</div>
+  <div id="list"></div>
+</div>
+
+<script>
+(function () {
+  var pw = sessionStorage.getItem('adminPw') || '';
+  var supabaseUrl = '';
+
+  var $login = document.getElementById('login');
+  var $app = document.getElementById('app');
+  var $error = document.getElementById('error');
+  var $list = document.getElementById('list');
+  var $loading = document.getElementById('loading');
+  var $empty = document.getElementById('empty');
+  var $count = document.getElementById('count');
+
+  function photoUrl(path) {
+    if (!path || !supabaseUrl) return null;
+    return supabaseUrl + '/storage/v1/object/public/photos/' + path;
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function render(reports) {
+    $count.textContent = reports.length;
+    $empty.style.display = reports.length ? 'none' : 'block';
+    $list.innerHTML = reports.map(function (r) {
+      var url = photoUrl(r.photo_path);
+      var img = url
+        ? '<img src="' + esc(url) + '" loading="lazy" alt="">'
+        : '<div class="noimg">사진 없음</div>';
+      var badges = '<span class="badge">Lv.' + esc(r.level) + '</span>' +
+        '<span class="badge">' + esc(r.area) + '</span>' +
+        (r.flags > 0 ? '<span class="badge flag">신고 ' + esc(r.flags) + '</span>' : '') +
+        (r.hidden ? '<span class="badge hide">숨김</span>' : '');
+      var cls = 'card' + (r.hidden ? ' hidden-row' : (r.flags > 0 ? ' flagged' : ''));
+      var when = new Date(r.created_at).toLocaleString('ko-KR');
+      return (
+        '<div class="' + cls + '" data-id="' + esc(r.id) + '">' +
+          img +
+          '<div class="meta">' +
+            '<div class="top">' + badges + '</div>' +
+            (r.comment ? '<div class="comment">' + esc(r.comment) + '</div>' : '') +
+            '<div>' + esc(r.nickname || '익명') + ' · ' + esc(when) + '</div>' +
+          '</div>' +
+          '<div class="row-actions">' +
+            '<button class="del" data-action="delete">삭제</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function apiFetch(path, options) {
+    options = options || {};
+    options.headers = Object.assign({}, options.headers, { 'x-admin-password': pw });
+    return fetch(path, options);
+  }
+
+  async function load() {
+    $loading.style.display = 'block';
+    $list.innerHTML = '';
+    $empty.style.display = 'none';
+    try {
+      var res = await apiFetch('/api/admin?action=list');
+      if (res.status === 401) { showLogin('비밀번호가 올바르지 않습니다.'); return; }
+      if (!res.ok) throw new Error('fetch_failed');
+      var data = await res.json();
+      render(data.reports || []);
+    } catch (e) {
+      $list.innerHTML = '';
+      $empty.textContent = '목록을 불러오지 못했습니다.';
+      $empty.style.display = 'block';
+    } finally {
+      $loading.style.display = 'none';
+    }
+  }
+
+  async function deleteReport(id, $btn) {
+    if (!confirm('이 제보를 완전히 삭제할까요? 되돌릴 수 없습니다.')) return;
+    $btn.disabled = true;
+    $btn.textContent = '삭제 중…';
+    try {
+      var res = await apiFetch('/api/admin?action=delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id }),
+      });
+      if (!res.ok) throw new Error('delete_failed');
+      var $card = $btn.closest('.card');
+      if ($card) $card.remove();
+      $count.textContent = $list.children.length;
+      $empty.style.display = $list.children.length ? 'none' : 'block';
+    } catch (e) {
+      alert('삭제에 실패했습니다.');
+      $btn.disabled = false;
+      $btn.textContent = '삭제';
+    }
+  }
+
+  $list.addEventListener('click', function (e) {
+    var $btn = e.target.closest('button[data-action="delete"]');
+    if (!$btn) return;
+    var id = $btn.closest('.card').dataset.id;
+    deleteReport(id, $btn);
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', load);
+
+  function showLogin(msg) {
+    pw = '';
+    sessionStorage.removeItem('adminPw');
+    $app.style.display = 'none';
+    $login.style.display = 'flex';
+    $error.textContent = msg || '';
+  }
+
+  async function tryLogin(candidate) {
+    pw = candidate;
+    var res = await apiFetch('/api/admin?action=list');
+    if (res.status === 401) { showLogin('비밀번호가 올바르지 않습니다.'); return; }
+    if (!res.ok) { $error.textContent = '서버 오류가 발생했습니다.'; return; }
+    sessionStorage.setItem('adminPw', pw);
+    $login.style.display = 'none';
+    $app.style.display = 'block';
+    var data = await res.json();
+    render(data.reports || []);
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', function () {
+    tryLogin(document.getElementById('pw').value);
+  });
+  document.getElementById('pw').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') tryLogin(this.value);
+  });
+
+  (async function init() {
+    try {
+      var cfg = await fetch('/api/config').then(function (r) { return r.json(); });
+      supabaseUrl = cfg.supabaseUrl || '';
+    } catch (e) {}
+
+    if (pw) {
+      $login.style.display = 'none';
+      $app.style.display = 'block';
+      load();
+    }
+  })();
+})();
+</script>
+</body>
+</html>
