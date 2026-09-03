@@ -1,24 +1,25 @@
 /**
  * 서울시 혼잡도 — 접속자 요청을 트리거 삼아 수집하는 엔드포인트
  *
- *   GET /api/congestion   접속자용. 캐시가 신선하면 그대로, 등급별로
- *                         만료됐으면 이 요청이 락을 잡고 서울시를 불러 채운다.
+ *   GET /api/congestion   접속자용. 캐시가 신선하면 그대로, 만료됐으면
+ *                         이 요청이 락을 잡고 서울시를 불러 채운다.
  *
- * Hobby 플랜은 Cron이 하루 1회로 제한되어 5분 주기 폴링을 못 쓴다(Pro부터
+ * Hobby 플랜은 Cron이 하루 1회로 제한되어 분 단위 폴링을 못 쓴다(Pro부터
  * 분 단위 Cron 허용). 그래서 "누군가 접속했을 때 캐시가 오래됐으면 그
  * 요청이 대신 갱신한다" 방식으로 바꿨다 — subway.js와 같은 패턴이다.
  *
  * 서울시 API는 HTTP 전용이라 브라우저에서 직접 못 부른다(mixed content).
- * 게다가 인증키가 하루 1,000회 제한이라, 접속자마다 부르면 금방 넘긴다.
- * 그래서 등급별 TTL(HOT 5분·WARM 20분·COLD 60분)로 캐시하고, 만료된
- * 등급만 락을 쥔 요청 하나가 갱신해 접속자 수와 호출량을 분리한다.
- */
+ * 호출 횟수 제한은 없고(1회 호출에 최대 1,000건 응답이라는 뜻이었다),
+ * 그래서 예산 캡 없이 TTL(3분)만으로 캐시해 신선도를 확보한다.
+ *
+ * 등급 구분(HOT/WARM)은 예산 배분이 아니라 "관람 판단에 쓸모 있는 장소만
+ * 수집한다"는 필터로만 남겨둔다. 모든 등급이 같은 TTL을 쓴다. */
 
 /* 등급별 장소 — 전부 실호출로 검증된 이름이다(각각 다른 POI 코드 반환).
    HOT은 관람 핵심, WARM은 주변·귀가 경로.
    불꽃이 보이지 않는 원거리 환승 거점(서울역·홍대 관광특구·신촌·이대역·
    고속터미널역·잠실한강공원·뚝섬한강공원·강남역·용산역·영등포 타임스퀘어)은
-   COLD 등급째로 제외했다 — 관람 판단에 쓸모가 없는데 예산만 쓴다. */
+   COLD 등급째로 제외했다 — 관람 판단에 쓸모가 없다. */
 const HOT  = ['여의도', '여의도한강공원', '여의서로', '노들섬'];
 const WARM = ['이촌한강공원', '반포한강공원', '양화한강공원', '노량진', '합정역', '망원한강공원'];
 const COLD = [];
@@ -62,15 +63,11 @@ async function kvSetIfAbsent(key, value, ttlSec) {
   catch { return false; }
 }
 
-/* 등급별 캐시 수명(초). 짧을수록 자주 갱신되지만 그만큼 서울시 호출도
-   늘어난다 — HOT(관람 핵심)에 예산을 몰아주고 WARM(주변·귀가 경로)은 느슨하게.
+/* 캐시 수명(초). 호출 횟수 제한이 없으므로 등급 구분 없이 3분으로 통일한다.
    Cron이 없으므로 이 TTL이 곧 "최대 이만큼 묵을 수 있다"는 약속이다.
-   트래픽이 끊이지 않는다는 최악의 가정으로 하루 예산(900회) 안에
-   들어오도록 잡은 값이다(HOT 12분·WARM 45분 하한).
-   실제로는 DAILY_BUDGET 체크가 한 번 더 막아주므로 여유를 더 뒀다.
    COLD는 더 이상 쓰지 않지만(불꽃 안 보이는 원거리 거점을 뺐다),
    staleTier 탐색이 빈 배열을 자연스럽게 건너뛰므로 값만 남겨둔다. */
-const TTL = { HOT: 420, WARM: 1500, COLD: 4500 };
+const TTL = { HOT: 180, WARM: 180, COLD: 180 };
 const TIER_OF = new Map([
   ...HOT.map((a) => [a, 'HOT']),
   ...WARM.map((a) => [a, 'WARM']),
@@ -130,8 +127,8 @@ async function fetchLive(area, key, timeoutMs) {
   return distill(raw?.CITYDATA);
 }
 
-/** 서울시를 불러 캐시를 채운다. 등급의 TTL만큼 살려두고, 하루짜리 사본을
- *  stale로 따로 남겨 예산 초과로 못 채울 때도 완전히 빈 화면은 막는다. */
+/** 서울시를 불러 캐시를 채운다. TTL만큼 살려두고, 하루짜리 사본을
+ *  stale로 따로 남겨 갱신에 실패해도 완전히 빈 화면은 막는다. */
 async function collect(area, key, timeoutMs = 6000) {
   try {
     const data = await fetchLive(area, key, timeoutMs);
@@ -144,8 +141,6 @@ async function collect(area, key, timeoutMs = 6000) {
     return { area, ok: false, why: String(e).slice(0, 60) };
   }
 }
-
-const DAILY_BUDGET = 900;   // 한도 1,000에서 예비를 남긴 값
 
 async function bumpCallCount(kst, n) {
   const day = kst.toISOString().slice(0, 10);
@@ -191,9 +186,7 @@ async function refreshOneStaleTier(areas, kst, key) {
     return null; // 너무 오래 걸리면 포기 — 이후 stale 폴백이 화면을 채운다
   }
 
-  const used = await callsUsedToday(kst);
   const targets = AREAS_OF_TIER[staleTier];
-  if (used + targets.length > DAILY_BUDGET) return null;
 
   // 함수 제한(Hobby 10초) 안에서 끝나야 하므로 등급 내부는 병렬로 부른다.
   // HOT(4곳)·WARM(8곳)·COLD(7곳) 모두 여유 있게 끝난다.
@@ -244,7 +237,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // 락을 못 잡았거나 예산이 바닥나 못 채운 곳은 하루 묵은 stale 사본으로
+  // 락을 못 잡아 못 채운 곳은 하루 묵은 stale 사본으로
   // 메운다 — 비어 있는 것보다 몇 시간 지난 값이라도 있는 편이 낫다.
   const missing = ALL.filter((a) => !areas[a]);
   if (missing.length) {

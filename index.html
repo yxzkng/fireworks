@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>여의도 불꽃 지도</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,6 +68,13 @@
   --sorts-pad: 3px;
   --sort-btn-pad: 6px 12px;
   --sort-btn-size: 12.5px;
+  --ico-plus: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M11 5h2v14h-2z'/><path d='M5 11h14v2H5z'/></svg>");
+  --ico-minus: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 11h14v2H5z'/></svg>");
+  --ico-home: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 4 4 10v10h6v-6h4v6h6V10z'/></svg>");
+  --ico-toilet: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M7.5 5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm-3 5h6l-.5 9H8.6l-.3-4H6.7l-.3 4H5Zm12-5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm-2.4 5h4.8l1.2 5h-2l.5 4h-4.2l.5-4h-2Z'/></svg>");
+  --ico-camera: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M8.5 5 7 7H4v12h16V7h-3l-1.5-2Zm3.5 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z'/></svg>");
+  --ico-report: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 4h14v11H8l-3 3Zm4 4v2h6V8Zm0 4v2h4v-2Z'/></svg>");
+  --ico-signal: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M3 17h3v4H3zm5-4h3v8H8zm5-5h3v13h-3zm5-5h3v18h-3z'/></svg>");
 }
 body {
   margin: 0; background:
@@ -100,18 +112,6 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(25px,5.6vw,
 #map:active { cursor: grabbing; }
 #map:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 
-.map-ui {
-  position: absolute; top: 10px; right: 10px;
-  display: flex; flex-direction: column; gap: 6px;
-}
-.map-btn {
-  width: 34px; height: 34px; border-radius: 9px; cursor: pointer;
-  background: rgba(11,16,32,.85); border: 1px solid var(--ink-line);
-  color: var(--text); font-size: 17px; font-family: var(--body);
-  display: grid; place-items: center; padding: 0;
-}
-.map-btn:hover { border-color: var(--text-faint); }
-.map-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 h2 { font-family: var(--display); font-size: 17px; font-weight: 700; margin: 0; flex: 1; }
 @keyframes rise { from { transform: translateY(14px); opacity: 0 } }
 @media (prefers-reduced-motion: reduce) { .sheet { animation: none } .card { transition: none } }
@@ -153,8 +153,6 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
   .head-btn-row { gap: 5px; }
   .traffic-btn, .live-btn { padding: 6px 8px; font-size: 10.5px; }
   #map { height: clamp(230px, 34dvh, 280px); }
-  .map-hint { left: 8px; right: auto; bottom: 100px; width: fit-content; max-width: calc(100% - 16px); }
-  .map-ui { top: 8px; right: 8px; }
 }
 
 /* ────────────────────────────────────────────────────────────────────
@@ -227,6 +225,19 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
 .card-name { font-family: var(--card-name-font); font-size: var(--card-name-size); font-weight: var(--w-card-name); flex: 1; line-height: 1.35 }
 .card-dist { font-size: var(--card-dist-size); color: var(--text-faint); font-variant-numeric: tabular-nums; font-weight: var(--w-dist) }
 .card-desc { font-size: var(--card-desc-size); color: var(--text-dim); line-height: 1.5 }
+.trust-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center }
+.trust-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 22px; padding: 3px 7px; border-radius: var(--r-pill);
+  border: 1px solid rgba(255,248,238,.12);
+  background: rgba(7,12,31,.28); color: var(--text-faint);
+  font-size: 10.5px; font-weight: 700; line-height: 1; white-space: nowrap;
+}
+.trust-chip.strong { color: var(--text); border-color: rgba(255,243,222,.28); background: rgba(255,243,222,.09) }
+.trust-ico { width: 12px; height: 12px; flex: 0 0 auto; background: currentColor }
+.trust-ico.public { -webkit-mask: var(--ico-signal) center / contain no-repeat; mask: var(--ico-signal) center / contain no-repeat }
+.trust-ico.report { -webkit-mask: var(--ico-report) center / contain no-repeat; mask: var(--ico-report) center / contain no-repeat }
+.trust-ico.photo { -webkit-mask: var(--ico-camera) center / contain no-repeat; mask: var(--ico-camera) center / contain no-repeat }
 
 /* ── 혼잡도 배지 ──────────────────────────────────────────────────── */
 .badge {
@@ -502,16 +513,36 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
   opacity: .86;
   color: transparent; font-size: 0;
 }
-.toilet-toggle {
+.map-tools {
   position: absolute; top: 10px; right: 10px; z-index: 7;
-  min-height: 34px; border-radius: 8px; border: 1px solid var(--ink-line);
-  background: rgba(11,16,32,.88); color: var(--text); font-family: var(--sans);
-  font-size: 12px; font-weight: 750; padding: 0 10px; cursor: pointer;
+  display: grid; gap: 6px;
+}
+.map-tools .map-btn, .toilet-toggle, .loc-btn {
+  width: 36px; height: 36px; min-width: 36px; min-height: 36px;
+  border-radius: 8px; border: 1px solid rgba(255,248,238,.42);
+  background: rgba(255,248,238,.92); color: var(--on-signal); cursor: pointer;
+  box-shadow: 0 8px 22px rgba(5,8,22,.34), inset 0 1px 0 rgba(255,255,255,.5);
+}
+.map-tools .map-btn, .toilet-toggle {
+  display: grid; place-items: center; padding: 0; font-family: var(--sans);
+  font-size: 0;
+}
+.map-tools .map-btn:hover, .toilet-toggle:hover, .loc-btn:hover { border-color: var(--text-faint) }
+.map-tools .map-btn:focus-visible, .toilet-toggle:focus-visible, .loc-btn:focus-visible {
+  outline: 2px solid var(--signal); outline-offset: 2px;
+}
+.toilet-toggle {
+  position: static; z-index: auto;
   box-shadow: 0 8px 22px rgba(5,8,22,.25);
 }
-.toilet-toggle[aria-pressed="true"] { border-color: var(--signal); color: var(--signal); background: rgba(255,243,222,.10) }
-.toilet-toggle:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
-.map-wrap:has(.map-ui) .toilet-toggle { right: 54px }
+.toilet-toggle[aria-pressed="true"], .loc-btn.on { border-color: var(--signal); background: var(--signal); color: var(--on-signal) }
+.map-tools .map-btn::before, .toilet-toggle::before, .loc-btn::before {
+  content: ''; width: 19px; height: 19px; background: currentColor;
+}
+.map-tools .map-btn.zoom-in::before { -webkit-mask: var(--ico-plus) center / contain no-repeat; mask: var(--ico-plus) center / contain no-repeat }
+.map-tools .map-btn.zoom-out::before { -webkit-mask: var(--ico-minus) center / contain no-repeat; mask: var(--ico-minus) center / contain no-repeat }
+.map-tools .map-btn.fit::before { -webkit-mask: var(--ico-home) center / contain no-repeat; mask: var(--ico-home) center / contain no-repeat }
+.toilet-toggle::before { -webkit-mask: var(--ico-toilet) center / contain no-repeat; mask: var(--ico-toilet) center / contain no-repeat }
 .legend, .map-hint {
   position: absolute; z-index: 5; font-size: 10.5px; color: var(--text-dim);
   background: var(--scrim); border: 1px solid var(--ink-line);
@@ -522,20 +553,14 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
 .legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 3px }
 .map-hint { right: 62px; bottom: 14px; padding: 6px 9px }
 .loc-btn {
-  position: absolute; right: 10px; bottom: 10px; z-index: 6;
-  width: 42px; height: 42px; display: grid; place-items: center;
-  border: 0; background: none; color: var(--text); cursor: pointer;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,.5));
+  display: grid; place-items: center; padding: 0;
 }
 .loc-btn::before {
-  content: '';
-  width: 20px; height: 20px;
   background-color: currentColor;
   -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M256 0c17.7 0 32 14.3 32 32V67.3C368.5 80 432 143.5 444.7 224H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H444.7C432 368.5 368.5 432 288 444.7V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V444.7C143.5 432 80 368.5 67.3 288H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H67.3C80 143.5 143.5 80 224 67.3V32c0-17.7 14.3-32 32-32zM256 128a128 128 0 1 0 0 256 128 128 0 1 0 0-256zm0 96a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>") no-repeat center / contain;
   mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M256 0c17.7 0 32 14.3 32 32V67.3C368.5 80 432 143.5 444.7 224H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H444.7C432 368.5 368.5 432 288 444.7V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V444.7C143.5 432 80 368.5 67.3 288H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H67.3C80 143.5 143.5 80 224 67.3V32c0-17.7 14.3-32 32-32zM256 128a128 128 0 1 0 0 256 128 128 0 1 0 0-256zm0 96a32 32 0 1 1 0 64 32 32 0 1 1 0-64z'/></svg>") no-repeat center / contain;
 }
 .loc-btn.loading { opacity: .72; cursor: wait }
-.loc-btn.on { color: var(--signal) }
 .loc-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 .me-pin {
   position: relative; width: 22px; height: 22px; border-radius: 50%;
@@ -585,8 +610,12 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
   .fc-top { margin-bottom: 10px }
   .fc { height: 78px; padding-top: 6px }
   .fc-time { font-size: 8.5px }
-  .loc-btn { right: 8px; bottom: 8px; width: 40px; height: 40px }
-  .legend { left: 8px; right: 8px; bottom: 56px; justify-content: space-between; gap: 5px; padding: 6px 7px }
+  .map-tools { top: 8px; right: 8px; gap: 5px }
+  .map-tools .map-btn, .toilet-toggle, .loc-btn { width: 34px; height: 34px; min-width: 34px; min-height: 34px }
+  .legend { left: 8px; right: 52px; bottom: 8px; flex-wrap: wrap; gap: 4px 8px; padding: 6px 7px }
+  .legend span { flex: 0 1 auto }
+  .map-hint { left: 8px; right: auto; bottom: 44px; max-width: calc(100% - 60px) }
+  .trust-chip { font-size: 10px; padding-inline: 6px }
   .program { margin-top: 14px }
   .program-head { align-items: flex-start; flex-direction: column; gap: 3px; padding: 12px }
   .program-note { white-space: normal }
@@ -604,6 +633,8 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
   .fab { min-height: 50px }
 }
 </style>
+</head>
+<body>
 
 <header>
   <div class="head-title">
@@ -623,13 +654,13 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
 <div class="map-wrap">
   <canvas id="map" role="img" aria-label="여의도 일대 장소별 혼잡도 지도" tabindex="0"></canvas>
   <div class="map-hint" id="mapHint">—:— 기준</div>
-  <button class="toilet-toggle" id="toggleToilets" type="button" aria-pressed="true" title="화장실 표시">화장실</button>
-  <div class="map-ui">
-    <button class="map-btn" id="zin"  aria-label="확대">+</button>
-    <button class="map-btn" id="zout" aria-label="축소">−</button>
-    <button class="map-btn" id="zfit" aria-label="여의도로 되돌리기">⌖</button>
+  <div class="map-tools" aria-label="지도 조작" style="position:absolute;top:8px;right:8px;z-index:20;display:grid;gap:5px">
+    <button class="map-btn zoom-in" id="zin"  aria-label="확대" title="확대" style="width:34px;height:34px;background:#FFF8EE;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
+    <button class="map-btn zoom-out" id="zout" aria-label="축소" title="축소" style="width:34px;height:34px;background:#FFF8EE;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
+    <button class="map-btn fit" id="zfit" aria-label="여의도로 되돌리기" title="여의도로 되돌리기" style="width:34px;height:34px;background:#FFF8EE;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
+    <button class="toilet-toggle" id="toggleToilets" type="button" aria-pressed="true" aria-label="화장실 표시" title="화장실 표시" style="width:34px;height:34px;background:#FFD91A;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
+    <button class="loc-btn" id="locateMe" aria-label="현재 위치 표시" title="현재 위치 표시" style="width:34px;height:34px;background:#FFF8EE;color:#141A3D;border:1px solid rgba(255,248,238,.55);border-radius:8px"></button>
   </div>
-  <button class="loc-btn" id="locateMe" aria-label="현재 위치 표시" title="현재 위치 표시"></button>
   <div class="legend">
     <span><i style="background:var(--c1)"></i>여유</span>
     <span><i style="background:var(--c2)"></i>보통</span>
@@ -781,6 +812,19 @@ function ago(ts) {
   if (m < 60) return m + '분 전';
   const h = Math.floor(m / 60);
   return h < 24 ? h + '시간 전' : Math.floor(h / 24) + '일 전';
+}
+function officialAge(o) {
+  const raw = o?.congestion?.time || o?.updatedAt || o?.time;
+  if (!raw) return '공공데이터';
+  const t = new Date(raw);
+  return Number.isNaN(t.getTime()) ? `공공 ${raw}` : `공공 ${ago(t.getTime())}`;
+}
+function trustChips(s, pics) {
+  const chips = [];
+  if (s.o) chips.push(`<span class="trust-chip strong"><i class="trust-ico public"></i>${esc(officialAge(s.o))}</span>`);
+  if (s.vote) chips.push(`<span class="trust-chip"><i class="trust-ico report"></i>최근 제보 ${s.vote.count}건</span>`);
+  if (pics.length) chips.push(`<span class="trust-chip"><i class="trust-ico photo"></i>사진 ${pics.length}장</span>`);
+  return chips.length ? `<div class="trust-row">${chips.join('')}</div>` : '';
 }
 
 /* ── 카운트다운 ───────────────────────────────────────── */
@@ -1151,6 +1195,7 @@ function renderRail() {
     if (s.vote) bits.push(`<span>제보 <b>${s.vote.count}건</b></span>`);
 
     const pics = photosOf(s.area);
+    const trust = trustChips(s, pics);
     const thumbs = pics.length ? `<div class="thumbs">${
       pics.slice(0, 3).map((r) => `<img src="${r.photo}" alt="" loading="lazy">`).join('') +
       (pics.length > 3 ? `<div class="thumb-more">+${pics.length - 3}</div>` : '')}</div>` : '';
@@ -1163,6 +1208,7 @@ function renderRail() {
         ${badge}
       </div>
       <div class="card-desc">${esc(NOTES[s.area] || '')}</div>
+      ${trust}
       ${bits.length ? `<div class="metrics">${bits.join('')}</div>` : ''}
       ${thumbs}
     </button>`;
@@ -1534,3 +1580,5 @@ setInterval(loadOfficial, 60 * 1000);   // Worker가 KV를 읽어줄 뿐이라 �
     }, () => {});
 })();
 </script>
+</body>
+</html>
