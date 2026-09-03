@@ -342,11 +342,10 @@ function officialAge(o) {
   const t = new Date(ours);
   return Number.isNaN(t.getTime()) ? `공공 ${ours}` : `공공 ${ago(t.getTime())}`;
 }
-function trustChips(s, pics) {
+function trustChips(s) {
   const chips = [];
   if (s.o) chips.push(`<span class="trust-chip strong"><i class="trust-ico public"></i>${esc(officialAge(s.o))}</span>`);
   if (s.vote) chips.push(`<span class="trust-chip"><i class="trust-ico report"></i>최근 제보 ${s.vote.count}건</span>`);
-  if (pics.length) chips.push(`<span class="trust-chip"><i class="trust-ico photo"></i>사진 ${pics.length}장</span>`);
   return chips.length ? `<div class="trust-row">${chips.join('')}</div>` : '';
 }
 
@@ -555,7 +554,7 @@ function drawMap() {
     ctx.shadowColor = 'rgba(0,0,0,.55)';
     ctx.shadowBlur = 8;
     ctx.shadowOffsetY = 3;
-    ctx.drawImage(fireworkMarker, fx - 21, fy - 33, 42, 44);
+    ctx.drawImage(fireworkMarker, fx - 26, fy - 40, 52, 54);
     ctx.restore();
   } else {
     ctx.save();
@@ -743,22 +742,17 @@ function renderRail() {
     }
     if (s.vote) bits.push(`<span>제보 <b>${s.vote.count}건</b></span>`);
 
-    const pics = photosOf(s.area);
-    const trust = trustChips(s, pics);
-    const thumbs = pics.length ? `<div class="thumbs">${
-      pics.slice(0, 3).map((r) => `<img src="${r.photo}" alt="" loading="lazy">`).join('') +
-      (pics.length > 3 ? `<div class="thumb-more">+${pics.length - 3}</div>` : '')}</div>` : '';
+    const trust = trustChips(s);
 
     return `<button class="card${s.area === selected ? ' active' : ''}" data-area="${esc(s.area)}">
       <div class="card-top">
         <span class="card-name">${esc(s.area)}<br><span class="card-dist">${
           myLocation ? `내 위치에서 ${s.km}km`
-          : VIEWABLE.has(s.area) ? `발사지점 ${s.km}km` : `이동 거점 · ${s.km}km`}</span></span>
+          : VIEWABLE.has(s.area) ? `불꽃 발사 지점 ${s.km}km` : `이동 거점 · ${s.km}km`}</span></span>
         ${badge}
       </div>
       ${trust}
       ${bits.length ? `<div class="metrics">${bits.join('')}</div>` : ''}
-      ${thumbs}
     </button>`;
   }).join('');
 }
@@ -782,6 +776,8 @@ function setSort(m) {
   $('#listTitle').textContent = m === 'near' ? '가까운 순' : '붐비는 순';
   renderRail();
   $('#rail').scrollTo({ left: 0, behavior: 'smooth' });
+  // "가까운 순"인데 아직 위치를 모르면 바로 권한을 물어본다.
+  if (m === 'near' && !myLocation) locateMe();
 }
 
 /* ── 공공데이터 ───────────────────────────────────────── */
@@ -813,7 +809,7 @@ function detailSheet(area) {
   const vote = crowdVote(area);
   const list = reports.filter((r) => r.placeId === area && !r.hidden).slice(0, 30);
 
-  const distLabel = myLocation ? `내 위치에서 ${c.km}km` : `발사지점에서 ${c.km}km`;
+  const distLabel = myLocation ? `내 위치에서 ${c.km}km` : `불꽃 발사 지점에서 ${c.km}km`;
   let html = `<div class="sheet-head">
       <span class="sheet-title">${esc(area)}</span>
       <button class="close" data-close aria-label="닫기">&times;</button>

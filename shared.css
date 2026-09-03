@@ -439,7 +439,7 @@
 [hidden] { display: none !important }
 
 @media (max-width: 520px) {
-  :root { --pad: 14px }
+  :root { --pad: 22px }
   body { padding-bottom: 86px }
   .list-head { margin-top: 14px; align-items: flex-end }
   .sorts { flex-shrink: 0 }
