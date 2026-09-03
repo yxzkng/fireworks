@@ -15,7 +15,7 @@
   --text:       #FFF8EE;
   --text-dim:   #E7DCEF;
   --text-faint: #B7A8CB;
-  --gold:       #F26A1B;
+  --gold:       #FFF3DE;
   --yellow:     #FFD91A;
   --coral:      #F47C8E;
 
@@ -34,7 +34,7 @@
   --serif: var(--display);
   --sans: var(--body);
   --signal: var(--gold);
-  --on-signal: #241000;
+  --on-signal: #141A3D;
   --ink-panel: var(--ink-raised);
   --card-bg: linear-gradient(160deg,rgba(255,248,238,.105),rgba(255,248,238,.045) 46%,rgba(16,22,50,.78));
   --map-bg: var(--land);
@@ -219,7 +219,7 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
   background: transparent;
 }
 .card:hover { border-color: var(--text-faint); transform: translateY(-1px) }
-.card.active { border-color: rgba(242,106,27,.72); background: rgba(25, 31, 68, .98) }
+.card.active { border-color: rgba(255,243,222,.72); background: rgba(25, 31, 68, .98) }
 .card.active::before { background: var(--signal) }
 .card:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 
@@ -268,7 +268,7 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
 }
 .program-item:last-child { border-bottom: 0 }
 .program-item.featured {
-  background: rgba(242,106,27,.10);
+  background: rgba(255,243,222,.10);
   box-shadow: inset 3px 0 0 var(--signal);
 }
 .program-time {
@@ -304,7 +304,7 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
   padding: 15px; border: 0; border-radius: var(--r); cursor: pointer;
   background: var(--signal); color: var(--on-signal);
   font-family: var(--sans); font-size: 15px; font-weight: var(--w-strong);
-  box-shadow: 0 12px 28px rgba(242,106,27,.28), inset 0 1px 0 rgba(255,255,255,.32);
+  box-shadow: 0 12px 28px rgba(255,243,222,.22), inset 0 1px 0 rgba(255,255,255,.42);
 }
 .fab:active { transform: translateY(1px) }
 .fab:focus-visible { outline: 2px solid var(--text); outline-offset: 2px }
@@ -412,33 +412,20 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
   cursor: pointer; padding: 2px 4px; margin-left: auto;
 }
 .report-flag:hover { color: var(--c4) }
+.report-cat {
+  padding: 1px 6px; border-radius: 999px; border: 1px solid var(--ink-line);
+  color: var(--text-faint);
+}
 .empty { color: var(--text-faint); font-size: 12.5px; padding: 4px 0 }
 
-/* ── 과거 혼잡 레퍼런스 ─────────────────────────────────────────── */
-.history-strip {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+.report-sort { display: flex; gap: 6px }
+.report-sort-btn {
+  padding: 4px 9px; border-radius: 999px; border: 1px solid var(--ink-line);
+  background: transparent; color: var(--text-faint); cursor: pointer;
+  font-family: var(--sans); font-size: 11px; font-weight: var(--w-btn);
 }
-.history-shot {
-  border: 1px solid var(--ink-line); border-radius: var(--r);
-  overflow: hidden; background: var(--ink-panel); color: inherit; text-align: left;
-}
-.history-shot img, .history-ph {
-  display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
-}
-.history-ph {
-  display: grid; place-items: center; padding: 8px; text-align: center;
-  color: var(--text-faint); font-size: 11px; line-height: 1.35;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.05), transparent 52%),
-    var(--ink);
-}
-.history-cap { padding: 8px; display: grid; gap: 3px }
-.history-count {
-  color: var(--text); font-size: 13px; font-weight: var(--w-strong);
-  font-variant-numeric: tabular-nums;
-}
-.history-note { color: var(--text-dim); font-size: 11.5px; line-height: 1.4 }
-.history-source { color: var(--text-faint); font-size: 10.5px; line-height: 1.45; margin-top: 8px }
+.report-sort-btn[aria-pressed="true"] { border-color: var(--signal); color: var(--signal) }
+.report-sort-btn:disabled { opacity: .4; cursor: not-allowed }
 
 /* ── 제보 폼 ──────────────────────────────────────────────────────── */
 .lv-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px }
@@ -448,6 +435,16 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
   font-family: var(--sans); font-size: 12px; font-weight: var(--w-btn);
 }
 .lv-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
+
+.cat-pick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px }
+.cat-btn {
+  padding: 10px 4px; border-radius: var(--r); border: 1px solid var(--ink-line);
+  background: transparent; color: var(--text-dim); cursor: pointer;
+  font-family: var(--sans); font-size: 12px; font-weight: var(--w-btn);
+}
+.cat-btn[aria-pressed="true"] { border-color: var(--signal); color: var(--signal); background: var(--c2-bg) }
+.cat-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
+
 .photo-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%; padding: 13px; border-radius: var(--r);
@@ -512,7 +509,7 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
   font-size: 12px; font-weight: 750; padding: 0 10px; cursor: pointer;
   box-shadow: 0 8px 22px rgba(5,8,22,.25);
 }
-.toilet-toggle[aria-pressed="true"] { border-color: var(--signal); color: var(--signal); background: rgba(36,20,11,.92) }
+.toilet-toggle[aria-pressed="true"] { border-color: var(--signal); color: var(--signal); background: rgba(255,243,222,.10) }
 .toilet-toggle:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 .map-wrap:has(.map-ui) .toilet-toggle { right: 54px }
 .legend, .map-hint {
@@ -602,15 +599,6 @@ footer { margin: 30px auto 0; max-width: var(--maxw); padding: 0 var(--pad); fon
     border-radius: 12px 12px 0 0;
   }
   .sheet-head { position: sticky; top: -16px; z-index: 2; background: var(--ink-raised); padding-top: 2px }
-  .history-strip {
-    display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory;
-    margin-inline: calc(var(--pad) * -1); padding: 0 var(--pad) 4px;
-    scrollbar-width: none; -webkit-overflow-scrolling: touch;
-  }
-  .history-strip::-webkit-scrollbar { display: none }
-  .history-shot { flex: 0 0 74%; scroll-snap-align: center }
-  .history-shot img, .history-ph { aspect-ratio: 16 / 10 }
-  .history-count { font-size: 14px }
   .report { grid-template-columns: 68px minmax(0, 1fr) }
   .report img { width: 68px; height: 68px }
   .fab { min-height: 50px }
@@ -733,10 +721,10 @@ const LEVELS    = ['여유', '보통', '약간 붐빔', '붐빔'];
 
 /* 빌드 시 주입되는 지도 데이터 (build.py) */
 const GEO    = {"river":[[37.54147,127.02516],[37.54076,127.03231],[37.53425,127.05471],[37.52992,127.06396],[37.5281,127.06977],[37.52654,127.07861],[37.52689,127.0877],[37.51969,127.09161],[37.51846,127.08128],[37.52055,127.06591],[37.52491,127.0581],[37.52908,127.05222],[37.53252,127.03792],[37.5343,127.03397],[37.5348,127.02828],[37.53381,127.02497],[37.53169,127.02193],[37.52863,127.01928],[37.51846,127.00742],[37.51729,127.00489],[37.5155,127.00418],[37.51343,127.00074],[37.51221,126.99695],[37.50739,126.9912],[37.50655,126.98809],[37.50689,126.98517],[37.50623,126.98256],[37.50648,126.9748],[37.50715,126.97122],[37.50933,126.96545],[37.51024,126.96477],[37.51311,126.95948],[37.51827,126.94566],[37.52083,126.94357],[37.52844,126.93453],[37.53148,126.92961],[37.53393,126.92266],[37.53598,126.91187],[37.53523,126.91027],[37.53538,126.9117],[37.53505,126.91265],[37.53478,126.91235],[37.53431,126.90952],[37.53487,126.90815],[37.53702,126.90615],[37.54846,126.8886],[37.55155,126.88337],[37.5548,126.87552],[37.5614,126.86686],[37.57626,126.84124],[37.58122,126.82915],[37.58327,126.82632],[37.58764,126.81788],[37.59146,126.81255],[37.59866,126.80562],[37.60539,126.79785],[37.60716,126.79306],[37.60748,126.79118],[37.6069,126.78981],[37.60732,126.78856],[37.60826,126.78698],[37.6096,126.78609],[37.61917,126.77102],[37.62243,126.75823],[37.62472,126.75281],[37.62695,126.74944],[37.62873,126.74459],[37.63082,126.74118],[37.63347,126.73866],[37.63587,126.73463],[37.64823,126.70681],[37.65139,126.70271],[37.65478,126.70195],[37.65773,126.69612],[37.66301,126.68223],[37.66503,126.67859],[37.66771,126.67514],[37.66849,126.675],[37.67274,126.66815],[37.67747,126.66322],[37.68327,126.65901],[37.68824,126.65884],[37.69168,126.66001],[37.69236,126.6623],[37.69591,126.66435],[37.69941,126.66256],[37.70474,126.66292],[37.70817,126.66489],[37.72012,126.66788],[37.72888,126.67122],[37.73064,126.67028],[37.73512,126.6701],[37.73489,126.6691],[37.73537,126.66873],[37.73547,126.66993],[37.74194,126.66922],[37.75453,126.6659],[37.76282,126.66082],[37.76832,126.65631],[37.77306,126.6748],[37.77091,126.67518],[37.76981,126.67722],[37.77052,126.67846],[37.77036,126.67951],[37.76697,126.68379],[37.76471,126.6851],[37.75865,126.68639],[37.75834,126.68707],[37.75604,126.68508],[37.7434,126.68645],[37.73848,126.6853],[37.73769,126.68686],[37.73563,126.68777],[37.73172,126.68842],[37.72705,126.68828],[37.72516,126.68689],[37.72326,126.6874],[37.72051,126.68665],[37.71259,126.68018],[37.70498,126.67523],[37.69609,126.67222],[37.69498,126.67136],[37.69272,126.67119],[37.68743,126.67406],[37.68075,126.67872],[37.67415,126.68595],[37.67023,126.69148],[37.66185,126.71215],[37.65843,126.71845],[37.65534,126.72166],[37.65371,126.72462],[37.65388,126.72645],[37.65263,126.72697],[37.65328,126.72801],[37.65921,126.72998],[37.66043,126.73137],[37.65922,126.73244],[37.65664,126.73671],[37.65974,126.73098],[37.65718,126.72984],[37.65506,126.73041],[37.65541,126.7294],[37.65321,126.72855],[37.6523,126.7274],[37.65248,126.72633],[37.65348,126.72613],[37.65314,126.72551],[37.65205,126.7263],[37.64768,126.73258],[37.63231,126.76149],[37.62874,126.77126],[37.62724,126.77834],[37.62183,126.78889],[37.61465,126.80039],[37.60602,126.80951],[37.59946,126.81505],[37.59664,126.81911],[37.59209,126.83066],[37.59128,126.83118],[37.58947,126.83585],[37.58573,126.84201],[37.58538,126.8436],[37.58411,126.8445],[37.584,126.84658],[37.58166,126.85066],[37.57862,126.85361],[37.5752,126.86078],[37.5741,126.86201],[37.57449,126.86296],[37.57376,126.86251],[37.57218,126.86584],[37.57079,126.86745],[37.57014,126.86959],[37.56498,126.87592],[37.56188,126.88485],[37.56131,126.88481],[37.55847,126.8899],[37.54425,126.90989],[37.54326,126.91252],[37.54253,126.9175],[37.54279,126.92015],[37.54338,126.91994],[37.54373,126.92062],[37.5432,126.92117],[37.54414,126.92585],[37.54142,126.93361],[37.54119,126.93742],[37.54001,126.93923],[37.53467,126.94326],[37.53374,126.94704],[37.52975,126.95159],[37.52406,126.95313],[37.52275,126.95402],[37.52179,126.95565],[37.52091,126.95968],[37.51514,126.97492],[37.51452,126.98144],[37.51522,126.98743],[37.51735,126.99183],[37.51669,126.99229],[37.51733,126.99411],[37.51716,126.99275],[37.51776,126.99414],[37.51886,126.9945],[37.52192,127.00096],[37.52588,127.00413],[37.53047,127.01204],[37.53951,127.01835],[37.54109,127.02081],[37.54147,127.02516]],"yeouido":[[37.5317,126.91044],[37.53076,126.9109],[37.52823,126.91133],[37.52648,126.91214],[37.52394,126.91433],[37.52199,126.9153],[37.51979,126.91705],[37.51866,126.91876],[37.51635,126.92512],[37.5156,126.92969],[37.51671,126.9367],[37.51814,126.94273],[37.51888,126.94391],[37.51946,126.94431],[37.52083,126.94357],[37.52929,126.93347],[37.53115,126.93032],[37.5329,126.92604],[37.53405,126.92214],[37.53599,126.91141],[37.53567,126.91053],[37.53523,126.91027],[37.53506,126.91087],[37.5354,126.91157],[37.53495,126.91265],[37.53458,126.90978],[37.5317,126.91044]],"nodeul":[[37.5163,126.96248],[37.5173,126.96159],[37.51889,126.95737],[37.51917,126.95571],[37.51867,126.95486],[37.51795,126.95522],[37.5166,126.95838],[37.51603,126.96079],[37.5163,126.96248]],"bridges":{"양화대교":[[37.5432,126.901],[37.5382,126.902]],"서강대교":[[37.5405,126.927],[37.529,126.9235]],"마포대교":[[37.542,126.9455],[37.529,126.9385]],"원효대교":[[37.5345,126.948],[37.521,126.937]],"한강대교":[[37.525,126.9585],[37.5105,126.956]]}};
-const COORDS = [{"area":"여의도한강공원","lat":37.52899,"lon":126.92822,"cat":"공원","km":0.4},{"area":"여의도","lat":37.52502,"lon":126.92553,"cat":"발달상권","km":0.8},{"area":"여의서로","lat":37.5327,"lon":126.91458,"cat":"공원","km":1.7},{"area":"노량진","lat":37.51389,"lon":126.94406,"cat":"발달상권","km":1.9},{"area":"용산역","lat":37.53026,"lon":126.96082,"cat":"인구밀집지역","km":2.5},{"area":"노들섬","lat":37.51756,"lon":126.95866,"cat":"공원","km":2.6},{"area":"영등포 타임스퀘어","lat":37.51686,"lon":126.90615,"cat":"발달상권","km":2.7},{"area":"합정역","lat":37.54938,"lon":126.91173,"cat":"인구밀집지역","km":3.0},{"area":"홍대 관광특구","lat":37.55392,"lon":126.92127,"cat":"관광특구","km":3.0},{"area":"이촌한강공원","lat":37.5194,"lon":126.96665,"cat":"공원","km":3.1},{"area":"신촌·이대역","lat":37.55704,"lon":126.93897,"cat":"인구밀집지역","km":3.2},{"area":"양화한강공원","lat":37.5413,"lon":126.89819,"cat":"공원","km":3.4},{"area":"망원한강공원","lat":37.55328,"lon":126.89927,"cat":"공원","km":4.0},{"area":"서울역","lat":37.55659,"lon":126.97303,"cat":"인구밀집지역","km":4.7},{"area":"반포한강공원","lat":37.50983,"lon":126.99467,"cat":"공원","km":5.8},{"area":"고속터미널역","lat":37.50481,"lon":127.00586,"cat":"인구밀집지역","km":6.9},{"area":"강남역","lat":37.49886,"lon":127.02813,"cat":"인구밀집지역","km":9.0},{"area":"뚝섬한강공원","lat":37.52918,"lon":127.07151,"cat":"공원","km":12.2},{"area":"잠실한강공원","lat":37.51923,"lon":127.0843,"cat":"공원","km":13.4}];
+const COORDS = [{"area":"여의도한강공원","lat":37.52899,"lon":126.92822,"cat":"공원","km":0.4},{"area":"여의도","lat":37.52502,"lon":126.92553,"cat":"발달상권","km":0.8},{"area":"여의서로","lat":37.5327,"lon":126.91458,"cat":"공원","km":1.7},{"area":"노량진","lat":37.51389,"lon":126.94406,"cat":"발달상권","km":1.9},{"area":"노들섬","lat":37.51756,"lon":126.95866,"cat":"공원","km":2.6},{"area":"합정역","lat":37.54938,"lon":126.91173,"cat":"인구밀집지역","km":3.0},{"area":"이촌한강공원","lat":37.5194,"lon":126.96665,"cat":"공원","km":3.1},{"area":"양화한강공원","lat":37.5413,"lon":126.89819,"cat":"공원","km":3.4},{"area":"망원한강공원","lat":37.55328,"lon":126.89927,"cat":"공원","km":4.0},{"area":"반포한강공원","lat":37.50983,"lon":126.99467,"cat":"공원","km":5.8}];
 
 /* 관람 가능 여부 — 불꽃이 보이는 곳과 이동 거점을 구분한다.
-   '붐비는 순'에서 강남역 같은 원거리 거점이 맨 위로 올라오면
+   '붐비는 순'에서 원거리 환승 거점이 맨 위로 올라오면
    자리를 찾는 사람에게 쓸모없는 순서가 되기 때문이다. */
 const VIEWABLE = new Set([
   '여의도한강공원', '여의도', '여의서로', '노들섬',
@@ -760,102 +748,8 @@ const NOTES = {
   '양화한강공원':   '측후방 원거리. 늦게 가도 자리가 있는 편입니다.',
   '망원한강공원':   '서측 원거리 조망.',
   '노량진':        '귀가 경유지. 붐비면 우회를 고려하세요.',
-  '용산역':        '귀가 환승 거점.',
-  '영등포 타임스퀘어': '실내 대기·식사 장소.',
   '합정역':        '서측 환승 거점.',
-  '서울역':        '귀가 환승 거점.',
-  '홍대 관광특구':  '종료 후 이동 인파가 몰리는 곳.',
-  '신촌·이대역':    '북측 환승 거점.',
-  '고속터미널역':   '남측 환승 거점.',
-  '잠실한강공원':   '원거리. 불꽃은 보이지 않습니다.',
-  '뚝섬한강공원':   '원거리. 불꽃은 보이지 않습니다.',
-  '강남역':        '남측 환승 거점.',
 };
-
-const HISTORICAL_CROWD = {
-  '여의도한강공원': {
-    source: '축제 전체 발표 인원과 관람 핵심 구역 면적을 바탕으로 한 서비스 내부 추정치입니다.',
-    shots: [
-      { year: '2023', people: 320000, caption: '메인 행사장 잔디·수변부가 일찍부터 포화된 상황', image: '' },
-      { year: '2022', people: 280000, caption: '불꽃 시작 전 돗자리 밀도가 매우 높았던 시간대', image: '' },
-      { year: '2019', people: 300000, caption: '마포대교~원효대교 사이 정면 관람 인파', image: '' },
-    ],
-  },
-  '여의도': {
-    source: '여의도 일대 유입 인파를 지하철역·도로 접근 구역으로 나누어 배분한 추정치입니다.',
-    shots: [
-      { year: '2023', people: 180000, caption: '여의나루역 주변 진입 대기와 이동 인파', image: '' },
-      { year: '2022', people: 150000, caption: '공원 진입로와 상권 방향 보행 흐름', image: '' },
-      { year: '2019', people: 170000, caption: '행사 종료 직후 역 방향으로 빠지는 구간', image: '' },
-    ],
-  },
-  '여의서로': {
-    source: '벚꽃길·국회 주변 도로변 체류 가능 면적 기준 추정치입니다.',
-    shots: [
-      { year: '2023', people: 70000, caption: '국회 뒤편 도로변에 길게 형성된 관람 줄', image: '' },
-      { year: '2022', people: 60000, caption: '공원보다 여유 있지만 이동 통로가 좁아지는 구간', image: '' },
-      { year: '2019', people: 65000, caption: '서강대교 방향 측면 관람 인파', image: '' },
-    ],
-  },
-  '노들섬': {
-    source: '섬 내 관람 가능 공간과 출입 동선 용량을 기준으로 한 추정치입니다.',
-    shots: [
-      { year: '2023', people: 30000, caption: '섬 중앙부와 수변 데크가 빠르게 찬 상황', image: '' },
-      { year: '2022', people: 25000, caption: '한강대교 보행 접근로까지 대기 발생', image: '' },
-      { year: '2019', people: 28000, caption: '측면 조망을 노린 소규모 밀집', image: '' },
-    ],
-  },
-  '이촌한강공원': {
-    source: '강 건너 주요 관람 구간 길이와 평균 체류 밀도 기준 추정치입니다.',
-    shots: [
-      { year: '2023', people: 120000, caption: '정면 조망이 가능한 수변 산책로 밀집', image: '' },
-      { year: '2022', people: 95000, caption: '가족 단위 관람객이 넓게 분산된 구역', image: '' },
-      { year: '2019', people: 110000, caption: '원효대교 건너편 주요 포인트', image: '' },
-    ],
-  },
-  '양화한강공원': {
-    source: '원거리 조망 구역의 체류 사진과 공원 규모를 함께 반영한 추정치입니다.',
-    shots: [
-      { year: '2023', people: 45000, caption: '늦은 시간에도 일부 여유가 남는 후방 조망', image: '' },
-      { year: '2022', people: 38000, caption: '수변부 중심으로 느슨하게 모인 관람객', image: '' },
-      { year: '2019', people: 42000, caption: '귀가 동선 부담이 적은 서측 포인트', image: '' },
-    ],
-  },
-  '망원한강공원': {
-    source: '서측 원거리 관람 구간 면적과 관람 후기 사진을 바탕으로 한 추정치입니다.',
-    shots: [
-      { year: '2023', people: 50000, caption: '망원 수변부 중심의 분산 관람', image: '' },
-      { year: '2022', people: 42000, caption: '행사 직전 잔디밭과 산책로가 함께 찬 상황', image: '' },
-      { year: '2019', people: 46000, caption: '성산대교 방향 여유 관람 구간', image: '' },
-    ],
-  },
-  '반포한강공원': {
-    source: '원거리 관람·대체 이동지 성격을 고려한 보수적 추정치입니다.',
-    shots: [
-      { year: '2023', people: 35000, caption: '불꽃은 작게 보이지만 접근성이 좋은 대체지', image: '' },
-      { year: '2022', people: 30000, caption: '메인 행사장 회피 관람객 일부 유입', image: '' },
-      { year: '2019', people: 32000, caption: '반포 수변부에 낮은 밀도로 분산', image: '' },
-    ],
-  },
-};
-
-function renderHistorical(area) {
-  const h = HISTORICAL_CROWD[area];
-  if (!h?.shots?.length) return '';
-  return `<div class="block">
-    <div class="block-label">과거 현장 레퍼런스</div>
-    <div class="history-strip">${h.shots.slice(0, 3).map((shot, i) => `
-      <div class="history-shot">
-        ${shot.image ? `<img src="${esc(shot.image)}" alt="${esc(area)} ${esc(shot.year)}년 과거 혼잡 사진" data-history="${esc(area)}-${i}" loading="lazy">`
-          : `<div class="history-ph">${esc(shot.year)}년<br>사진 추가 예정</div>`}
-        <div class="history-cap">
-          <div class="history-count">약 ${shot.people.toLocaleString()}명</div>
-          <div class="history-note">${esc(shot.caption)}</div>
-        </div>
-      </div>`).join('')}</div>
-    <div class="history-source">${esc(h.source)} 사진을 넣으면 이 영역이 실제 현장 이미지 3장으로 바뀝니다.</div>
-  </div>`;
-}
 
 /* ── 상태 ─────────────────────────────────────────────── */
 let db = null;
@@ -1234,7 +1128,7 @@ function renderRail() {
   states.sort(sortMode === 'near'
     ? (a, b) => a.km - b.km
     // 붐비는 순: 관람 가능한 곳을 먼저 놓고 그 안에서 혼잡도순.
-    // 그러지 않으면 강남역처럼 늘 붐비는 원거리 거점이 맨 위를 차지한다.
+    // 그러지 않으면 원거리 환승 거점처럼 늘 붐비는 곳이 맨 위를 차지한다.
     : (a, b) => (VIEWABLE.has(b.area) - VIEWABLE.has(a.area))
              || (b.level - a.level) || (b.people - a.people));
 
@@ -1372,8 +1266,6 @@ function detailSheet(area) {
       <div class="block-label">현장 제보 · 최근 30분 ${vote.count}건</div>
       <span class="badge lv${vote.level}">${LEVELS[vote.level - 1]}</span></div>`;
   }
-
-  html += renderHistorical(area);
 
   html += `<div class="block">
     <div class="block-label">제보 타임라인</div>
@@ -1533,15 +1425,6 @@ document.addEventListener('click', async (e) => {
     return;
   }
 
-  const history = t.closest('[data-history]');
-  if (history?.src) {
-    const lb = document.createElement('div');
-    lb.className = 'lightbox';
-    lb.innerHTML = `<img src="${history.src}" alt="${esc(history.alt || '과거 현장 사진')}">`;
-    lb.addEventListener('click', () => lb.remove());
-    document.body.appendChild(lb);
-    return;
-  }
 
   const flag = t.closest('[data-flag]');
   if (flag) {

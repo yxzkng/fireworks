@@ -15,12 +15,13 @@
  */
 
 /* 등급별 장소 — 전부 실호출로 검증된 이름이다(각각 다른 POI 코드 반환).
-   HOT은 관람 핵심, WARM은 주변·귀가 경로, COLD는 지도 맥락용. */
+   HOT은 관람 핵심, WARM은 주변·귀가 경로.
+   불꽃이 보이지 않는 원거리 환승 거점(서울역·홍대 관광특구·신촌·이대역·
+   고속터미널역·잠실한강공원·뚝섬한강공원·강남역·용산역·영등포 타임스퀘어)은
+   COLD 등급째로 제외했다 — 관람 판단에 쓸모가 없는데 예산만 쓴다. */
 const HOT  = ['여의도', '여의도한강공원', '여의서로', '노들섬'];
-const WARM = ['이촌한강공원', '반포한강공원', '양화한강공원', '노량진',
-              '용산역', '영등포 타임스퀘어', '합정역', '망원한강공원'];
-const COLD = ['서울역', '홍대 관광특구', '신촌·이대역', '고속터미널역',
-              '잠실한강공원', '뚝섬한강공원', '강남역'];
+const WARM = ['이촌한강공원', '반포한강공원', '양화한강공원', '노량진', '합정역', '망원한강공원'];
+const COLD = [];
 const ALL = [...new Set([...HOT, ...WARM, ...COLD])];
 
 let kvClientPromise;
@@ -35,6 +36,16 @@ async function kvGet(key) {
   const client = await getKv();
   if (!client) return null;
   try { return await client.get(key); } catch { return null; }
+}
+
+/** 여러 키를 한 번의 왕복으로 읽는다. 개별 kvGet을 Promise.all로 병렬
+ *  호출해도 각각 별도의 HTTP 요청이 나가므로(REST 기반 KV라 커넥션 재사용이
+ *  안 됨), 키가 여럿일 때는 이쪽이 훨씬 빠르다. */
+async function kvMget(keys) {
+  if (!keys.length) return [];
+  const client = await getKv();
+  if (!client) return keys.map(() => null);
+  try { return await client.mget(...keys); } catch { return keys.map(() => null); }
 }
 
 async function kvSet(key, value, options) {
@@ -52,11 +63,13 @@ async function kvSetIfAbsent(key, value, ttlSec) {
 }
 
 /* 등급별 캐시 수명(초). 짧을수록 자주 갱신되지만 그만큼 서울시 호출도
-   늘어난다 — HOT(관람 핵심)에 예산을 몰아주고 COLD(지도 맥락용)는 느슨하게.
+   늘어난다 — HOT(관람 핵심)에 예산을 몰아주고 WARM(주변·귀가 경로)은 느슨하게.
    Cron이 없으므로 이 TTL이 곧 "최대 이만큼 묵을 수 있다"는 약속이다.
    트래픽이 끊이지 않는다는 최악의 가정으로 하루 예산(900회) 안에
-   들어오도록 잡은 값이다(HOT 12분·WARM 45분·COLD 75분 하한).
-   실제로는 DAILY_BUDGET 체크가 한 번 더 막아주므로 여유를 더 뒀다. */
+   들어오도록 잡은 값이다(HOT 12분·WARM 45분 하한).
+   실제로는 DAILY_BUDGET 체크가 한 번 더 막아주므로 여유를 더 뒀다.
+   COLD는 더 이상 쓰지 않지만(불꽃 안 보이는 원거리 거점을 뺐다),
+   staleTier 탐색이 빈 배열을 자연스럽게 건너뛰므로 값만 남겨둔다. */
 const TTL = { HOT: 420, WARM: 1500, COLD: 4500 };
 const TIER_OF = new Map([
   ...HOT.map((a) => [a, 'HOT']),
@@ -170,8 +183,7 @@ async function refreshOneStaleTier(areas, kst, key) {
       await new Promise((r) => setTimeout(r, 300));
       const filled = await kvGet(`area:${probe}`);
       if (filled) {
-        const rest = await Promise.all(
-          AREAS_OF_TIER[staleTier].map((a) => kvGet(`area:${a}`)));
+        const rest = await kvMget(AREAS_OF_TIER[staleTier].map((a) => `area:${a}`));
         AREAS_OF_TIER[staleTier].forEach((a, i2) => { if (rest[i2]) areas[a] = rest[i2]; });
         return null; // meta는 락 보유자가 이미 갱신했으므로 새로 쓸 필요 없다
       }
@@ -200,7 +212,7 @@ export default async function handler(req, res) {
   let values = [], meta = null;
   try {
     [values, meta] = await Promise.all([
-      Promise.all(ALL.map((a) => kvGet(`area:${a}`))),
+      kvMget(ALL.map((a) => `area:${a}`)),
       kvGet('meta'),
     ]);
   } catch (e) {
@@ -236,7 +248,7 @@ export default async function handler(req, res) {
   // 메운다 — 비어 있는 것보다 몇 시간 지난 값이라도 있는 편이 낫다.
   const missing = ALL.filter((a) => !areas[a]);
   if (missing.length) {
-    const stale = await Promise.all(missing.map((a) => kvGet(`area:stale:${a}`)));
+    const stale = await kvMget(missing.map((a) => `area:stale:${a}`));
     missing.forEach((a, i) => { if (stale[i]) areas[a] = stale[i]; });
   }
 

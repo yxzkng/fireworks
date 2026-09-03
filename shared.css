@@ -60,7 +60,7 @@
   background: transparent;
 }
 .card:hover { border-color: var(--text-faint); transform: translateY(-1px) }
-.card.active { border-color: rgba(242,106,27,.72); background: rgba(25, 31, 68, .98) }
+.card.active { border-color: rgba(255,243,222,.72); background: rgba(25, 31, 68, .98) }
 .card.active::before { background: var(--signal) }
 .card:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 
@@ -109,7 +109,7 @@
 }
 .program-item:last-child { border-bottom: 0 }
 .program-item.featured {
-  background: rgba(242,106,27,.10);
+  background: rgba(255,243,222,.10);
   box-shadow: inset 3px 0 0 var(--signal);
 }
 .program-time {
@@ -145,7 +145,7 @@
   padding: 15px; border: 0; border-radius: var(--r); cursor: pointer;
   background: var(--signal); color: var(--on-signal);
   font-family: var(--sans); font-size: 15px; font-weight: var(--w-strong);
-  box-shadow: 0 12px 28px rgba(242,106,27,.28), inset 0 1px 0 rgba(255,255,255,.32);
+  box-shadow: 0 12px 28px rgba(255,243,222,.22), inset 0 1px 0 rgba(255,255,255,.42);
 }
 .fab:active { transform: translateY(1px) }
 .fab:focus-visible { outline: 2px solid var(--text); outline-offset: 2px }
@@ -253,33 +253,20 @@
   cursor: pointer; padding: 2px 4px; margin-left: auto;
 }
 .report-flag:hover { color: var(--c4) }
+.report-cat {
+  padding: 1px 6px; border-radius: 999px; border: 1px solid var(--ink-line);
+  color: var(--text-faint);
+}
 .empty { color: var(--text-faint); font-size: 12.5px; padding: 4px 0 }
 
-/* ── 과거 혼잡 레퍼런스 ─────────────────────────────────────────── */
-.history-strip {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+.report-sort { display: flex; gap: 6px }
+.report-sort-btn {
+  padding: 4px 9px; border-radius: 999px; border: 1px solid var(--ink-line);
+  background: transparent; color: var(--text-faint); cursor: pointer;
+  font-family: var(--sans); font-size: 11px; font-weight: var(--w-btn);
 }
-.history-shot {
-  border: 1px solid var(--ink-line); border-radius: var(--r);
-  overflow: hidden; background: var(--ink-panel); color: inherit; text-align: left;
-}
-.history-shot img, .history-ph {
-  display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
-}
-.history-ph {
-  display: grid; place-items: center; padding: 8px; text-align: center;
-  color: var(--text-faint); font-size: 11px; line-height: 1.35;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.05), transparent 52%),
-    var(--ink);
-}
-.history-cap { padding: 8px; display: grid; gap: 3px }
-.history-count {
-  color: var(--text); font-size: 13px; font-weight: var(--w-strong);
-  font-variant-numeric: tabular-nums;
-}
-.history-note { color: var(--text-dim); font-size: 11.5px; line-height: 1.4 }
-.history-source { color: var(--text-faint); font-size: 10.5px; line-height: 1.45; margin-top: 8px }
+.report-sort-btn[aria-pressed="true"] { border-color: var(--signal); color: var(--signal) }
+.report-sort-btn:disabled { opacity: .4; cursor: not-allowed }
 
 /* ── 제보 폼 ──────────────────────────────────────────────────────── */
 .lv-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px }
@@ -289,6 +276,16 @@
   font-family: var(--sans); font-size: 12px; font-weight: var(--w-btn);
 }
 .lv-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
+
+.cat-pick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px }
+.cat-btn {
+  padding: 10px 4px; border-radius: var(--r); border: 1px solid var(--ink-line);
+  background: transparent; color: var(--text-dim); cursor: pointer;
+  font-family: var(--sans); font-size: 12px; font-weight: var(--w-btn);
+}
+.cat-btn[aria-pressed="true"] { border-color: var(--signal); color: var(--signal); background: var(--c2-bg) }
+.cat-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
+
 .photo-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%; padding: 13px; border-radius: var(--r);
@@ -353,7 +350,7 @@
   font-size: 12px; font-weight: 750; padding: 0 10px; cursor: pointer;
   box-shadow: 0 8px 22px rgba(5,8,22,.25);
 }
-.toilet-toggle[aria-pressed="true"] { border-color: var(--signal); color: var(--signal); background: rgba(36,20,11,.92) }
+.toilet-toggle[aria-pressed="true"] { border-color: var(--signal); color: var(--signal); background: rgba(255,243,222,.10) }
 .toilet-toggle:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px }
 .map-wrap:has(.map-ui) .toilet-toggle { right: 54px }
 .legend, .map-hint {
@@ -443,15 +440,6 @@
     border-radius: 12px 12px 0 0;
   }
   .sheet-head { position: sticky; top: -16px; z-index: 2; background: var(--ink-raised); padding-top: 2px }
-  .history-strip {
-    display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory;
-    margin-inline: calc(var(--pad) * -1); padding: 0 var(--pad) 4px;
-    scrollbar-width: none; -webkit-overflow-scrolling: touch;
-  }
-  .history-strip::-webkit-scrollbar { display: none }
-  .history-shot { flex: 0 0 74%; scroll-snap-align: center }
-  .history-shot img, .history-ph { aspect-ratio: 16 / 10 }
-  .history-count { font-size: 14px }
   .report { grid-template-columns: 68px minmax(0, 1fr) }
   .report img { width: 68px; height: 68px }
   .fab { min-height: 50px }

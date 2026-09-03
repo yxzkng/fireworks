@@ -4,6 +4,9 @@
 create table if not exists reports (
   id         uuid primary key default gen_random_uuid(),
   area       text        not null,              -- 장소명 (서울시 API 장소명과 동일)
+  category   text        not null,              -- 장소 종류 (공원 / 발달상권 / 인구밀집지역 / 관광특구)
+  lat        double precision not null,          -- 제보자가 지도에서 찍은 위치
+  lon        double precision not null,
   level      smallint    not null check (level between 1 and 4),
   comment    text        check (char_length(comment) <= 80),
   nickname   text        check (char_length(nickname) <= 12),
@@ -13,9 +16,25 @@ create table if not exists reports (
   created_at timestamptz not null default now()
 );
 
+-- 기존 배포본에 이미 reports 테이블이 있다면 아래를 한 번 실행해서 컬럼을 추가하세요.
+-- (신규 설치는 위 create table 하나로 충분하며 이 블록은 필요 없습니다.)
+--
+--   alter table reports add column if not exists category text;
+--   alter table reports add column if not exists lat double precision;
+--   alter table reports add column if not exists lon double precision;
+--   update reports r set
+--     category = coalesce(r.category, '기타'),
+--     lat = coalesce(r.lat, 37.528),
+--     lon = coalesce(r.lon, 126.933)
+--   where r.category is null or r.lat is null or r.lon is null;
+--   alter table reports alter column category set not null;
+--   alter table reports alter column lat set not null;
+--   alter table reports alter column lon set not null;
+
 -- 목록은 항상 "최근 것부터, 장소별로" 읽는다
 create index if not exists reports_recent on reports (created_at desc);
 create index if not exists reports_area   on reports (area, created_at desc);
+create index if not exists reports_category on reports (category, created_at desc);
 
 alter table reports enable row level security;
 
@@ -38,6 +57,9 @@ create policy "누구나 제보" on reports
     level between 1 and 4
     and char_length(coalesce(comment, '')) <= 80
     and char_length(coalesce(nickname, '')) <= 12
+    -- 여의도 일대를 크게 벗어난 좌표는 받지 않는다(오차·장난 제보 방지).
+    and lat between 37.3 and 37.7
+    and lon between 126.7 and 127.2
     -- 사진 경로는 우리가 만드는 형식만 받는다. 임의 경로를 넣어
     -- 다른 파일을 가리키게 하는 것을 막는다.
     and (photo_path is null

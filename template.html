@@ -15,7 +15,7 @@
   --text:       #FFF8EE;
   --text-dim:   #E7DCEF;
   --text-faint: #B7A8CB;
-  --gold:       #F26A1B;
+  --gold:       #FFF3DE;
   --yellow:     #FFD91A;
   --coral:      #F47C8E;
 
@@ -34,7 +34,7 @@
   --serif: var(--display);
   --sans: var(--body);
   --signal: var(--gold);
-  --on-signal: #241000;
+  --on-signal: #141A3D;
   --ink-panel: var(--ink-raised);
   --card-bg: linear-gradient(160deg,rgba(255,248,238,.105),rgba(255,248,238,.045) 46%,rgba(16,22,50,.78));
   --map-bg: var(--land);
@@ -279,7 +279,7 @@ const GEO    = /*__GEO__*/null;
 const COORDS = /*__COORDS__*/null;
 
 /* 관람 가능 여부 — 불꽃이 보이는 곳과 이동 거점을 구분한다.
-   '붐비는 순'에서 강남역 같은 원거리 거점이 맨 위로 올라오면
+   '붐비는 순'에서 원거리 환승 거점이 맨 위로 올라오면
    자리를 찾는 사람에게 쓸모없는 순서가 되기 때문이다. */
 const VIEWABLE = new Set([
   '여의도한강공원', '여의도', '여의서로', '노들섬',
@@ -303,102 +303,8 @@ const NOTES = {
   '양화한강공원':   '측후방 원거리. 늦게 가도 자리가 있는 편입니다.',
   '망원한강공원':   '서측 원거리 조망.',
   '노량진':        '귀가 경유지. 붐비면 우회를 고려하세요.',
-  '용산역':        '귀가 환승 거점.',
-  '영등포 타임스퀘어': '실내 대기·식사 장소.',
   '합정역':        '서측 환승 거점.',
-  '서울역':        '귀가 환승 거점.',
-  '홍대 관광특구':  '종료 후 이동 인파가 몰리는 곳.',
-  '신촌·이대역':    '북측 환승 거점.',
-  '고속터미널역':   '남측 환승 거점.',
-  '잠실한강공원':   '원거리. 불꽃은 보이지 않습니다.',
-  '뚝섬한강공원':   '원거리. 불꽃은 보이지 않습니다.',
-  '강남역':        '남측 환승 거점.',
 };
-
-const HISTORICAL_CROWD = {
-  '여의도한강공원': {
-    source: '축제 전체 발표 인원과 관람 핵심 구역 면적을 바탕으로 한 서비스 내부 추정치입니다.',
-    shots: [
-      { year: '2023', people: 320000, caption: '메인 행사장 잔디·수변부가 일찍부터 포화된 상황', image: '' },
-      { year: '2022', people: 280000, caption: '불꽃 시작 전 돗자리 밀도가 매우 높았던 시간대', image: '' },
-      { year: '2019', people: 300000, caption: '마포대교~원효대교 사이 정면 관람 인파', image: '' },
-    ],
-  },
-  '여의도': {
-    source: '여의도 일대 유입 인파를 지하철역·도로 접근 구역으로 나누어 배분한 추정치입니다.',
-    shots: [
-      { year: '2023', people: 180000, caption: '여의나루역 주변 진입 대기와 이동 인파', image: '' },
-      { year: '2022', people: 150000, caption: '공원 진입로와 상권 방향 보행 흐름', image: '' },
-      { year: '2019', people: 170000, caption: '행사 종료 직후 역 방향으로 빠지는 구간', image: '' },
-    ],
-  },
-  '여의서로': {
-    source: '벚꽃길·국회 주변 도로변 체류 가능 면적 기준 추정치입니다.',
-    shots: [
-      { year: '2023', people: 70000, caption: '국회 뒤편 도로변에 길게 형성된 관람 줄', image: '' },
-      { year: '2022', people: 60000, caption: '공원보다 여유 있지만 이동 통로가 좁아지는 구간', image: '' },
-      { year: '2019', people: 65000, caption: '서강대교 방향 측면 관람 인파', image: '' },
-    ],
-  },
-  '노들섬': {
-    source: '섬 내 관람 가능 공간과 출입 동선 용량을 기준으로 한 추정치입니다.',
-    shots: [
-      { year: '2023', people: 30000, caption: '섬 중앙부와 수변 데크가 빠르게 찬 상황', image: '' },
-      { year: '2022', people: 25000, caption: '한강대교 보행 접근로까지 대기 발생', image: '' },
-      { year: '2019', people: 28000, caption: '측면 조망을 노린 소규모 밀집', image: '' },
-    ],
-  },
-  '이촌한강공원': {
-    source: '강 건너 주요 관람 구간 길이와 평균 체류 밀도 기준 추정치입니다.',
-    shots: [
-      { year: '2023', people: 120000, caption: '정면 조망이 가능한 수변 산책로 밀집', image: '' },
-      { year: '2022', people: 95000, caption: '가족 단위 관람객이 넓게 분산된 구역', image: '' },
-      { year: '2019', people: 110000, caption: '원효대교 건너편 주요 포인트', image: '' },
-    ],
-  },
-  '양화한강공원': {
-    source: '원거리 조망 구역의 체류 사진과 공원 규모를 함께 반영한 추정치입니다.',
-    shots: [
-      { year: '2023', people: 45000, caption: '늦은 시간에도 일부 여유가 남는 후방 조망', image: '' },
-      { year: '2022', people: 38000, caption: '수변부 중심으로 느슨하게 모인 관람객', image: '' },
-      { year: '2019', people: 42000, caption: '귀가 동선 부담이 적은 서측 포인트', image: '' },
-    ],
-  },
-  '망원한강공원': {
-    source: '서측 원거리 관람 구간 면적과 관람 후기 사진을 바탕으로 한 추정치입니다.',
-    shots: [
-      { year: '2023', people: 50000, caption: '망원 수변부 중심의 분산 관람', image: '' },
-      { year: '2022', people: 42000, caption: '행사 직전 잔디밭과 산책로가 함께 찬 상황', image: '' },
-      { year: '2019', people: 46000, caption: '성산대교 방향 여유 관람 구간', image: '' },
-    ],
-  },
-  '반포한강공원': {
-    source: '원거리 관람·대체 이동지 성격을 고려한 보수적 추정치입니다.',
-    shots: [
-      { year: '2023', people: 35000, caption: '불꽃은 작게 보이지만 접근성이 좋은 대체지', image: '' },
-      { year: '2022', people: 30000, caption: '메인 행사장 회피 관람객 일부 유입', image: '' },
-      { year: '2019', people: 32000, caption: '반포 수변부에 낮은 밀도로 분산', image: '' },
-    ],
-  },
-};
-
-function renderHistorical(area) {
-  const h = HISTORICAL_CROWD[area];
-  if (!h?.shots?.length) return '';
-  return `<div class="block">
-    <div class="block-label">과거 현장 레퍼런스</div>
-    <div class="history-strip">${h.shots.slice(0, 3).map((shot, i) => `
-      <div class="history-shot">
-        ${shot.image ? `<img src="${esc(shot.image)}" alt="${esc(area)} ${esc(shot.year)}년 과거 혼잡 사진" data-history="${esc(area)}-${i}" loading="lazy">`
-          : `<div class="history-ph">${esc(shot.year)}년<br>사진 추가 예정</div>`}
-        <div class="history-cap">
-          <div class="history-count">약 ${shot.people.toLocaleString()}명</div>
-          <div class="history-note">${esc(shot.caption)}</div>
-        </div>
-      </div>`).join('')}</div>
-    <div class="history-source">${esc(h.source)} 사진을 넣으면 이 영역이 실제 현장 이미지 3장으로 바뀝니다.</div>
-  </div>`;
-}
 
 /* ── 상태 ─────────────────────────────────────────────── */
 let db = null;
@@ -777,7 +683,7 @@ function renderRail() {
   states.sort(sortMode === 'near'
     ? (a, b) => a.km - b.km
     // 붐비는 순: 관람 가능한 곳을 먼저 놓고 그 안에서 혼잡도순.
-    // 그러지 않으면 강남역처럼 늘 붐비는 원거리 거점이 맨 위를 차지한다.
+    // 그러지 않으면 원거리 환승 거점처럼 늘 붐비는 곳이 맨 위를 차지한다.
     : (a, b) => (VIEWABLE.has(b.area) - VIEWABLE.has(a.area))
              || (b.level - a.level) || (b.people - a.people));
 
@@ -915,8 +821,6 @@ function detailSheet(area) {
       <div class="block-label">현장 제보 · 최근 30분 ${vote.count}건</div>
       <span class="badge lv${vote.level}">${LEVELS[vote.level - 1]}</span></div>`;
   }
-
-  html += renderHistorical(area);
 
   html += `<div class="block">
     <div class="block-label">제보 타임라인</div>
@@ -1076,15 +980,6 @@ document.addEventListener('click', async (e) => {
     return;
   }
 
-  const history = t.closest('[data-history]');
-  if (history?.src) {
-    const lb = document.createElement('div');
-    lb.className = 'lightbox';
-    lb.innerHTML = `<img src="${history.src}" alt="${esc(history.alt || '과거 현장 사진')}">`;
-    lb.addEventListener('click', () => lb.remove());
-    document.body.appendChild(lb);
-    return;
-  }
 
   const flag = t.closest('[data-flag]');
   if (flag) {
