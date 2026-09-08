@@ -1,142 +1,48 @@
-# 여의도 불꽃 지도 — Vercel 버전
+# 여의도 불꽃 지도 — Vercel 배포판
 
-카카오맵을 쓰는 웹 배포 버전입니다. 아티팩트 버전(`../index.html`)은 그대로 유지되니
-이쪽 배포가 늦어져도 축제 당일 쓸 것은 확보돼 있습니다.
+실제 서비스로 운영되는 배포본입니다. 프로젝트 전체 개요와 동시 접속 대응 내역은
+[루트 README](../README.md), 부하 분석 상세는 [`docs/scaling-plan.md`](../docs/scaling-plan.md)를 참고하세요.
 
-## 왜 Vercel인가
+Claude Artifact 배포판(`../index.html`)과 UI 스타일(`../shared.css`)을 공유하지만,
+지도 엔진과 저장소가 다릅니다.
 
-아티팩트는 주소가 매번 바뀌는 UUID라 **카카오맵 도메인 등록이 불가능**합니다.
-고정 도메인이 생기면 카카오맵을 정상적으로 등록해 쓸 수 있습니다.
-
-| | 아티팩트 버전 | Vercel 버전 |
+| | Artifact 버전 | Vercel 버전 |
 |---|---|---|
-| 지도 | 직접 그린 한강·여의도 윤곽 | **카카오맵** |
-| 저장소 | `claude.use('db')` | **Supabase** |
-| 사진 | 256KB 제한 (1024px 압축) | **제한 없음** (1600px) |
-| 배포 | 즉시 | 설정 필요 |
+| 지도 | 한강·여의도 윤곽을 좌표로 직접 렌더링 | 카카오맵 JS SDK |
+| 저장소 | Artifact 내장 DB | Supabase (Postgres + Storage) |
+| 사진 | 256KB 제한 (1024px) | 1280px 원본 + 240px 썸네일 |
 
----
-
-## 배포 절차
-
-### 1. Supabase (제보·사진 저장소)
-
-1. https://supabase.com 가입 → 새 프로젝트
-2. **SQL Editor**에 [`schema.sql`](schema.sql) 붙여넣고 실행
-3. **Storage** → 새 버킷 `photos` 생성 → **Public** 체크
-4. **Settings → API**에서 `Project URL`과 `anon public` 키 복사
-
-### 2. 카카오맵 키
-
-1. https://developers.kakao.com → 애플리케이션 추가
-2. **앱 키 → JavaScript 키** 복사
-3. **플랫폼 → Web → 사이트 도메인**에 배포 주소 등록
-   (Vercel 배포 후 나오는 `https://xxx.vercel.app`)
-
-> 도메인 등록을 빠뜨리면 지도만 안 뜹니다. 카드 목록은 정상 동작합니다.
-
-### 3. 서울시 인증키
-
-https://data.seoul.go.kr 가입 → **Open API → 인증키 신청** (즉시 발급)
-
-> ⚠️ 이 키는 서버에서만 씁니다. 절대 공유하지 마세요.
-
-### 4. Vercel 배포
-
-```bash
-cd web
-npx vercel            # 첫 배포 (프로젝트 생성)
-```
-
-Vercel 대시보드 → **Storage → KV** 생성 후 프로젝트에 연결합니다.
-
-**Settings → Environment Variables**에 등록:
-
-| 이름 | 값 | 노출 |
-|---|---|---|
-| `SEOUL_API_KEY` | 서울시 인증키 | 서버 전용 |
-| `SEOUL_SUBWAY_KEY` | 서울시 "실시간 지하철" 인증키 (일반 인증키와 별도 발급) | 서버 전용 |
-| `NEXT_PUBLIC_KAKAO_KEY` | 카카오 JavaScript 키 | 공개 |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase Project URL | 공개 |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon 키 | 공개 |
-
-```bash
-npx vercel --prod     # 환경변수 반영해 재배포
-```
-
-### 5. 첫 데이터 채우기
-
-Cron 없이 접속자 요청이 트리거이므로, 배포 직후 아무나(혹은 직접) 한 번
-열어보면 그 요청이 캐시를 채웁니다. 등급이 세 개라 최초 몇 번의 요청에
-걸쳐 HOT → WARM → COLD 순으로 채워집니다.
-
-```bash
-curl "https://<주소>.vercel.app/api/congestion" | head -c 300
-```
-
----
-
-## API 호출 예산 — 하루 900 / 1,000회
-
-서울시 인증키는 **하루 1,000회** 제한입니다. Hobby 플랜은 Cron이 하루 1회로
-제한되어 분 단위 폴링을 못 쓰므로, 접속자 요청을 트리거 삼아 등급별
-TTL이 지난 곳만 갱신합니다(`api/congestion.js`).
-
-| 등급 | 장소 | 캐시 수명(TTL) |
-|---|---|---|
-| HOT | 여의도, 여의도한강공원, 여의서로, 노들섬 | 5분 |
-| WARM | 이촌·반포·양화·망원한강공원, 노량진, 용산역, 영등포, 합정역 | 20분 |
-| COLD | 서울역, 홍대, 신촌·이대역, 고속터미널, 잠실·뚝섬한강공원, 강남역 | 60분 |
-
-트래픽이 없는 시간대는 TTL이 지나도 아무도 갱신을 트리거하지 않아 그만큼
-호출이 자연히 줄어듭니다. 등급을 늘리거나 TTL을 바꾸면 하루 최대 호출량이
-바뀌니 `DAILY_BUDGET`(현재 900)과 함께 조정하세요.
-
-> **한도 늘리기**: 열린데이터광장 **활용사례(갤러리)**에 등록하면 제한이 풀립니다.
-
-> **Pro 플랜으로 전환**하면 분 단위 Cron을 다시 쓸 수 있어 트래픽과 무관하게
-> 항상 최신 데이터를 유지할 수 있습니다. 대규모 접속이 예상되면 고려하세요.
-
----
-
-## 설계 메모
-
-**지도 다크 처리** — 카카오맵에 공식 다크 타입이 없습니다. CSS `invert` 필터로 반전시키는
-방법이 흔하지만 **지도 이미지 변형은 약관 위반 소지**가 있어(실제 API 차단 사례 존재)
-쓰지 않았습니다. 대신 어두운 반투명 막을 위에 덮어 원본은 그대로 두고 화면만 가라앉힙니다.
-
-**마커** — 원 크기가 인원(제곱근이라 면적이 인원에 비례), 색이 혼잡도입니다.
-겹치면 카카오 클러스터러가 묶고, 확대하면 풀립니다.
-
-**정렬** — '붐비는 순'은 관람 가능한 곳을 먼저 놓습니다. 안 그러면 늘 붐비는 강남역이
-1위가 되어 자리 찾는 사람에게 쓸모없는 순서가 됩니다.
-
-**사진** — Supabase Storage에 올리므로 아티팩트의 256KB 제한이 없습니다.
-
-**지하철 도착정보** — 지역 혼잡도(광역 인파)와는 별개로, 상세를 열면 그 근처 역의
-"다음 열차 몇 분 후" 정보를 보여줍니다. 인원 숫자가 아니라 귀가 동선 판단용입니다.
-전체 폴링이 아니라 상세를 열 때만 호출하고 서버가 30초 캐시해 인증키 한도를 아낍니다.
-근처에 역이 없는 한강공원 등은 표시하지 않습니다(가장 가까운 역이 애매해 오히려 혼란).
-1600px·q0.82로만 줄여 현장 업로드 속도를 확보합니다.
-
-**신고** — `update` 정책을 열면 남의 제보 내용을 고칠 수 있어, `report_flag()` 함수로만
-`flags`를 올립니다. 3건이면 자동으로 가려집니다.
-
-**단계적 축소** — 키가 하나씩 없어도 나머지는 동작합니다.
-카카오 키 없음 → 지도만 안내 문구, 카드는 정상. Supabase 없음 → 제보만 비활성.
-혼잡도 API 실패 → 카드는 '정보 없음'으로 표시되고 제보는 정상. (모두 테스트로 확인)
-
----
+Artifact는 주소가 매번 바뀌는 UUID라 카카오맵 도메인 등록이 불가능합니다.
+고정 도메인이 필요해서 Vercel 배포판을 따로 두었습니다.
 
 ## 파일
 
 | 파일 | 설명 |
 |---|---|
-| `template.html` | 사이트 원본 — **여기를 수정합니다** |
-| `public/index.html` | 빌드 결과 (`python3 ../build.py`) — 직접 고치지 마세요 |
-| `../shared.css` | 아티팩트판과 공유하는 UI 스타일 |
-| `public/area-coords.json` | 장소 19곳 좌표 + 발사지점 거리 |
-| `api/congestion.js` | 서울시 혼잡도 수집(Cron) + 배포 |
-| `api/config.js` | 공개 키를 브라우저에 전달 |
-| `schema.sql` | Supabase 테이블·정책·신고 함수 |
-| `vercel.json` | Cron 5분 주기 설정. `maxDuration: 10`은 Hobby 플랜 함수 실행 상한(명시해 두면 플랫폼 기본값이 바뀌어도 동작이 같다) — congestion/subway 쪽 fetch 타임아웃이 이 안에서 끝나도록 짜여 있다 |
+| `template.html` | 사이트 원본 — **수정은 여기서** |
+| `public/index.html` | `python3 ../build.py` 산출물 — 직접 고치지 않음 |
+| `public/area-coords.json` | 관람 장소 좌표 + 발사지점 거리 |
+| `api/congestion.js` | 서울시 혼잡도 수집·캐싱 (KV 락 + TTL, 접속자 요청 트리거) |
+| `api/subway.js` | 지하철 실시간 도착정보 (single-flight 캐싱) |
+| `api/admin.js` | 관리자 인증 후 제보 조회/삭제 (`service_role` 키는 서버 전용) |
+| `api/config.js` | 공개 키를 클라이언트에 전달 |
+| `schema.sql` | 테이블 · RLS 정책 · 신고 함수 · 속도 제한 트리거 |
+| `vercel.json` | 함수별 `maxDuration` 설정 (Hobby 플랜 실행 상한을 명시해, 플랫폼 기본값이 바뀌어도 동작이 같도록) |
+
+## 환경 변수
+
+값은 Vercel 대시보드에서 관리합니다. 형식은 [`.env.example`](.env.example) 참고.
+
+| 이름 | 노출 |
+|---|---|
+| `SEOUL_API_KEY` | 서버 전용 |
+| `SEOUL_SUBWAY_KEY` | 서버 전용 (일반 인증키와 별도 발급) |
+| `SUPABASE_SERVICE_ROLE_KEY` | 서버 전용 |
+| `ADMIN_PASSWORD` | 서버 전용 |
+| `NEXT_PUBLIC_KAKAO_KEY` | 공개 |
+| `NEXT_PUBLIC_SUPABASE_URL` | 공개 |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 공개 |
+
+서울시 실시간 도시데이터 API는 **HTTP 전용**이라 HTTPS 사이트에서 직접 호출하면 mixed content로
+차단됩니다. 그래서 서버 함수(또는 `../proxy`의 Cloudflare Worker)를 거치고, 인증키는 클라이언트에
+노출되지 않습니다.
