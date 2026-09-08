@@ -1,5 +1,12 @@
 # 여의도 불꽃 지도
 
+![JavaScript](https://img.shields.io/badge/JavaScript-ES2022-F7DF1E?style=flat-square&labelColor=555)
+![Node.js](https://img.shields.io/badge/Node.js-Serverless-339933?style=flat-square&labelColor=555)
+![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ECF8E?style=flat-square&labelColor=555)
+![Redis](https://img.shields.io/badge/Vercel_KV-Redis-DC382D?style=flat-square&labelColor=555)
+![Kakao Maps](https://img.shields.io/badge/Kakao_Maps-SDK-FFCD00?style=flat-square&labelColor=555)
+![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=flat-square&labelColor=555)
+
 서울세계불꽃축제 관람 명당별 실시간 혼잡도와 현장 사진 제보를 지도 위에서 함께 보여주는 서비스입니다.
 서울시 공공데이터(기지국 기반 인구 추정)와 현장 이용자의 제보를 나란히 놓아,
 "지금 어디가 붐비는지"와 "돗자리 깔 자리가 남았는지"를 동시에 판단할 수 있게 만들었습니다.
@@ -15,23 +22,16 @@
 | Database | Supabase (Postgres + RLS), Supabase Storage |
 | Cache | Vercel KV (Redis) |
 | 외부 API | 서울시 실시간 도시데이터 API, 서울시 실시간 지하철 도착정보 API, 카카오맵 JS SDK |
-| 프록시 | Cloudflare Workers |
 | 배포 | Vercel |
 
 ## 구조
 
-하나의 소스에서 두 가지 배포본을 생성합니다.
-
 ```
-template.html  +  shared.css
-      │
-      ├─ build.py ─▶ index.html             Claude Artifact 배포판 (한강·여의도 윤곽을 직접 렌더링)
-      └─ build.py ─▶ web/public/index.html  Vercel 배포판 (실서비스, 카카오맵)
+web/template.html  +  shared.css  ─ build.py ─▶  web/public/index.html
 ```
 
-두 배포본은 지도 엔진과 저장소가 달라 HTML/JS는 각자 유지하고, 공통 UI(카드·레일·시트·제보 폼)의
-CSS만 `shared.css` 한 곳에서 관리합니다. `index.html`과 `web/public/index.html`은 빌드 산출물이므로
-직접 수정하지 않습니다.
+`web/public/index.html`은 빌드 산출물이므로 직접 수정하지 않습니다. UI 수정은
+`web/template.html`(마크업·로직)과 `shared.css`(스타일)에서 합니다.
 
 ```
 web/api/congestion.js   서울시 혼잡도 수집·캐싱 (KV 락 + TTL)
@@ -39,7 +39,6 @@ web/api/subway.js       지하철 실시간 도착정보 (single-flight 캐싱)
 web/api/admin.js        관리자 인증 후 제보 조회/삭제 (service_role 키는 서버에서만 사용)
 web/api/config.js       공개 키를 클라이언트에 전달
 web/schema.sql          테이블 · RLS 정책 · 신고 함수 · 속도 제한 트리거
-proxy/worker.js         서울시 HTTP 전용 API를 위한 HTTPS 프록시
 ```
 
 ---

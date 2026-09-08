@@ -1,19 +1,7 @@
-# 여의도 불꽃 지도 — Vercel 배포판
+# 여의도 불꽃 지도 — 웹 애플리케이션
 
-실제 서비스로 운영되는 배포본입니다. 프로젝트 전체 개요와 동시 접속 대응 내역은
+Vercel에 배포되는 실제 서비스 코드입니다. 프로젝트 개요와 동시 접속 대응 내역은
 [루트 README](../README.md), 부하 분석 상세는 [`docs/scaling-plan.md`](../docs/scaling-plan.md)를 참고하세요.
-
-Claude Artifact 배포판(`../index.html`)과 UI 스타일(`../shared.css`)을 공유하지만,
-지도 엔진과 저장소가 다릅니다.
-
-| | Artifact 버전 | Vercel 버전 |
-|---|---|---|
-| 지도 | 한강·여의도 윤곽을 좌표로 직접 렌더링 | 카카오맵 JS SDK |
-| 저장소 | Artifact 내장 DB | Supabase (Postgres + Storage) |
-| 사진 | 256KB 제한 (1024px) | 1280px 원본 + 240px 썸네일 |
-
-Artifact는 주소가 매번 바뀌는 UUID라 카카오맵 도메인 등록이 불가능합니다.
-고정 도메인이 필요해서 Vercel 배포판을 따로 두었습니다.
 
 ## 파일
 
@@ -44,5 +32,5 @@ Artifact는 주소가 매번 바뀌는 UUID라 카카오맵 도메인 등록이 
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 공개 |
 
 서울시 실시간 도시데이터 API는 **HTTP 전용**이라 HTTPS 사이트에서 직접 호출하면 mixed content로
-차단됩니다. 그래서 서버 함수(또는 `../proxy`의 Cloudflare Worker)를 거치고, 인증키는 클라이언트에
-노출되지 않습니다.
+차단됩니다. 그래서 브라우저가 아닌 서버 함수(`api/congestion.js`)에서 호출하며, 인증키도
+클라이언트에 노출되지 않습니다.
